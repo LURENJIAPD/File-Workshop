@@ -231,6 +231,7 @@ GET /api/v1/files?page=1&pageSize=50
 - Go 至少执行 `gofmt`、`go vet ./...`、`go test ./...`；前端命令以锁文件和 `package.json` 为准。
 - 不提交调试输出、临时文件、构建制品或编辑器私有配置。
 - 提交前缀使用 `feat:`、`fix:`、`refactor:`、`test:`、`docs:`、`perf:`、`security:`、`build:` 或 `chore:`。
+- Git 提交标题和正文统一使用中文；上述英文前缀保留，前缀后的内容必须使用中文。
 - 提交说明应解释变更原因和影响，不只罗列文件。
 - 兼容性、性能和安全结论必须有测试、测量或文档依据，不得凭感觉声明。
 
