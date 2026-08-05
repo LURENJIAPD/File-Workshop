@@ -3,3 +3,25 @@
 //   sqlc v1.31.1
 
 package dbgen
+
+import (
+	"net/netip"
+
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+type UserSession struct {
+	UserSessionID pgtype.UUID
+	UserID        pgtype.UUID
+	DeviceID      pgtype.Text
+	IpAddress     *netip.Addr
+	UserAgent     pgtype.Text
+	Status        string
+	ExpiresAt     pgtype.Timestamptz
+	LastSeenAt    pgtype.Timestamptz
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+	RevokedAt     pgtype.Timestamptz
+	RevokeReason  pgtype.Text
+	RowVersion    int64
+}

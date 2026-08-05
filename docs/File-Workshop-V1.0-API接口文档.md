@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.1  
+> 文档版本：V0.2
 > 文档状态：按模块持续编制  
 > 最近更新：2026-08-05  
-> 当前已收录：公共健康检查、模块 01 身份认证  
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -19,7 +19,8 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 |---:|---|---|---:|---|
 | 公共 | 健康检查 | 已完成 | 2 | 2026-08-05 |
 | 01 | 身份认证 | 已完成 | 4 | 2026-08-05 |
-| 02～16 | 后续系统模块 | 未收录 | 0 | — |
+| 02 | 用户管理 | 已完成 | 13 | 2026-08-05 |
+| 03～16 | 后续系统模块 | 未收录 | 0 | — |
 
 ## 3. 全局接口约定
 
@@ -315,7 +316,242 @@ Authorization: Bearer <access-token>
 - `backend/scripts/verify.ps1`
 - `backend/scripts/verify-integration.ps1`
 
-## 6. 文档维护与冻结规则
+## 6. 模块 02：用户管理
+
+### 6.1 模块边界和授权
+
+用户管理接口分为本人入口和系统管理员入口：
+
+- `/api/v1/users/me*` 只允许访问当前认证用户自己的资料和会话。
+- `/api/v1/admin/users*` 只允许活动 `SYSTEM_ADMIN` 使用；普通用户统一返回 `403/AUTH_FORBIDDEN`。
+- 所有接口均接受 Bearer Token 或 `file_workshop_access` Cookie，并同时校验数据库用户和 Session 状态。
+- 带 `Origin` 的写请求必须来自允许列表，否则返回 `403/AUTH_ORIGIN_REJECTED`。
+- 普通响应不返回规范化字段、密码哈希、Refresh Token 摘要或内部安全版本。
+
+用户状态为 `ACTIVE`、`DISABLED`、`LOCKED`、`DELETED`。`DELETED` 是终态；禁用、锁定、逻辑删除和密码重置都会撤销活动会话。系统必须至少保留一个活动 `SYSTEM_ADMIN`。
+
+### 6.2 用户响应结构
+
+`User` 字段：
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `userId` | UUID | 是 | 用户稳定 ID |
+| `username` | string | 是 | 原始用户名，创建后不可修改且逻辑删除后不复用 |
+| `employeeNo` | string | 否 | 工号 |
+| `displayName` | string | 是 | 显示名称 |
+| `email` | email | 否 | 邮箱 |
+| `phone` | string | 否 | 电话 |
+| `systemRole` | `USER`、`SYSTEM_ADMIN` | 是 | 系统角色 |
+| `status` | `ACTIVE`、`DISABLED`、`LOCKED`、`DELETED` | 是 | 用户状态 |
+| `locale` | string | 是 | 语言区域 |
+| `timezone` | IANA 时区 | 是 | 用户时区 |
+| `lastLoginAt` | date-time | 否 | 最近成功登录时间 |
+| `createdAt`、`updatedAt` | date-time | 是 | 创建和更新时间 |
+| `deletedAt` | date-time | 否 | 逻辑删除时间，仅 `DELETED` 时存在 |
+| `rowVersion` | int64 | 是 | 乐观锁版本，所有修改请求必须提交当前值 |
+
+单用户响应统一为：
+
+```json
+{
+  "user": {
+    "userId": "019fd195-8000-7000-8000-000000000001",
+    "username": "worker001",
+    "employeeNo": "FW-001",
+    "displayName": "一车间操作员",
+    "email": "worker001@example.com",
+    "systemRole": "USER",
+    "status": "ACTIVE",
+    "locale": "zh-CN",
+    "timezone": "Asia/Shanghai",
+    "createdAt": "2026-08-05T10:00:00Z",
+    "updatedAt": "2026-08-05T10:00:00Z",
+    "rowVersion": 1
+  },
+  "requestId": "019fd195-8100-7000-8000-000000000001"
+}
+```
+
+### 6.3 获取和修改本人资料
+
+`GET /api/v1/users/me`
+Operation ID：`getCurrentUser`
+认证：Bearer Token 或 Access Cookie
+
+成功返回 `200` 和 `UserResponse`；认证失败返回 `401/AUTH_REQUIRED`。
+
+`PATCH /api/v1/users/me`
+Operation ID：`updateCurrentUser`
+认证：Bearer Token 或 Access Cookie
+
+请求至少包含一个可修改字段，并必须包含 `rowVersion`：
+
+```json
+{
+  "displayName": "一车间操作员",
+  "email": "worker001@example.com",
+  "phone": "13800000000",
+  "locale": "zh-CN",
+  "timezone": "Asia/Shanghai",
+  "rowVersion": 3
+}
+```
+
+空字符串用于清除 `email` 或 `phone`。本人接口不能修改用户名、工号、系统角色或状态。
+
+| HTTP 状态 | 错误码 | 条件 |
+|---:|---|---|
+| `400` | `INVALID_REQUEST` | 字段为空、邮箱、时区、长度或请求体无效 |
+| `401` | `AUTH_REQUIRED` | 认证或数据库 Session 无效 |
+| `403` | `AUTH_ORIGIN_REJECTED` | Origin 不允许 |
+| `409` | `USER_VERSION_CONFLICT` | `rowVersion` 已过期 |
+
+成功返回 `200` 和更新后的 `UserResponse`，`rowVersion` 增加 1，并写入 `USER_UPDATED` Outbox。
+
+### 6.4 本人会话管理
+
+`GET /api/v1/users/me/sessions?page=1&pageSize=50`
+Operation ID：`listCurrentUserSessions`
+认证：Bearer Token 或 Access Cookie
+
+响应包含 `items`、`page`、`pageSize`、`total`、`requestId`。每个会话包含 `sessionId`、`status`、`isCurrent`、设备/IP/客户端摘要、创建/过期/最近访问/撤销时间和 `rowVersion`。分页非法返回 `400/INVALID_REQUEST`。
+
+`DELETE /api/v1/users/me/sessions/{sessionId}`
+Operation ID：`revokeCurrentUserSession`
+认证：Bearer Token 或 Access Cookie
+
+只能撤销本人会话；成功或重复撤销返回 `204`。会话不属于本人或不存在时返回 `404/USER_NOT_FOUND`，认证失败返回 `401/AUTH_REQUIRED`，Origin 不允许返回 `403/AUTH_ORIGIN_REJECTED`。成功后在同一事务撤销 Session 和活动 Refresh Token，并写入 `AUTH_SESSION_REVOKED` Outbox；撤销当前会话会使当前 Access Token 立即失效。
+
+### 6.5 管理员分页查询和创建用户
+
+`GET /api/v1/admin/users?page=1&pageSize=50&status=ACTIVE&systemRole=USER`
+Operation ID：`listUsers`
+认证：仅 `SYSTEM_ADMIN`
+
+- `page` 默认 1；`pageSize` 默认 50、最大 200。
+- `status` 和 `systemRole` 可选，枚举值必须符合数据库设计。
+- 按 `createdAt DESC, userId DESC` 稳定排序。
+- 响应包含 `items`、`page`、`pageSize`、准确 `total` 和 `requestId`。
+
+`POST /api/v1/admin/users`
+Operation ID：`createUser`
+认证：仅 `SYSTEM_ADMIN`
+必须请求头：`Idempotency-Key`，1～128 字符
+
+```json
+{
+  "username": "worker001",
+  "password": "<初始密码>",
+  "employeeNo": "FW-001",
+  "displayName": "一车间操作员",
+  "email": "worker001@example.com",
+  "phone": "13800000000",
+  "systemRole": "USER",
+  "locale": "zh-CN",
+  "timezone": "Asia/Shanghai"
+}
+```
+
+`username`、`password`、`displayName` 必填；角色默认 `USER`，语言默认 `zh-CN`，时区默认 `Asia/Shanghai`。密码使用模块 01 的 Argon2id 和 12～128 字符策略，不实施密码历史限制。
+
+成功返回 `201`、`Location: /api/v1/admin/users/{userId}` 和 `UserResponse`。用户、PASSWORD 凭据、主体安全版本、`USER_CREATED` Outbox 和幂等结果在同一事务写入。
+
+| HTTP 状态 | 错误码 | 条件 |
+|---:|---|---|
+| `400` | `INVALID_REQUEST` | 字段、密码策略、邮箱、时区或 Idempotency-Key 无效 |
+| `401` | `AUTH_REQUIRED` | 未认证 |
+| `403` | `AUTH_FORBIDDEN`、`AUTH_ORIGIN_REJECTED` | 非管理员或 Origin 不允许 |
+| `409` | `USER_CONFLICT` | 用户名、工号或邮箱重复 |
+| `409` | `IDEMPOTENCY_CONFLICT` | 同一幂等键对应不同请求体 |
+
+同一管理员使用相同幂等键和相同请求体重试时，返回同一个用户，不创建重复凭据或 Outbox。
+
+### 6.6 管理员读取和修改用户
+
+`GET /api/v1/admin/users/{userId}`
+Operation ID：`getUser`
+
+成功返回 `200/UserResponse`；不存在返回 `404/USER_NOT_FOUND`；普通用户返回 `403/AUTH_FORBIDDEN`。
+
+`PATCH /api/v1/admin/users/{userId}`
+Operation ID：`updateUser`
+
+请求必须包含当前 `rowVersion`，并至少包含 `displayName`、`email`、`phone`、`locale`、`timezone`、`employeeNo`、`systemRole` 之一。`email`、`phone`、`employeeNo` 使用空字符串清除；用户名和状态不能由该接口修改。
+
+成功返回 `200/UserResponse`。角色变化同时递增 `global_authorization_version`，写入 `USER_ROLE_CHANGED` 和 `USER_UPDATED` Outbox。
+
+除公共的 `400/401/403/404` 外，冲突错误包括：
+
+- `409/USER_VERSION_CONFLICT`：并发版本过期；
+- `409/USER_CONFLICT`：邮箱或工号唯一值冲突；
+- `409/USER_STATE_CONFLICT`：用户已经逻辑删除；
+- `409/USER_LAST_SYSTEM_ADMIN`：操作会移除最后一个活动系统管理员。
+
+### 6.7 用户状态操作
+
+以下接口仅允许 `SYSTEM_ADMIN`，请求体统一为：
+
+```json
+{
+  "rowVersion": 4,
+  "reason": "人员离岗"
+}
+```
+
+| 接口 | Operation ID | 成功响应 | 事务副作用 |
+|---|---|---|---|
+| `POST /api/v1/admin/users/{userId}/disable` | `disableUser` | `200/UserResponse` | 状态改为 `DISABLED`，递增安全版本，撤销会话和 Refresh Token，写 `USER_DISABLED` |
+| `POST /api/v1/admin/users/{userId}/enable` | `enableUser` | `200/UserResponse` | `DISABLED`/`LOCKED` 改为 `ACTIVE`，递增安全版本，写 `USER_ENABLED` |
+| `POST /api/v1/admin/users/{userId}/lock` | `lockUser` | `200/UserResponse` | 状态改为 `LOCKED`，递增安全版本，撤销会话和 Refresh Token，写 `AUTH_ACCOUNT_LOCKED` |
+| `DELETE /api/v1/admin/users/{userId}` | `deleteUser` | `204` | 状态改为 `DELETED` 并设置 `deletedAt`，撤销凭据、会话和 Token，不物理删除引用事实 |
+
+用户已经处于目标状态且请求携带当前 `rowVersion` 时可无副作用成功；`DELETED` 不能重新启用。所有操作校验最后一个活动系统管理员保护，并可能返回 `USER_VERSION_CONFLICT`、`USER_STATE_CONFLICT` 或 `USER_LAST_SYSTEM_ADMIN`。
+
+### 6.8 管理员重置密码
+
+`PUT /api/v1/admin/users/{userId}/password`
+Operation ID：`resetUserPassword`
+认证：仅 `SYSTEM_ADMIN`
+
+```json
+{
+  "password": "<新密码>",
+  "rowVersion": 5
+}
+```
+
+成功返回 `204`；密码使用 Argon2id 更新活动 PASSWORD 凭据，不读取或写入 `user_password_history`。用户 `rowVersion` 递增，所有活动会话与 Refresh Token 被撤销，并写入 `AUTH_PASSWORD_CHANGED` Outbox。
+
+除公共错误外，可能返回 `409/USER_PASSWORD_CREDENTIAL_NOT_FOUND`、`USER_VERSION_CONFLICT` 或 `USER_STATE_CONFLICT`。
+
+### 6.9 模块 02 接口测试依据
+
+正式接口测试至少覆盖：
+
+1. 本人只能读取和修改允许的资料字段，不能跨用户读取。
+2. 普通用户访问全部 `/admin/users*` 接口均返回 `403/AUTH_FORBIDDEN`。
+3. `page/pageSize` 默认值、非法值、最大值、空页、最后一页和稳定排序。
+4. 创建用户同键同请求只产生一名用户；同键不同请求返回 `IDEMPOTENCY_CONFLICT`。
+5. 用户名、工号和邮箱唯一冲突；用户名逻辑删除后仍不能复用。
+6. 两个相同 `rowVersion` 的并发更新最多一个成功，另一个返回 `USER_VERSION_CONFLICT`。
+7. `ACTIVE/DISABLED/LOCKED/DELETED` 合法和非法转换，以及 `DELETED` 终态。
+8. 禁用、锁定、删除和密码重置后，旧 Access Token 与 Refresh Token 立即失效。
+9. 至少保留一个活动 `SYSTEM_ADMIN`，并发角色/状态变更不能绕过保护。
+10. 逻辑删除只更新用户、凭据和会话状态，不级联删除文件、版本、授权、共享或审计引用。
+11. 本人会话分页、越权撤销、重复撤销和撤销当前会话。
+12. 响应和日志不包含密码、哈希、Token 摘要、SQL 或内部路径；用户变更事务包含对应 Outbox。
+
+现有自动化证据：
+
+- `backend/internal/modules/users/domain/*_test.go`
+- `backend/internal/modules/users/application/*_test.go`
+- `backend/tests/integration/users_http_test.go`
+- `backend/tests/migration/initial_schema_test.go`
+- `backend/scripts/verify.ps1`
+- `backend/scripts/verify-integration.ps1`
+
+## 7. 文档维护与冻结规则
 
 1. 新模块先更新 `backend/api/openapi.yaml`，再生成代码和实现。
 2. 模块开发完成时，在本文档追加对应模块章节和接口测试要点，并更新第 2 章状态。

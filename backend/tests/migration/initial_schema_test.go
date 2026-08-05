@@ -88,7 +88,7 @@ func TestInitialMigrationOnEmptyDatabase(t *testing.T) {
 		t.Fatalf("migration did not establish expected schema: %#v", info)
 	}
 
-	runGoose(t, ctx, backendRoot, temporaryConfig.ConnectionString(), "down")
+	runGoose(t, ctx, backendRoot, temporaryConfig.ConnectionString(), "down-to", "0")
 	verificationConnection, err := pgx.Connect(ctx, temporaryConfig.ConnectionString())
 	if err != nil {
 		t.Fatalf("connect rolled back PostgreSQL database: %v", err)
@@ -107,9 +107,10 @@ func TestInitialMigrationOnEmptyDatabase(t *testing.T) {
 	}
 }
 
-func runGoose(t *testing.T, ctx context.Context, backendRoot, connectionString, command string) {
+func runGoose(t *testing.T, ctx context.Context, backendRoot, connectionString string, arguments ...string) {
 	t.Helper()
-	gooseCommand := exec.CommandContext(ctx, "go", "tool", "goose", "-dir", filepath.Join(backendRoot, "migrations"), command)
+	commandArguments := append([]string{"tool", "goose", "-dir", filepath.Join(backendRoot, "migrations")}, arguments...)
+	gooseCommand := exec.CommandContext(ctx, "go", commandArguments...)
 	gooseCommand.Dir = backendRoot
 	gooseCommand.Env = append(
 		os.Environ(),
@@ -118,7 +119,7 @@ func runGoose(t *testing.T, ctx context.Context, backendRoot, connectionString, 
 	)
 	output, err := gooseCommand.CombinedOutput()
 	if err != nil {
-		t.Fatalf("goose %s failed: %v\n%s", command, err, sanitizeGooseOutput(string(output), connectionString))
+		t.Fatalf("goose %s failed: %v\n%s", strings.Join(arguments, " "), err, sanitizeGooseOutput(string(output), connectionString))
 	}
 }
 

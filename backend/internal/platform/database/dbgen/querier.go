@@ -11,22 +11,48 @@ import (
 )
 
 type Querier interface {
+	CompleteUserIdempotencyRecord(ctx context.Context, arg *CompleteUserIdempotencyRecordParams) error
+	CountManagedUserSessions(ctx context.Context, userID pgtype.UUID) (int64, error)
+	CountManagedUsers(ctx context.Context, arg *CountManagedUsersParams) (int64, error)
 	CreateSessionRefreshToken(ctx context.Context, arg *CreateSessionRefreshTokenParams) (*CreateSessionRefreshTokenRow, error)
 	CreateUserSession(ctx context.Context, arg *CreateUserSessionParams) (*CreateUserSessionRow, error)
 	GetCurrentSessionIdentity(ctx context.Context, userSessionID pgtype.UUID) (*GetCurrentSessionIdentityRow, error)
 	GetDatabaseHealth(ctx context.Context) (*GetDatabaseHealthRow, error)
+	GetManagedUserByID(ctx context.Context, userID pgtype.UUID) (*GetManagedUserByIDRow, error)
+	GetManagedUserForUpdate(ctx context.Context, userID pgtype.UUID) (*GetManagedUserForUpdateRow, error)
+	GetOwnedUserSession(ctx context.Context, arg *GetOwnedUserSessionParams) (pgtype.UUID, error)
 	GetPasswordLoginIdentity(ctx context.Context, arg *GetPasswordLoginIdentityParams) (*GetPasswordLoginIdentityRow, error)
 	GetRecentLoginFailureState(ctx context.Context, arg *GetRecentLoginFailureStateParams) (*GetRecentLoginFailureStateRow, error)
 	GetRefreshTokenForUpdate(ctx context.Context, tokenHash []byte) (*GetRefreshTokenForUpdateRow, error)
 	GetSessionIDByRefreshTokenHash(ctx context.Context, tokenHash []byte) (pgtype.UUID, error)
+	GetUserIdempotencyRecordForUpdate(ctx context.Context, arg *GetUserIdempotencyRecordForUpdateParams) (*GetUserIdempotencyRecordForUpdateRow, error)
+	IncrementGlobalAuthorizationVersion(ctx context.Context, arg *IncrementGlobalAuthorizationVersionParams) error
 	InsertLoginAttempt(ctx context.Context, arg *InsertLoginAttemptParams) error
+	InsertManagedPasswordCredential(ctx context.Context, arg *InsertManagedPasswordCredentialParams) error
+	InsertManagedUser(ctx context.Context, arg *InsertManagedUserParams) (*InsertManagedUserRow, error)
+	InsertPrincipalSecurityVersions(ctx context.Context, arg *InsertPrincipalSecurityVersionsParams) error
+	InsertUserOutboxEvent(ctx context.Context, arg *InsertUserOutboxEventParams) error
+	ListManagedUserSessions(ctx context.Context, arg *ListManagedUserSessionsParams) ([]*UserSession, error)
+	ListManagedUsers(ctx context.Context, arg *ListManagedUsersParams) ([]*ListManagedUsersRow, error)
+	LockActiveSystemAdministrators(ctx context.Context) ([]pgtype.UUID, error)
+	LockSystemAdminMutation(ctx context.Context) error
 	MarkRefreshTokenReused(ctx context.Context, arg *MarkRefreshTokenReusedParams) error
 	MarkRefreshTokenUsed(ctx context.Context, arg *MarkRefreshTokenUsedParams) (int64, error)
 	RevokeActiveRefreshTokensForSession(ctx context.Context, arg *RevokeActiveRefreshTokensForSessionParams) error
+	RevokeManagedUserCredentials(ctx context.Context, arg *RevokeManagedUserCredentialsParams) error
+	RevokeManagedUserRefreshTokens(ctx context.Context, arg *RevokeManagedUserRefreshTokensParams) error
+	RevokeManagedUserSessions(ctx context.Context, arg *RevokeManagedUserSessionsParams) error
+	RevokeOwnedUserSession(ctx context.Context, arg *RevokeOwnedUserSessionParams) (int64, error)
+	RevokeOwnedUserSessionTokens(ctx context.Context, arg *RevokeOwnedUserSessionTokensParams) error
 	RevokeUserSession(ctx context.Context, arg *RevokeUserSessionParams) error
+	SetManagedUserStatus(ctx context.Context, arg *SetManagedUserStatusParams) (*SetManagedUserStatusRow, error)
 	TouchCredentialAfterLogin(ctx context.Context, arg *TouchCredentialAfterLoginParams) error
+	TouchManagedUserForPasswordReset(ctx context.Context, arg *TouchManagedUserForPasswordResetParams) (int64, error)
 	TouchUserAfterLogin(ctx context.Context, arg *TouchUserAfterLoginParams) error
 	TouchUserSession(ctx context.Context, arg *TouchUserSessionParams) error
+	TryCreateUserIdempotencyRecord(ctx context.Context, arg *TryCreateUserIdempotencyRecordParams) (int64, error)
+	UpdateManagedPasswordCredential(ctx context.Context, arg *UpdateManagedPasswordCredentialParams) (int64, error)
+	UpdateManagedUser(ctx context.Context, arg *UpdateManagedUserParams) (*UpdateManagedUserRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

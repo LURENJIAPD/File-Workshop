@@ -11,6 +11,10 @@ tags:
     description: 应用存活与就绪探针，不产生业务审计事件。
   - name: Authentication
     description: 登录、会话检查、Refresh Token 轮换和注销；只建立身份上下文，不判断文件资源权限。
+  - name: Users
+    description: 当前用户资料和本人会话管理。
+  - name: UserAdministration
+    description: SYSTEM_ADMIN 用户生命周期管理；所有写操作执行资源级授权和并发校验。
 
 paths:
   /health/live:
@@ -167,6 +171,383 @@ paths:
         "401":
           $ref: "#/components/responses/AuthRequired"
 
+  /api/v1/users/me:
+    get:
+      operationId: getCurrentUser
+      tags: [Users]
+      summary: 获取当前用户资料
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      responses:
+        "200":
+          description: 当前用户资料。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "401":
+          $ref: "#/components/responses/AuthRequired"
+    patch:
+      operationId: updateCurrentUser
+      tags: [Users]
+      summary: 修改当前用户资料
+      description: 只允许修改显示名称、邮箱、电话、语言和时区，使用 rowVersion 防止覆盖并发更新。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCurrentUserRequest"
+      responses:
+        "200":
+          description: 资料已更新。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/AuthRequired"
+        "403":
+          $ref: "#/components/responses/SecurityRejected"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/v1/users/me/sessions:
+    get:
+      operationId: listCurrentUserSessions
+      tags: [Users]
+      summary: 分页查询当前用户会话
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+      responses:
+        "200":
+          description: 当前用户会话列表，包含活动和历史会话。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSessionListResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/AuthRequired"
+
+  /api/v1/users/me/sessions/{sessionId}:
+    delete:
+      operationId: revokeCurrentUserSession
+      tags: [Users]
+      summary: 撤销当前用户的一条会话
+      description: 只能撤销属于当前用户的会话；重复撤销保持成功。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/SessionIdPath"
+      responses:
+        "204":
+          description: 会话已撤销或原本已经失效。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestId"
+        "401":
+          $ref: "#/components/responses/AuthRequired"
+        "403":
+          $ref: "#/components/responses/SecurityRejected"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/admin/users:
+    get:
+      operationId: listUsers
+      tags: [UserAdministration]
+      summary: 分页查询用户
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/UserStatus"
+        - name: systemRole
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/SystemRole"
+      responses:
+        "200":
+          description: 用户列表，按创建时间和 userId 稳定倒序。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/AuthRequired"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: createUser
+      tags: [UserAdministration]
+      summary: 创建本地密码用户
+      description: 用户、PASSWORD 凭据、安全版本、Outbox 和幂等结果在同一事务写入。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: 用户已创建。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestId"
+            Location:
+              description: 新用户资源路径。
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/AuthRequired"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/v1/admin/users/{userId}:
+    get:
+      operationId: getUser
+      tags: [UserAdministration]
+      summary: 获取用户详情
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/UserIdPath"
+      responses:
+        "200":
+          description: 用户详情。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "401":
+          $ref: "#/components/responses/AuthRequired"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateUser
+      tags: [UserAdministration]
+      summary: 修改用户资料或系统角色
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/UserIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: 用户已更新。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/AuthRequired"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+    delete:
+      operationId: deleteUser
+      tags: [UserAdministration]
+      summary: 逻辑删除用户
+      description: 用户名永久保留；凭据和会话在同一事务撤销，不物理删除关联业务事实。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/UserIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserStateChangeRequest"
+      responses:
+        "204":
+          description: 用户已逻辑删除。
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/AuthRequired"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /api/v1/admin/users/{userId}/disable:
+    post:
+      operationId: disableUser
+      tags: [UserAdministration]
+      summary: 禁用用户
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/UserIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserStateChangeRequest"
+      responses:
+        "200":
+          description: 用户已禁用且活动会话已撤销。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin/users/{userId}/enable:
+    post:
+      operationId: enableUser
+      tags: [UserAdministration]
+      summary: 启用或解除锁定用户
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/UserIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserStateChangeRequest"
+      responses:
+        "200":
+          description: 用户已启用。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin/users/{userId}/lock:
+    post:
+      operationId: lockUser
+      tags: [UserAdministration]
+      summary: 管理员锁定用户
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/UserIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserStateChangeRequest"
+      responses:
+        "200":
+          description: 用户已锁定且活动会话已撤销。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin/users/{userId}/password:
+    put:
+      operationId: resetUserPassword
+      tags: [UserAdministration]
+      summary: 管理员重置本地用户密码
+      description: 使用模块 01 密码策略生成 Argon2id 哈希；不实施密码历史限制，成功后撤销全部活动会话。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/UserIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetUserPasswordRequest"
+      responses:
+        "204":
+          description: 密码已重置，活动会话已撤销。
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -214,6 +595,20 @@ components:
         type: string
         minLength: 1
         maxLength: 128
+    UserIdPath:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SessionIdPath:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
 
   headers:
     RequestId:
@@ -292,6 +687,33 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: 当前用户没有执行该管理操作的权限。
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestId"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: 指定资源不存在或对当前用户不可见。
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestId"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: 唯一值、幂等键、用户状态或 rowVersion 发生冲突。
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestId"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
 
   schemas:
     LoginRequest:
@@ -339,6 +761,304 @@ components:
           type: string
           minLength: 1
           maxLength: 64
+
+    SystemRole:
+      type: string
+      enum: [USER, SYSTEM_ADMIN]
+
+    UserStatus:
+      type: string
+      enum: [ACTIVE, DISABLED, LOCKED, DELETED]
+
+    User:
+      type: object
+      additionalProperties: false
+      required: [userId, username, displayName, systemRole, status, locale, timezone, createdAt, updatedAt, rowVersion]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+          minLength: 1
+          maxLength: 128
+        employeeNo:
+          type: string
+          minLength: 1
+          maxLength: 128
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 128
+        email:
+          type: string
+          format: email
+          maxLength: 256
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 64
+        systemRole:
+          $ref: "#/components/schemas/SystemRole"
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        locale:
+          type: string
+          minLength: 1
+          maxLength: 16
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+        lastLoginAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+
+    UserResponse:
+      type: object
+      additionalProperties: false
+      required: [user, requestId]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    UserListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        page:
+          $ref: "#/components/schemas/Page"
+        pageSize:
+          $ref: "#/components/schemas/PageSize"
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    CreateUserRequest:
+      type: object
+      additionalProperties: false
+      required: [username, password, displayName]
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 128
+        password:
+          type: string
+          minLength: 12
+          maxLength: 128
+        employeeNo:
+          type: string
+          minLength: 1
+          maxLength: 128
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 128
+        email:
+          type: string
+          format: email
+          maxLength: 256
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 64
+        systemRole:
+          $ref: "#/components/schemas/SystemRole"
+        locale:
+          type: string
+          minLength: 1
+          maxLength: 16
+          default: zh-CN
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+          default: Asia/Shanghai
+
+    UpdateCurrentUserRequest:
+      type: object
+      additionalProperties: false
+      required: [rowVersion]
+      properties:
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 128
+        email:
+          type: string
+          maxLength: 256
+          description: 空字符串表示清除邮箱，非空时必须是合法邮箱地址。
+        phone:
+          type: string
+          maxLength: 64
+          description: 空字符串表示清除电话。
+        locale:
+          type: string
+          minLength: 1
+          maxLength: 16
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+
+    UpdateUserRequest:
+      type: object
+      additionalProperties: false
+      required: [rowVersion]
+      properties:
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 128
+        email:
+          type: string
+          maxLength: 256
+          description: 空字符串表示清除邮箱，非空时必须是合法邮箱地址。
+        phone:
+          type: string
+          maxLength: 64
+          description: 空字符串表示清除电话。
+        locale:
+          type: string
+          minLength: 1
+          maxLength: 16
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+        employeeNo:
+          type: string
+          maxLength: 128
+          description: 空字符串表示清除工号。
+        systemRole:
+          $ref: "#/components/schemas/SystemRole"
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+
+    UserStateChangeRequest:
+      type: object
+      additionalProperties: false
+      required: [rowVersion, reason]
+      properties:
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 512
+
+    ResetUserPasswordRequest:
+      type: object
+      additionalProperties: false
+      required: [password, rowVersion]
+      properties:
+        password:
+          type: string
+          minLength: 12
+          maxLength: 128
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+
+    UserSession:
+      type: object
+      additionalProperties: false
+      required: [sessionId, status, isCurrent, createdAt, expiresAt, rowVersion]
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        deviceId:
+          type: string
+          maxLength: 256
+        ipAddress:
+          type: string
+        userAgent:
+          type: string
+          maxLength: 1024
+        status:
+          type: string
+          enum: [ACTIVE, REVOKED, EXPIRED]
+        isCurrent:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        lastSeenAt:
+          type: string
+          format: date-time
+        revokedAt:
+          type: string
+          format: date-time
+        revokeReason:
+          type: string
+          maxLength: 512
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+
+    UserSessionListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserSession"
+        page:
+          $ref: "#/components/schemas/Page"
+        pageSize:
+          $ref: "#/components/schemas/PageSize"
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
 
     SessionSummary:
       type: object

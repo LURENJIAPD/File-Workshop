@@ -13,6 +13,9 @@ import (
 	identityrepository "file-workshop/backend/internal/modules/identity/repository"
 	"file-workshop/backend/internal/modules/identity/security"
 	identitytransport "file-workshop/backend/internal/modules/identity/transport"
+	usersapplication "file-workshop/backend/internal/modules/users/application"
+	usersrepository "file-workshop/backend/internal/modules/users/repository"
+	userstransport "file-workshop/backend/internal/modules/users/transport"
 	"file-workshop/backend/internal/platform/cache"
 	"file-workshop/backend/internal/platform/config"
 	"file-workshop/backend/internal/platform/database"
@@ -82,7 +85,10 @@ func RunServer(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 		return fmt.Errorf("configure identity service: %w", err)
 	}
 	identityHandler := identitytransport.NewHandler(identityService, cfg.Auth)
-	router := httpserver.NewRouter(httpserver.NewAPIHandler(healthHandler, identityHandler), logger, cfg.Auth.AllowedOrigins)
+	usersRepository := usersrepository.NewPostgreSQL(postgresPool)
+	usersService := usersapplication.NewService(usersRepository, usersRepository, domain.NewArgon2IDHasher(), time.Now)
+	usersHandler := userstransport.NewHandler(usersService, identityService, cfg.Auth)
+	router := httpserver.NewRouter(httpserver.NewAPIHandler(healthHandler, identityHandler, usersHandler), logger, cfg.Auth.AllowedOrigins)
 	server := httpserver.NewServer(cfg.HTTP, router)
 
 	serverErrors := make(chan error, 1)
