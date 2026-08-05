@@ -12,6 +12,8 @@ try {
 
     & (Join-Path $PSScriptRoot 'generate.ps1')
 
+    & (Join-Path $PSScriptRoot 'verify-api-doc.ps1')
+
     $goFiles = @(rg --files -g '*.go')
     $unformatted = @(gofmt -l $goFiles)
     if ($unformatted.Count -gt 0) {

@@ -8,12 +8,12 @@
 - `POST /api/v1/auth/refresh`：单事务锁定并消费旧 Refresh Token，签发下一代 Token；检测旧 Token 重放后撤销整个会话和活动 Token。
 - `POST /api/v1/auth/logout`：按访问令牌或 Refresh Token 定位并幂等撤销会话。
 - `GET /api/v1/auth/session`：同时校验 JWT、用户状态、数据库会话状态与过期时间。
-- Argon2id PHC 密码哈希；已冻结 12～128 字符、拒绝用户名、拒绝常见弱密码、最近 5 个密码不可复用的策略。
+- Argon2id PHC 密码哈希；已冻结 12～128 字符、拒绝用户名和拒绝常见弱密码的策略，不实施密码历史限制。
 - 同一规范化用户名 15 分钟内连续失败 5 次后锁定 15 分钟；成功登录会重置失败窗口。
 - 单实例 IP 短时突发限制；登录结果写入 `login_attempts`。
 - 浏览器令牌使用 HttpOnly Cookie，生产环境要求 Secure；带 Origin 的认证写请求执行允许列表校验，并为允许的前端源提供携带凭据的 CORS 预检响应。
 
-所有持久化字段均来自数据库设计中的 `users`、`user_credentials`、`user_password_history`、`user_sessions`、`session_refresh_tokens` 与 `login_attempts`，没有另建身份数据模型。
+所有持久化字段均来自数据库设计中的 `users`、`user_credentials`、`user_sessions`、`session_refresh_tokens` 与 `login_attempts`，没有另建身份数据模型。现有 `user_password_history` 表不参与当前业务策略。
 
 ## 令牌约定
 

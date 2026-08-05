@@ -29,24 +29,3 @@ func TestPasswordPolicy(t *testing.T) {
 		})
 	}
 }
-
-func TestPasswordPolicyChecksFiveMostRecentHashes(t *testing.T) {
-	policy := NewPasswordPolicy()
-	hasher := historyHasher{matchingHash: "hash-5"}
-	if err := policy.ValidateHistory("new password", []string{"hash-1", "hash-2", "hash-3", "hash-4", "hash-5", "hash-6"}, hasher); !errors.Is(err, ErrPasswordRecentlyUsed) {
-		t.Fatalf("ValidateHistory() error = %v", err)
-	}
-	hasher.matchingHash = "hash-6"
-	if err := policy.ValidateHistory("new password", []string{"hash-1", "hash-2", "hash-3", "hash-4", "hash-5", "hash-6"}, hasher); err != nil {
-		t.Fatalf("ValidateHistory() checked more than five hashes: %v", err)
-	}
-}
-
-type historyHasher struct {
-	matchingHash string
-}
-
-func (historyHasher) Hash(string) (string, error) { return "", nil }
-func (h historyHasher) Compare(_ string, encodedHash string) (bool, error) {
-	return encodedHash == h.matchingHash, nil
-}

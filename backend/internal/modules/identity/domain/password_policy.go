@@ -2,7 +2,6 @@ package domain
 
 import (
 	"errors"
-	"fmt"
 	"unicode/utf8"
 
 	passwordvalidator "github.com/go-passwd/validator"
@@ -11,15 +10,13 @@ import (
 const (
 	PasswordMinimumLength = 12
 	PasswordMaximumLength = 128
-	PasswordHistoryLimit  = 5
 )
 
 var (
-	ErrPasswordTooShort     = errors.New("password is too short")
-	ErrPasswordTooLong      = errors.New("password is too long")
-	ErrPasswordMatchesUser  = errors.New("password matches username")
-	ErrPasswordCommon       = errors.New("password is commonly used")
-	ErrPasswordRecentlyUsed = errors.New("password was recently used")
+	ErrPasswordTooShort    = errors.New("password is too short")
+	ErrPasswordTooLong     = errors.New("password is too long")
+	ErrPasswordMatchesUser = errors.New("password matches username")
+	ErrPasswordCommon      = errors.New("password is commonly used")
 )
 
 type PasswordPolicy struct {
@@ -45,20 +42,6 @@ func (p *PasswordPolicy) Validate(password, username string) error {
 	}
 	if err := p.commonPasswordValidator.Validate(password); err != nil {
 		return err
-	}
-	return nil
-}
-
-func (p *PasswordPolicy) ValidateHistory(password string, recentHashes []string, hasher PasswordHasher) error {
-	limit := min(len(recentHashes), PasswordHistoryLimit)
-	for _, encodedHash := range recentHashes[:limit] {
-		matches, err := hasher.Compare(password, encodedHash)
-		if err != nil {
-			return fmt.Errorf("compare password history: %w", err)
-		}
-		if matches {
-			return ErrPasswordRecentlyUsed
-		}
 	}
 	return nil
 }

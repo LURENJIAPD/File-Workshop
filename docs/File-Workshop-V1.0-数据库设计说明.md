@@ -321,7 +321,7 @@ TOTP 仅允许 `secret_ref` 非空；WEBAUTHN 仅允许 `credential_id/public_ke
 
 恢复码通过条件 UPDATE 从 ACTIVE 原子改为 USED。重新生成恢复码时撤销该用户之前所有 ACTIVE 批次。
 
-## 4.5 `user_password_history`
+## 4.5 `user_password_history`（保留但当前不启用）
 
 | 字段 | 类型 | 必填 | 约束/说明 |
 |---|---|---:|---|
@@ -332,7 +332,7 @@ TOTP 仅允许 `secret_ref` 非空；WEBAUTHN 仅允许 `credential_id/public_ke
 | created_by_user_id | uuid | 否 | 管理员重置时记录 |
 | created_at | timestamptz | 是 | 插入时间 |
 
-该表只允许 INSERT/SELECT；按密码历史策略保留，不保存明文或可逆密文。
+项目负责人已取消密码历史策略。当前应用不得读写该表；由于首版 Schema 已导入且已发布 Migration 禁止原地修改，暂时保留结构以避免破坏性变更。如后续确认删除，只能通过新增 Migration 执行并先核验数据。
 
 ## 4.6 `user_sessions`
 
