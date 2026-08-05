@@ -1,0 +1,95 @@
+:root {
+  --bg: #edf5fb;
+  --surface: #fff;
+  --surface-2: #e4eff7;
+  --text: #20233b;
+  --muted: #727792;
+  --line: rgba(49,55,91,.1);
+  --accent: #6c5ce7;
+  --accent-2: #8e83ef;
+  --success: #42af78;
+  --warning: #efaa3d;
+  --danger: #ed6579;
+  --radius: 25px;
+  --radius-sm: 16px;
+  --shadow: 0 20px 55px rgba(56,64,108,.14);
+  --card-shadow: 0 10px 25px rgba(69,79,127,.07);
+  --sidebar-width: 248px;
+  --sidebar-bg: #fff;
+  --sidebar-text: #20233b;
+  --sidebar-muted: #7a7f9a;
+  --nav-active-text: #fff;
+  --nav-active-bg: #6c5ce7;
+  --topbar-bg: rgba(237,245,251,.82);
+  --visual-bg: #7668eb;
+  --visual-text: #fff;
+  --login-panel-bg: #f8fbfd;
+  --smart-bg: #20233b;
+  --smart-text: #fff;
+  --smart-muted: #b9bdd3;
+  --smart-accent: #ffcd73;
+  --smart-line: #20233b;
+  --smart-input-bg: #303452;
+  --smart-input-line: rgba(255,255,255,.12);
+  --smart-input-text: #fff;
+  --font: "Nunito", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+body { background: radial-gradient(circle at 12% 18%,#fff 0 4%,transparent 4.2%),radial-gradient(circle at 93% 76%,#dfe4ff 0 8%,transparent 8.2%),#edf5fb; }
+.brand-symbol { border-radius: 13px; transform: rotate(-6deg); box-shadow: 0 7px 16px rgba(108,92,231,.22); }
+.brand-name strong { letter-spacing: .03em; }
+.app-shell { padding: 14px; grid-template-columns: var(--sidebar-width) minmax(0,1fr); gap: 14px; }
+.sidebar { height: calc(100vh - 28px); top: 14px; border: 0; border-radius: 28px; box-shadow: var(--card-shadow); }
+.topbar { top: 14px; min-height: 66px; margin-right: 0; border: 0; border-radius: 22px; box-shadow: var(--card-shadow); }
+.nav-item.is-active { box-shadow: 0 8px 20px rgba(108,92,231,.22); }
+.storage-card { background: #f3f0ff; border: 0; }
+.dashboard { padding-top: 34px; }
+.welcome-copy h1 { font-weight: 720; }
+.welcome-copy h1::after { content: " ✦"; color: #ffb84e; }
+.secondary-button, .upload-button { border-radius: 15px; }
+.metric-grid { gap: 17px; }
+.metric-card { min-height: 142px; border: 0; }
+.metric-card:nth-child(1) { background: #dfeeff; }
+.metric-card:nth-child(2) { background: #eee8ff; }
+.metric-card:nth-child(3) { background: #e1f6eb; }
+.metric-card:nth-child(4) { background: #fff0cc; }
+.metric-icon { border-radius: 12px; background: rgba(255,255,255,.7); }
+.metric-value strong { font-weight: 720; }
+.workspace-grid { gap: 18px; }
+.panel { border: 0; }
+.panel-head { border: 0; }
+.file-table td { border-top-color: rgba(49,55,91,.07); }
+.file-table tr:hover td { background: #f8f9fd; }
+.file-icon { border-radius: 10px; }
+.quick-grid { gap: 11px; }
+.quick-card { border: 0; }
+.quick-card:nth-child(1) { background: #e8f3ff; }
+.quick-card:nth-child(2) { background: #f0ebff; }
+.quick-card:nth-child(3) { background: #fff0d5; }
+.quick-card:nth-child(4) { background: #ffe9ed; }
+.quick-icon { background: rgba(255,255,255,.65); }
+.activity-dot { border-width: 4px; }
+.smart-strip { min-height: 130px; border: 0; box-shadow: var(--shadow); }
+.smart-strip::after { content: "✦"; position: absolute; right: 43%; top: -30px; color: #6c5ce7; font-size: 130px; opacity: .11; transform: rotate(15deg); }
+
+.login-visual { margin: 18px; min-height: calc(100vh - 36px); border-radius: 34px; background: linear-gradient(145deg,#7668eb,#5b4ed0); box-shadow: 0 30px 70px rgba(86,72,190,.25); }
+.login-visual::before, .login-visual::after { content: ""; position: absolute; border-radius: 50%; background: rgba(255,255,255,.1); }
+.login-visual::before { width: 280px; height: 280px; right: -80px; top: 80px; }
+.login-visual::after { width: 150px; height: 150px; left: 8%; bottom: -50px; }
+.login-visual h1 { font-weight: 720; }
+.deco-grid { display: none; }
+.deco-orbit { border-color: #ffcd73; opacity: .35; }
+.deco-file { border: 0; border-radius: 24px; background: rgba(255,255,255,.1); opacity: 1; transform: rotate(9deg); }
+.visual-stats { padding: 17px; border-radius: 18px; background: rgba(255,255,255,.08); backdrop-filter: blur(10px); }
+.login-panel { background: transparent; }
+.login-card { padding: 38px; border-radius: 28px; background: #fff; box-shadow: var(--shadow); }
+.login-card-head h2 { font-weight: 720; }
+.input-wrap input, .sso-button { background: #f7f8fb; border-color: transparent; }
+.primary-button { border-radius: 15px; box-shadow: 0 10px 22px rgba(108,92,231,.2); }
+
+@media (max-width: 860px) {
+  .app-shell { padding: 8px; display: block; }
+  .sidebar { top: 8px; height: calc(100vh - 16px); }
+  .topbar { top: 8px; }
+}
+

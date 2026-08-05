@@ -1,0 +1,38 @@
+:root {
+  --bg: #eeeae3; --surface: #fbfaf6; --surface-2: #e4dfd6; --text: #242d2e; --muted: #707b7c; --line: #cdc8bf;
+  --accent: #e56618; --accent-2: #f28c45; --success: #168c7d; --warning: #c77b17; --danger: #c94641;
+  --radius: 2px; --radius-sm: 2px; --shadow: 0 20px 55px rgba(50,48,43,.15); --card-shadow: 0 3px 0 color-mix(in srgb,var(--line) 65%,transparent);
+  --sidebar-width: 232px; --sidebar-bg: #dcd8d0; --sidebar-text: #242d2e; --sidebar-muted: #697475; --sidebar-line: #bbb7af;
+  --nav-active-text: #fff; --nav-active-bg: #e56618; --topbar-bg: rgba(238,234,227,.95); --visual-bg: #d8d3ca; --visual-text: #242d2e;
+  --login-panel-bg: #f3f0ea; --button-text: #fff; --smart-bg: #0d5552; --smart-text: #efffff; --smart-muted: #abd1ce;
+  --smart-accent: #6dd5cb; --smart-line: #0d5552; --smart-input-bg: #073a38; --smart-input-line: #3e7773; --smart-input-text: #efffff;
+  --font: "DIN Alternate", "Bahnschrift", "Segoe UI", "Microsoft YaHei", sans-serif;
+}
+body { background-image: linear-gradient(color-mix(in srgb,var(--text) 4%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--text) 4%,transparent) 1px,transparent 1px); background-size: 28px 28px; }
+.brand-symbol { border-radius: 0; background: linear-gradient(90deg,var(--accent) 0 30%,transparent 30% 35%,var(--accent) 35% 65%,transparent 65% 70%,var(--accent) 70%); }
+.sidebar .brand-lockup { border-bottom: 1px dashed var(--sidebar-line); }
+.nav-item { border: 1px solid transparent; }
+.nav-item.is-active { box-shadow: 4px 4px 0 color-mix(in srgb,var(--accent) 25%,var(--text)); }
+.search-box input, .icon-button, .profile-button { background: var(--surface); }
+.dashboard::before { content: "WAREHOUSE GRID  A01—H48  /  DOCUMENT ROUTE ACTIVE"; display: block; margin-bottom: 20px; color: var(--muted); font: 700 8px/1 monospace; letter-spacing: .14em; }
+.plant-status { box-shadow: 4px 4px 0 var(--line); }
+.plant-status-item i { border-radius: 0; transform: rotate(45deg); }
+.metric-card { position: relative; overflow: hidden; }
+.metric-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--metric-color); }
+.metric-icon, .quick-icon { border-radius: 2px; }
+.panel-head { border-bottom-style: dashed; background: color-mix(in srgb,var(--surface-2) 48%,var(--surface)); }
+.file-table td { border-top-style: dashed; }
+.file-table tr:hover td { background: color-mix(in srgb,var(--accent) 7%,transparent); }
+.quick-card { border-style: dashed; background: var(--surface); }
+.quick-card:hover { box-shadow: 4px 4px 0 color-mix(in srgb,var(--quick-color) 35%,var(--line)); transform: translate(-2px,-2px); }
+.smart-strip { background-image: linear-gradient(90deg,transparent 0 48%,color-mix(in srgb,var(--smart-text) 6%,transparent) 48% 49%,transparent 49%); }
+.login-visual { background-image: linear-gradient(color-mix(in srgb,var(--text) 7%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--text) 7%,transparent) 1px,transparent 1px); background-size: 46px 46px; }
+.login-visual::after { content: "A01  A02  A03  A04  →  DISPATCH"; position: absolute; left: 44px; bottom: 34px; padding-bottom: 8px; color: var(--visual-text); border-bottom: 4px solid var(--accent); font: 800 8px/1 monospace; letter-spacing: .14em; }
+.concept-kicker { display: inline-block; padding: 7px 10px; color: #fff; background: var(--accent); opacity: 1; }
+.deco-orbit { border-color: var(--success); border-style: dashed; }
+.deco-file { border-color: var(--accent); }
+.visual-stat { padding: 10px; border: 1px dashed color-mix(in srgb,var(--visual-text) 32%,transparent); }
+.login-card { padding: 34px; border: 1px solid var(--line); background: var(--surface); box-shadow: 7px 7px 0 var(--line); }
+.input-wrap input, .sso-button { background: var(--surface); }
+.primary-button { box-shadow: 5px 5px 0 color-mix(in srgb,var(--accent) 25%,var(--text)); }
+

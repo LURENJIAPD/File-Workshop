@@ -1,0 +1,496 @@
+openapi: 3.1.0
+info:
+  title: File Workshop API
+  version: 0.1.0
+  description: File Workshop V1.0 REST API 工作契约。业务 API 使用 /api/v1，平台健康检查为部署探针例外。
+servers:
+  - url: /
+
+tags:
+  - name: Health
+    description: 应用存活与就绪探针，不产生业务审计事件。
+  - name: Authentication
+    description: 登录、会话检查、Refresh Token 轮换和注销；只建立身份上下文，不判断文件资源权限。
+
+paths:
+  /health/live:
+    get:
+      operationId: getLiveness
+      tags: [Health]
+      summary: 检查进程是否存活
+      description: 只确认 HTTP 进程能够响应，不访问外部依赖。
+      responses:
+        "200":
+          description: 进程存活。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /health/ready:
+    get:
+      operationId: getReadiness
+      tags: [Health]
+      summary: 检查节点是否可以接收流量
+      description: PostgreSQL 是必需依赖；Redis 故障时允许降级；MinIO 暂缓期间明确报告 disabled。
+      responses:
+        "200":
+          description: 节点就绪；响应 status 可能为 ok 或 degraded。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: 必需依赖不可用，节点未就绪。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /api/v1/auth/login:
+    post:
+      operationId: login
+      tags: [Authentication]
+      summary: 使用用户名和密码登录
+      description: >-
+        成功后返回短期 Bearer 访问令牌，并设置访问 Cookie 和只用于刷新/注销的 Refresh Token Cookie。
+        Refresh Token 不进入响应正文，数据库只保存其 SHA-256 摘要。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: 登录成功，会话和第一代 Refresh Token 已在同一事务创建。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestId"
+            Set-Cookie:
+              $ref: "#/components/headers/AuthSetCookie"
+            Cache-Control:
+              $ref: "#/components/headers/NoStore"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokenResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/InvalidCredentials"
+        "403":
+          $ref: "#/components/responses/SecurityRejected"
+        "423":
+          $ref: "#/components/responses/AccountLocked"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /api/v1/auth/refresh:
+    post:
+      operationId: refreshSession
+      tags: [Authentication]
+      summary: 轮换 Refresh Token 并签发新访问令牌
+      description: >-
+        需要 file_workshop_refresh Cookie。每次成功调用都会作废旧 Token 并设置下一代 Token；
+        检测到旧 Token 重用时吊销整个 Session 和活动 Token 家族。
+      security:
+        - refreshCookie: []
+      responses:
+        "200":
+          description: Refresh Token 轮换成功。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestId"
+            Set-Cookie:
+              $ref: "#/components/headers/AuthSetCookie"
+            Cache-Control:
+              $ref: "#/components/headers/NoStore"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokenResponse"
+        "401":
+          $ref: "#/components/responses/AuthRequired"
+        "403":
+          $ref: "#/components/responses/SecurityRejected"
+
+  /api/v1/auth/logout:
+    post:
+      operationId: logout
+      tags: [Authentication]
+      summary: 注销当前会话
+      description: 使用访问 Cookie、Bearer Token 或 Refresh Token 定位并吊销当前会话，同时清除认证 Cookie。重复注销保持成功。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+        - refreshCookie: []
+      responses:
+        "204":
+          description: 当前会话已注销或原本已失效。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestId"
+            Set-Cookie:
+              $ref: "#/components/headers/AuthSetCookie"
+        "403":
+          $ref: "#/components/responses/SecurityRejected"
+
+  /api/v1/auth/session:
+    get:
+      operationId: getCurrentSession
+      tags: [Authentication]
+      summary: 获取当前认证会话
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      responses:
+        "200":
+          description: 当前访问令牌及数据库会话均有效。
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/RequestId"
+            Cache-Control:
+              $ref: "#/components/headers/NoStore"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentSessionResponse"
+        "401":
+          $ref: "#/components/responses/AuthRequired"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 短期访问 JWT。浏览器不应将其持久化到 LocalStorage。
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: file_workshop_access
+      description: 浏览器短期访问 JWT Cookie，使用 HttpOnly 和 SameSite；生产环境必须使用 Secure。
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: file_workshop_refresh
+      description: 只用于刷新和注销的轮换 Refresh Token Cookie，使用 HttpOnly 和 SameSite；生产环境必须使用 Secure。
+
+  parameters:
+    PageQuery:
+      name: page
+      in: query
+      required: false
+      description: 从 1 开始的页码。
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSizeQuery:
+      name: pageSize
+      in: query
+      required: false
+      description: 每页数量，最大 200。
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+    IdempotencyKeyHeader:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: 可重试写请求的稳定幂等键。
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+
+  headers:
+    RequestId:
+      description: 本次请求的稳定追踪标识。
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    AuthSetCookie:
+      description: 可能出现多次，分别设置或清除访问 Cookie 和 Refresh Token Cookie。
+      schema:
+        type: string
+    NoStore:
+      description: 认证响应不得被共享或浏览器缓存保存。
+      schema:
+        type: string
+        const: no-store
+
+  responses:
+    InvalidRequest:
+      description: 请求 JSON 或字段不符合契约。
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestId"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    AuthRequired:
+      description: 未提供有效认证信息、访问令牌过期或会话已经失效。
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestId"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InvalidCredentials:
+      description: 用户名或密码错误；响应不区分用户是否存在。
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestId"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    AccountLocked:
+      description: 账号被管理员锁定，或在锁定窗口内连续失败次数达到阈值。
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestId"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    SecurityRejected:
+      description: 浏览器请求的 Origin 不在允许列表中，拒绝可能的跨站请求伪造。
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestId"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    TooManyRequests:
+      description: IP 或账号短时间请求过多。
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/RequestId"
+        Retry-After:
+          description: 建议重试等待秒数。
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 128
+        password:
+          type: string
+          minLength: 1
+          maxLength: 128
+        deviceId:
+          type: string
+          minLength: 1
+          maxLength: 256
+
+    AuthenticatedUser:
+      type: object
+      additionalProperties: false
+      required: [userId, username, displayName, systemRole, locale, timezone]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+          minLength: 1
+          maxLength: 128
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 128
+        systemRole:
+          type: string
+          enum: [USER, SYSTEM_ADMIN]
+        locale:
+          type: string
+          minLength: 1
+          maxLength: 16
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+
+    SessionSummary:
+      type: object
+      additionalProperties: false
+      required: [sessionId, status, createdAt, expiresAt]
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [ACTIVE, REVOKED, EXPIRED]
+        deviceId:
+          type: string
+          maxLength: 256
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        lastSeenAt:
+          type: string
+          format: date-time
+
+    AuthTokenResponse:
+      type: object
+      additionalProperties: false
+      required: [accessToken, tokenType, expiresIn, user, session, requestId]
+      properties:
+        accessToken:
+          type: string
+          minLength: 1
+        tokenType:
+          type: string
+          const: Bearer
+        expiresIn:
+          type: integer
+          format: int64
+          minimum: 1
+          description: 访问令牌剩余有效秒数。
+        user:
+          $ref: "#/components/schemas/AuthenticatedUser"
+        session:
+          $ref: "#/components/schemas/SessionSummary"
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    CurrentSessionResponse:
+      type: object
+      additionalProperties: false
+      required: [user, session, requestId]
+      properties:
+        user:
+          $ref: "#/components/schemas/AuthenticatedUser"
+        session:
+          $ref: "#/components/schemas/SessionSummary"
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    Page:
+      type: integer
+      minimum: 1
+      default: 1
+
+    PageSize:
+      type: integer
+      minimum: 1
+      maximum: 200
+      default: 50
+
+    PaginationMeta:
+      type: object
+      additionalProperties: false
+      required: [page, pageSize]
+      properties:
+        page:
+          $ref: "#/components/schemas/Page"
+        pageSize:
+          $ref: "#/components/schemas/PageSize"
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+
+    HealthStatus:
+      type: string
+      enum: [ok, degraded, unavailable]
+
+    ComponentStatus:
+      type: string
+      enum: [ok, unavailable, disabled]
+
+    ComponentHealth:
+      type: object
+      additionalProperties: false
+      required: [status, latencyMs]
+      properties:
+        status:
+          $ref: "#/components/schemas/ComponentStatus"
+        latencyMs:
+          type: integer
+          format: int64
+          minimum: 0
+        message:
+          type: string
+          maxLength: 256
+
+    HealthResponse:
+      type: object
+      additionalProperties: false
+      required: [status, service, timestamp, requestId, checks]
+      properties:
+        status:
+          $ref: "#/components/schemas/HealthStatus"
+        service:
+          type: string
+          minLength: 1
+          maxLength: 128
+        timestamp:
+          type: string
+          format: date-time
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        checks:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/ComponentHealth"
+
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message, requestId]
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 64
+        message:
+          type: string
+          minLength: 1
+          maxLength: 512
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        details:
+          type: object
+          additionalProperties: true

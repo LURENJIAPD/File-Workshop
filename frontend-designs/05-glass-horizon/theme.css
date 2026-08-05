@@ -1,0 +1,78 @@
+:root {
+  --bg: #11152b;
+  --surface: rgba(31, 37, 70, .58);
+  --surface-2: rgba(255,255,255,.07);
+  --text: #f3f6ff;
+  --muted: #a0a9c9;
+  --line: rgba(255,255,255,.14);
+  --accent: #66e9df;
+  --accent-2: #806dff;
+  --success: #74e5a7;
+  --warning: #ffcb72;
+  --danger: #ff7e91;
+  --radius: 18px;
+  --radius-sm: 12px;
+  --shadow: 0 28px 80px rgba(3,5,20,.4);
+  --card-shadow: inset 0 1px rgba(255,255,255,.08), 0 16px 35px rgba(5,8,30,.16);
+  --sidebar-width: 250px;
+  --sidebar-bg: rgba(12, 16, 38, .72);
+  --sidebar-text: #f3f6ff;
+  --sidebar-muted: #929bbc;
+  --sidebar-line: rgba(255,255,255,.12);
+  --nav-active-text: #fff;
+  --nav-active-bg: linear-gradient(110deg, rgba(102,233,223,.22), rgba(128,109,255,.28));
+  --topbar-bg: rgba(15, 19, 43, .7);
+  --visual-bg: #11152b;
+  --visual-text: #f3f6ff;
+  --login-panel-bg: rgba(15, 19, 43, .82);
+  --button-text: #0e2230;
+  --smart-bg: linear-gradient(110deg, rgba(102,233,223,.16), rgba(128,109,255,.2));
+  --smart-text: #f3f6ff;
+  --smart-muted: #b5bdd8;
+  --smart-accent: #66e9df;
+  --smart-line: rgba(102,233,223,.35);
+  --smart-input-bg: rgba(8,12,32,.55);
+  --smart-input-line: rgba(255,255,255,.16);
+  --smart-input-text: #fff;
+  --font: Inter, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color-scheme: dark;
+}
+
+html { background: #11152b; }
+body { position: relative; background: radial-gradient(circle at 15% 15%,#243e72 0,transparent 34%),radial-gradient(circle at 88% 8%,rgba(117,80,255,.48),transparent 34%),radial-gradient(circle at 65% 90%,rgba(44,217,199,.22),transparent 30%),#11152b; background-attachment: fixed; }
+body::before, body::after { content: ""; position: fixed; z-index: 0; width: 28vw; aspect-ratio: 1; border-radius: 50%; filter: blur(80px); pointer-events: none; opacity: .24; }
+body::before { left: 18%; bottom: -12%; background: #23d7ca; }
+body::after { right: 5%; top: 12%; background: #6d4bff; }
+#app { position: relative; z-index: 1; }
+.brand-symbol { background: linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow: 0 8px 25px rgba(102,233,223,.22); }
+.sidebar { border-right-color: rgba(255,255,255,.08); backdrop-filter: blur(26px) saturate(130%); }
+.nav-item.is-active { background: linear-gradient(110deg,rgba(102,233,223,.18),rgba(128,109,255,.22)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+.storage-card { backdrop-filter: blur(15px); }
+.topbar { backdrop-filter: blur(28px) saturate(140%); }
+.search-box input, .icon-button, .profile-button { background: rgba(255,255,255,.055); backdrop-filter: blur(12px); }
+.dashboard { position: relative; }
+.welcome-copy h1 { background: linear-gradient(90deg,#fff,#a8fff8 50%,#b8afff); -webkit-background-clip: text; color: transparent; }
+.metric-card, .panel, .smart-strip, .upload-modal { backdrop-filter: blur(24px) saturate(125%); }
+.metric-card:hover, .panel:hover { border-color: rgba(102,233,223,.28); }
+.metric-icon, .quick-icon { box-shadow: inset 0 1px rgba(255,255,255,.1); }
+.panel-head { background: rgba(255,255,255,.018); }
+.file-table tr:hover td { background: rgba(255,255,255,.035); }
+.quick-card { background: rgba(255,255,255,.035); }
+.quick-card:hover { background: rgba(255,255,255,.07); }
+.smart-strip { box-shadow: inset 0 1px rgba(255,255,255,.12), 0 20px 50px rgba(5,8,30,.18); }
+.smart-strip::before { content: ""; position: absolute; inset: -80% auto -80% -10%; width: 45%; background: linear-gradient(90deg,transparent,rgba(255,255,255,.13),transparent); transform: rotate(18deg); animation: sheen 6s ease-in-out infinite; }
+@keyframes sheen { 0%,35% { transform: translateX(-120%) rotate(18deg); } 75%,100% { transform: translateX(360%) rotate(18deg); } }
+
+.login-shell { background: transparent; }
+.login-visual { background: linear-gradient(145deg,rgba(33,43,84,.7),rgba(18,22,50,.62)); backdrop-filter: blur(30px); }
+.login-visual h1 { background: linear-gradient(90deg,#fff,#8df5ec 65%,#ae9fff); -webkit-background-clip: text; color: transparent; }
+.deco-grid { opacity: .06; }
+.deco-orbit { border-color: #66e9df; box-shadow: 0 0 45px rgba(102,233,223,.2); animation: glassOrbit 12s linear infinite; }
+.deco-orbit::before { border-color: #9987ff; }
+.deco-file { border-color: #c5bcff; box-shadow: 0 0 35px rgba(128,109,255,.25); }
+@keyframes glassOrbit { to { transform: rotate(360deg); } }
+.login-panel { border-left: 1px solid rgba(255,255,255,.1); backdrop-filter: blur(28px) saturate(130%); }
+.login-card { padding: 34px; border: 1px solid rgba(255,255,255,.13); border-radius: 24px; background: rgba(255,255,255,.045); box-shadow: 0 35px 90px rgba(2,4,18,.3),inset 0 1px rgba(255,255,255,.1); backdrop-filter: blur(26px); }
+.input-wrap input, .sso-button { background: rgba(255,255,255,.055); }
+.primary-button { background: linear-gradient(100deg,#66e9df,#7c70ff); border: 0; }
+

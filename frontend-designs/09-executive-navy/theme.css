@@ -1,0 +1,88 @@
+:root {
+  --bg: #f3f1ec;
+  --surface: #fbfaf7;
+  --surface-2: #e9e6df;
+  --text: #102944;
+  --muted: #6f7c89;
+  --line: #d9d5cc;
+  --accent: #9d7a3e;
+  --accent-2: #c5a968;
+  --success: #3f8061;
+  --warning: #b17a2f;
+  --danger: #a74444;
+  --radius: 3px;
+  --radius-sm: 2px;
+  --shadow: 0 22px 55px rgba(16,41,68,.12);
+  --card-shadow: 0 4px 15px rgba(16,41,68,.045);
+  --sidebar-width: 252px;
+  --sidebar-bg: #0d2844;
+  --sidebar-text: #f5f1e7;
+  --sidebar-muted: #9dadbd;
+  --sidebar-line: rgba(220,205,175,.18);
+  --nav-active-text: #f1d799;
+  --nav-active-bg: rgba(197,169,104,.1);
+  --topbar-bg: rgba(243,241,236,.94);
+  --visual-bg: #0d2844;
+  --visual-text: #f5f1e7;
+  --login-panel-bg: #f3f1ec;
+  --smart-bg: #0d2844;
+  --smart-text: #f5f1e7;
+  --smart-muted: #aeb8c3;
+  --smart-accent: #c5a968;
+  --smart-line: #0d2844;
+  --smart-input-bg: #173752;
+  --smart-input-line: rgba(197,169,104,.35);
+  --smart-input-text: #fff;
+  --font: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+h1, h2, .brand-name strong, .metric-value strong { font-family: Georgia, "Noto Serif SC", "Songti SC", serif; }
+.brand-symbol { border-radius: 50%; background: transparent; border: 1px solid var(--accent-2); }
+.brand-symbol::before, .brand-symbol::after { width: 4px; border-width: 1px; }
+.brand-name strong { letter-spacing: .08em; font-weight: 500; }
+.sidebar { padding-inline: 21px; border-right: 0; }
+.sidebar .brand-lockup { padding-top: 8px; padding-bottom: 35px; }
+.nav-label { color: #c5a968; }
+.nav-item { border-left: 1px solid transparent; border-radius: 0; }
+.nav-item.is-active { border-left-color: #c5a968; }
+.storage-card { border-color: rgba(197,169,104,.35); }
+.storage-card .progress-value { background: #c5a968; }
+.topbar { min-height: 76px; }
+.search-box input, .icon-button, .profile-button { background: #fbfaf7; }
+.dashboard { padding-top: 45px; }
+.welcome-copy h1 { font-weight: 500; }
+.welcome-copy .date-line { color: var(--accent); letter-spacing: .14em; }
+.welcome-row { padding-bottom: 28px; border-bottom: 1px solid #c5a968; }
+.secondary-button, .upload-button { min-height: 45px; letter-spacing: .04em; }
+.metric-grid { margin-top: 26px; }
+.metric-card { border-top: 2px solid var(--metric-color); }
+.metric-icon { border-radius: 50%; background: transparent; border: 1px solid currentColor; }
+.metric-value strong { font-weight: 500; }
+.panel-head { background: #f7f5f0; }
+.panel-title h2 { font-family: Georgia,serif; font-size: 16px; font-weight: 500; }
+.file-table th { letter-spacing: .06em; }
+.file-table tr:hover td { background: #f6f2e8; }
+.file-icon { border-radius: 0; }
+.quick-card { border-left: 2px solid var(--quick-color); }
+.quick-icon { background: transparent; border: 1px solid currentColor; border-radius: 50%; }
+.smart-strip { min-height: 128px; border-top: 3px solid #c5a968; }
+.smart-copy h2 { font-family: Georgia,serif; font-weight: 500; }
+
+.login-visual { background-image: radial-gradient(circle at 80% 30%,rgba(197,169,104,.13),transparent 32%),linear-gradient(160deg,#153956,#091d33); }
+.login-visual::after { content: "SECURE ENTERPRISE ACCESS"; position: absolute; right: 35px; bottom: 32px; color: #c5a968; font: 9px/1 Georgia,serif; letter-spacing: .22em; }
+.login-visual h1 { font-family: Georgia, "Noto Serif SC", serif; font-weight: 400; letter-spacing: -.035em; }
+.concept-kicker { color: #e5cb8e; }
+.deco-grid { opacity: .035; }
+.deco-orbit { border-color: #c5a968; }
+.deco-file { border-color: #c5a968; opacity: .42; }
+.visual-stats { border-top: 1px solid rgba(197,169,104,.35); padding-top: 24px; }
+.visual-stat strong { font-family: Georgia,serif; font-weight: 400; color: #e5cb8e; }
+.login-panel { border-left: 1px solid #c5a968; }
+.login-card { width: min(100%,450px); }
+.login-card-head { padding-bottom: 25px; border-bottom: 1px solid #c5a968; }
+.login-card-head h2 { font-family: Georgia,serif; font-weight: 400; }
+.field > span { color: #526679; letter-spacing: .05em; }
+.input-wrap input, .sso-button { background: #fbfaf7; }
+.primary-button { background: #0d2844; border-color: #0d2844; color: #f5f1e7; }
+.login-divider { color: #8d877c; }
+

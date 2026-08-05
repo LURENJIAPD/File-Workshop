@@ -1,0 +1,94 @@
+:root {
+  --bg: #f3f3f0;
+  --surface: #fff;
+  --surface-2: #ededeb;
+  --text: #151515;
+  --muted: #74746f;
+  --line: #d5d5d0;
+  --accent: #175cff;
+  --accent-2: #789aff;
+  --success: #178753;
+  --warning: #b66b12;
+  --danger: #d54242;
+  --radius: 0px;
+  --radius-sm: 0px;
+  --shadow: 0 24px 70px rgba(0,0,0,.09);
+  --card-shadow: none;
+  --sidebar-width: 218px;
+  --sidebar-bg: #fafaf8;
+  --sidebar-text: #151515;
+  --sidebar-muted: #777772;
+  --nav-active-text: #175cff;
+  --nav-active-bg: transparent;
+  --visual-bg: #efefeb;
+  --visual-text: #151515;
+  --login-panel-bg: #fff;
+  --smart-bg: #151515;
+  --smart-text: #fff;
+  --smart-muted: #aaa;
+  --smart-accent: #6b91ff;
+  --smart-line: #151515;
+  --smart-input-bg: #252525;
+  --smart-input-line: #404040;
+  --smart-input-text: #fff;
+  --font: "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.brand-symbol { width: 32px; height: 32px; border-radius: 0; }
+.brand-name strong { font-size: 12px; letter-spacing: .12em; }
+.sidebar { padding-inline: 0; }
+.sidebar .brand-lockup { padding: 3px 24px 29px; }
+.nav-label { padding-inline: 24px; color: #a0a09a; }
+.nav-list { gap: 0; }
+.nav-item { min-height: 45px; padding-inline: 24px; border-radius: 0; border-left: 3px solid transparent; }
+.nav-item.is-active { border-left-color: var(--accent); font-weight: 750; }
+.nav-item:hover { background: #f0f0ed; }
+.sidebar-bottom { padding-inline: 18px; }
+.storage-card { border-left: 0; border-right: 0; }
+.topbar { min-height: 68px; background: rgba(243,243,240,.95); }
+.icon-button, .profile-button, .search-box input { background: transparent; }
+.icon-button { border-color: transparent; }
+.dashboard { padding-top: 54px; }
+.welcome-row { padding-bottom: 28px; border-bottom: 1px solid var(--text); }
+.welcome-copy .date-line { color: var(--accent); }
+.welcome-copy h1 { font-size: clamp(38px,4.2vw,60px); font-weight: 500; }
+.welcome-copy p { max-width: 500px; }
+.secondary-button, .upload-button { text-transform: uppercase; letter-spacing: .08em; }
+.metric-grid { gap: 0; margin-top: 0; border-bottom: 1px solid var(--line); }
+.metric-card { padding: 25px 20px; border: 0; border-right: 1px solid var(--line); }
+.metric-card:last-child { border-right: 0; }
+.metric-icon { border-radius: 50%; }
+.metric-value strong { font-weight: 450; }
+.workspace-grid { margin-top: 30px; gap: 30px; }
+.panel { border-top-color: var(--text); }
+.panel-head { padding-inline: 0; margin-inline: 18px; }
+.panel-title h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
+.file-table th { font-weight: 500; text-transform: uppercase; letter-spacing: .06em; }
+.file-table tr:hover td { background: #f7f7f4; }
+.quick-grid { padding: 0; gap: 0; }
+.quick-card { min-height: 120px; border-width: 0 1px 1px 0; }
+.quick-card:nth-child(even) { border-right: 0; }
+.quick-icon { background: transparent; }
+.activity-list { padding-inline: 18px; }
+.smart-strip { min-height: 135px; padding-inline: 30px; }
+.smart-copy h2 { font-size: 21px; font-weight: 500; }
+
+.login-shell { grid-template-columns: minmax(0,.9fr) minmax(500px,1.1fr); }
+.login-visual { border-right: 1px solid #c8c8c3; }
+.login-visual h1 { font-weight: 450; }
+.login-visual h1::after { content: "↘"; display: inline-block; margin-left: .2em; color: var(--accent); font-size: .7em; }
+.login-visual-copy { margin-top: clamp(80px, 14vh, 160px); }
+.login-visual .deco-grid { opacity: .18; background-size: 72px 72px; }
+.deco-orbit { border-radius: 0; transform: rotate(12deg); }
+.deco-orbit::before, .deco-orbit::after { border-radius: 0; }
+.deco-file { top: auto; bottom: 12%; right: 12%; border-color: var(--accent); opacity: .65; transform: none; }
+.visual-stats { border-top: 1px solid #bdbdb8; padding-top: 20px; }
+.visual-stat { flex: 1; }
+.login-card { width: min(100%, 480px); }
+.login-card-head h2 { font-size: 44px; font-weight: 450; }
+.field > span { text-transform: uppercase; letter-spacing: .08em; }
+.input-wrap input { border-width: 0 0 1px; padding-left: 36px; }
+.input-wrap > svg { left: 0; }
+.password-toggle { right: 0; }
+.primary-button { justify-content: space-between; padding-inline: 18px; text-transform: uppercase; letter-spacing: .08em; }
+

@@ -1,0 +1,83 @@
+:root {
+  --bg: #063b63;
+  --surface: rgba(7, 69, 111, .78);
+  --surface-2: #0b527f;
+  --text: #e7f7ff;
+  --muted: #8fc3df;
+  --line: rgba(153, 218, 251, .28);
+  --accent: #8ed8ff;
+  --accent-2: #f6c65c;
+  --success: #7febb3;
+  --warning: #f6c65c;
+  --danger: #ff8a8a;
+  --radius: 0px;
+  --radius-sm: 0px;
+  --shadow: 0 18px 50px rgba(0, 18, 34, .32);
+  --sidebar-width: 235px;
+  --sidebar-bg: #042d4d;
+  --sidebar-text: #e7f7ff;
+  --sidebar-muted: #77b0cf;
+  --sidebar-line: rgba(142,216,255,.22);
+  --nav-active-text: #042d4d;
+  --nav-active-bg: #8ed8ff;
+  --topbar-bg: rgba(4, 45, 77, .88);
+  --visual-bg: #064a78;
+  --visual-text: #e7f7ff;
+  --login-panel-bg: #e7f7ff;
+  --button-text: #043452;
+  --smart-bg: rgba(3, 42, 70, .92);
+  --smart-text: #e7f7ff;
+  --smart-muted: #8fc3df;
+  --smart-accent: #f6c65c;
+  --smart-line: #8ed8ff;
+  --smart-input-bg: rgba(142,216,255,.1);
+  --smart-input-line: rgba(142,216,255,.35);
+  --smart-input-text: #e7f7ff;
+  --font: "Cascadia Code", Consolas, "Microsoft YaHei", monospace;
+  color-scheme: dark;
+}
+
+body { background-color: var(--bg); background-image: linear-gradient(rgba(142,216,255,.08) 1px, transparent 1px), linear-gradient(90deg,rgba(142,216,255,.08) 1px,transparent 1px), linear-gradient(rgba(142,216,255,.025) 1px,transparent 1px), linear-gradient(90deg,rgba(142,216,255,.025) 1px,transparent 1px); background-size: 80px 80px,80px 80px,16px 16px,16px 16px; }
+.brand-symbol { border: 1px solid currentColor; background: transparent; border-radius: 0; }
+.brand-symbol::before, .brand-symbol::after { width: 5px; border-width: 1px; }
+.sidebar { background-image: linear-gradient(rgba(142,216,255,.04) 1px,transparent 1px); background-size: 100% 24px; }
+.sidebar::after { content: "X: 024 / Y: 118"; position: absolute; right: 9px; top: 9px; color: #77b0cf; font-size: 7px; }
+.nav-item { border: 1px solid transparent; }
+.nav-item.is-active { border-color: var(--accent); }
+.storage-card { border-style: dashed; }
+.topbar { border-bottom-style: dashed; }
+.search-box input, .icon-button, .profile-button { background: rgba(3,42,70,.7); }
+.dashboard { position: relative; }
+.dashboard::before { content: "FW-DASHBOARD / DWG-001 / SCALE 1:1"; display: block; margin-bottom: 20px; color: var(--accent); font-size: 8px; letter-spacing: .13em; }
+.welcome-copy h1 { font-weight: 500; }
+.welcome-copy h1::before { content: "// "; color: var(--accent-2); }
+.metric-card, .panel, .smart-strip { backdrop-filter: blur(4px); }
+.metric-card::before, .panel::before { content: "+"; position: absolute; z-index: 1; top: -8px; left: -5px; color: var(--accent); font-size: 12px; }
+.metric-card { position: relative; border-style: dashed; }
+.metric-icon, .quick-icon { border: 1px solid currentColor; border-radius: 0; background: transparent; }
+.panel { position: relative; border-style: dashed; }
+.panel-head { border-bottom-style: dashed; }
+.panel-title h2::before { content: "[ "; color: var(--accent); }
+.panel-title h2::after { content: " ]"; color: var(--accent); }
+.file-table td { border-top-style: dashed; }
+.file-icon { border: 1px solid currentColor; border-radius: 0; background: transparent; }
+.quick-card { border-style: dashed; background: rgba(4,45,77,.5); }
+.smart-strip::before { content: "SECURE AI GATEWAY"; position: absolute; right: 20px; top: 10px; color: var(--accent); font-size: 7px; letter-spacing: .1em; }
+
+.login-visual { background-image: linear-gradient(rgba(142,216,255,.11) 1px,transparent 1px), linear-gradient(90deg,rgba(142,216,255,.11) 1px,transparent 1px); background-size: 40px 40px; }
+.login-visual::after { content: "A-01\A FILE WORKSHOP\A AUTHENTICATION"; white-space: pre; position: absolute; right: 30px; bottom: 28px; padding: 12px 40px 12px 12px; border: 1px solid currentColor; font-size: 8px; line-height: 1.6; }
+.login-visual h1 { font-weight: 500; }
+.login-visual h1::before { content: "// "; color: var(--accent-2); }
+.deco-grid { background-size: 40px 40px; opacity: .25; }
+.deco-orbit { border-style: dashed; }
+.deco-file { border-style: dashed; opacity: .65; }
+.login-panel { color: #063b63; }
+.login-panel .brand-name small, .login-card-head p, .form-options, .login-help { color: #467b99; }
+.login-panel .brand-symbol { color: #063b63; }
+.login-card-head h2 { font-weight: 500; }
+.login-card-head h2::before { content: "01/ "; color: #1689c7; font-size: .45em; vertical-align: top; }
+.input-wrap input, .sso-button { color: #063b63; background: transparent; border-color: #8ab8d0; }
+.input-wrap > svg, .password-toggle { color: #467b99; }
+.primary-button { border: 1px solid #063b63; background: #8ed8ff; }
+.login-divider::before, .login-divider::after { background: #8ab8d0; }
+

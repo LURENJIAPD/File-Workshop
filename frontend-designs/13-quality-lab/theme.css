@@ -1,0 +1,38 @@
+:root {
+  --bg: #edf4f2; --surface: #fff; --surface-2: #e2edeb; --text: #19302f; --muted: #687d7b; --line: #c8d8d5;
+  --accent: #008a78; --accent-2: #36b7a5; --success: #19875d; --warning: #b17a20; --danger: #d64848;
+  --radius: 8px; --radius-sm: 5px; --shadow: 0 22px 58px rgba(38,82,76,.14); --card-shadow: 0 5px 15px rgba(38,82,76,.04);
+  --sidebar-width: 242px; --sidebar-bg: #f8fbfa; --sidebar-text: #19302f; --sidebar-muted: #69807d; --sidebar-line: #d3e0de;
+  --nav-active-text: #fff; --nav-active-bg: #008a78; --topbar-bg: rgba(237,244,242,.94); --visual-bg: #dcebe7; --visual-text: #19302f;
+  --login-panel-bg: #f6faf9; --button-text: #fff; --smart-bg: #143b38; --smart-text: #effbf9; --smart-muted: #acd0cb;
+  --smart-accent: #5ed7c5; --smart-line: #143b38; --smart-input-bg: #092724; --smart-input-line: #3c6c67; --smart-input-text: #effbf9;
+  --font: Inter, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+body { background-image: radial-gradient(color-mix(in srgb,var(--accent) 8%,transparent) .7px,transparent .7px); background-size: 12px 12px; }
+.brand-symbol { color: var(--accent); border: 2px solid currentColor; border-radius: 50%; background: transparent; }
+.brand-symbol::before { content: ""; position: absolute; left: 7px; right: 7px; top: 50%; height: 2px; background: currentColor; box-shadow: 0 -5px 0 -1px currentColor,0 5px 0 -1px currentColor; transform: translateY(-50%); }
+.sidebar { border-right: 0; box-shadow: 8px 0 24px color-mix(in srgb,var(--text) 5%,transparent); }
+.nav-item.is-active { box-shadow: 0 7px 18px color-mix(in srgb,var(--accent) 22%,transparent); }
+.storage-card { background: color-mix(in srgb,var(--accent) 5%,var(--surface)); }
+.topbar { border-bottom-color: color-mix(in srgb,var(--accent) 30%,var(--line)); }
+.welcome-row { padding-bottom: 23px; border-bottom: 1px solid var(--line); }
+.plant-status-item.is-danger strong { color: var(--danger); }
+.plant-status-item.is-warning strong { color: var(--warning); }
+.metric-card { border-top: 4px solid color-mix(in srgb,var(--metric-color) 55%,var(--line)); }
+.metric-icon, .quick-icon { border-radius: 50%; }
+.panel-head { background: color-mix(in srgb,var(--surface-2) 38%,var(--surface)); }
+.file-table tr:hover td { background: color-mix(in srgb,var(--accent) 5%,transparent); }
+.quick-card { background: color-mix(in srgb,var(--surface) 85%,var(--surface-2)); }
+.activity-dot { border-width: 2px; }
+.smart-strip { border-left: 5px solid var(--accent); }
+.login-visual { background-image: linear-gradient(color-mix(in srgb,var(--accent) 9%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--accent) 9%,transparent) 1px,transparent 1px); background-size: 32px 32px; }
+.login-visual::before { content: "QA"; position: absolute; right: 5%; top: 12%; color: color-mix(in srgb,var(--accent) 8%,transparent); font: 800 230px/1 sans-serif; letter-spacing: -.1em; }
+.concept-kicker { color: var(--accent); opacity: 1; }
+.deco-orbit { border-color: var(--accent); }
+.deco-orbit::after { background: var(--danger); }
+.deco-file { border-color: var(--accent); }
+.visual-stat strong { color: var(--accent); }
+.login-card { padding: 36px; border: 1px solid var(--line); border-top: 5px solid var(--accent); background: var(--surface); box-shadow: var(--shadow); }
+.input-wrap input, .sso-button { background: var(--surface); }
+.field > span { letter-spacing: .06em; }
+

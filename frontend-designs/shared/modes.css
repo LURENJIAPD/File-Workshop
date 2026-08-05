@@ -1,0 +1,246 @@
+/*
+ * Dual color schemes for every concept.
+ * Loaded after each concept theme so these semantic tokens remain authoritative.
+ */
+html[data-color-scheme="light"] { color-scheme: light; }
+html[data-color-scheme="dark"] { color-scheme: dark; }
+html[data-color-scheme] body { color: var(--text); background-color: var(--bg); }
+
+/* 01 · Industrial Command — light steel shift */
+html[data-color-scheme="light"] body[data-theme="01-industrial"] {
+  --bg: #e7ebed; --surface: #f7f9fa; --surface-2: #dce2e5; --text: #172026; --muted: #64727a; --line: #bdc7cc;
+  --accent: #c77b00; --accent-2: #f2ad25; --success: #167a4a; --warning: #ad6800; --danger: #c23f38;
+  --shadow: 0 18px 48px rgba(31,44,51,.15); --card-shadow: inset 0 1px #fff;
+  --sidebar-bg: #d2d9dc; --sidebar-text: #172026; --sidebar-muted: #58676f; --sidebar-line: #adb8bd;
+  --nav-active-text: #171b1d; --nav-active-bg: #e9a323; --topbar-bg: rgba(231,235,237,.94);
+  --login-panel-bg: #edf1f2; --visual-bg: #cfd6d9; --visual-text: #172026; --button-text: #141719;
+  --smart-bg: #273238; --smart-text: #f3f6f7; --smart-muted: #b8c4c9; --smart-accent: #ffc247; --smart-line: #273238;
+  --smart-input-bg: #11191d; --smart-input-line: #4f6069; --smart-input-text: #f3f6f7;
+}
+html[data-color-scheme="light"] body[data-theme="01-industrial"] .search-box input,
+html[data-color-scheme="light"] body[data-theme="01-industrial"] .icon-button,
+html[data-color-scheme="light"] body[data-theme="01-industrial"] .profile-button,
+html[data-color-scheme="light"] body[data-theme="01-industrial"] .input-wrap input,
+html[data-color-scheme="light"] body[data-theme="01-industrial"] .sso-button,
+html[data-color-scheme="light"] body[data-theme="01-industrial"] .panel-head,
+html[data-color-scheme="light"] body[data-theme="01-industrial"] .quick-card { background: var(--surface); }
+html[data-color-scheme="light"] body[data-theme="01-industrial"] .login-visual { background-image: linear-gradient(135deg,#dce2e5 0 58%,#c77b00 58% 59%,#c8d0d4 59%); }
+
+/* 02 · Precision — dark drafting desk */
+html[data-color-scheme="dark"] body[data-theme="02-precision"] {
+  --bg: #111315; --surface: #181b1e; --surface-2: #22262a; --text: #f0f1ef; --muted: #9a9e9f; --line: #353a3e;
+  --accent: #6d96ff; --accent-2: #9eb7ff; --success: #55bd82; --warning: #e2a34c; --danger: #ef7272;
+  --shadow: 0 24px 70px rgba(0,0,0,.32); --sidebar-bg: #0d0f11; --sidebar-text: #f0f1ef; --sidebar-muted: #8b9092;
+  --sidebar-line: #2d3236; --nav-active-text: #86a6ff; --topbar-bg: rgba(17,19,21,.95); --visual-bg: #15181a; --visual-text: #f0f1ef;
+  --login-panel-bg: #111315; --button-text: #fff; --smart-bg: #e8e9e5; --smart-text: #151515; --smart-muted: #5f6263;
+  --smart-accent: #315fda; --smart-line: #e8e9e5; --smart-input-bg: #fff; --smart-input-line: #c8cbcc; --smart-input-text: #151515;
+}
+html[data-color-scheme="dark"] body[data-theme="02-precision"] .nav-item:hover,
+html[data-color-scheme="dark"] body[data-theme="02-precision"] .file-table tr:hover td { background: var(--surface-2); }
+html[data-color-scheme="dark"] body[data-theme="02-precision"] .topbar { background: var(--topbar-bg); }
+
+/* 03 · Blueprint — daylight cyan print */
+html[data-color-scheme="light"] body[data-theme="03-blueprint"] {
+  --bg: #dceef5; --surface: rgba(245,251,253,.9); --surface-2: #cce4ee; --text: #073552; --muted: #527b91; --line: rgba(16,91,128,.25);
+  --accent: #0878b0; --accent-2: #c47d00; --success: #1f7b50; --warning: #ad6b00; --danger: #b84242;
+  --shadow: 0 18px 48px rgba(14,70,99,.17); --sidebar-bg: #c6e0eb; --sidebar-text: #073552; --sidebar-muted: #4c758b; --sidebar-line: rgba(7,53,82,.2);
+  --nav-active-text: #eaf8fd; --nav-active-bg: #0878b0; --topbar-bg: rgba(220,238,245,.92); --visual-bg: #c5e6f2; --visual-text: #073552;
+  --login-panel-bg: #edf8fc; --button-text: #fff; --smart-bg: #0b4e72; --smart-text: #eefaff; --smart-muted: #a8d3e6; --smart-accent: #ffd16e;
+  --smart-line: #0b4e72; --smart-input-bg: rgba(255,255,255,.1); --smart-input-line: rgba(255,255,255,.3); --smart-input-text: #fff;
+}
+html[data-color-scheme="light"] body[data-theme="03-blueprint"] .search-box input,
+html[data-color-scheme="light"] body[data-theme="03-blueprint"] .icon-button,
+html[data-color-scheme="light"] body[data-theme="03-blueprint"] .profile-button,
+html[data-color-scheme="light"] body[data-theme="03-blueprint"] .quick-card { background: rgba(245,251,253,.82); }
+
+/* 04 · Warm Archive — night archive */
+html[data-color-scheme="dark"] body[data-theme="04-warm"] {
+  --bg: #211b18; --surface: #2d2521; --surface-2: #3a302a; --text: #f4e9da; --muted: #b9a79a; --line: #50423a;
+  --accent: #ef8659; --accent-2: #f0ad70; --success: #83bb86; --warning: #e3a34a; --danger: #e4776d;
+  --shadow: 0 20px 54px rgba(0,0,0,.34); --card-shadow: 0 7px 18px rgba(0,0,0,.12); --sidebar-bg: #171311; --sidebar-text: #fff2e2;
+  --sidebar-muted: #b6a294; --sidebar-line: #40352f; --nav-active-text: #291d17; --nav-active-bg: #edb276; --topbar-bg: rgba(33,27,24,.92);
+  --visual-bg: #171311; --visual-text: #fff2e2; --login-panel-bg: #211b18; --button-text: #241712;
+  --smart-bg: #5e3c30; --smart-text: #fff5e9; --smart-muted: #d8c1b0; --smart-accent: #ffc47f; --smart-line: #7d5545;
+  --smart-input-bg: #241b17; --smart-input-line: #795e50; --smart-input-text: #fff5e9;
+}
+html[data-color-scheme="dark"] body[data-theme="04-warm"] .quick-card,
+html[data-color-scheme="dark"] body[data-theme="04-warm"] .input-wrap input,
+html[data-color-scheme="dark"] body[data-theme="04-warm"] .sso-button,
+html[data-color-scheme="dark"] body[data-theme="04-warm"] .login-card { color: var(--text); background: var(--surface); border-color: var(--line); }
+
+/* 05 · Glass Horizon — daylight glass */
+html[data-color-scheme="light"] { background: #eef4fa; }
+html[data-color-scheme="light"] body[data-theme="05-glass"] {
+  --bg: #e9f1f8; --surface: rgba(255,255,255,.62); --surface-2: rgba(27,65,98,.07); --text: #17273b; --muted: #687b91; --line: rgba(38,74,110,.16);
+  --accent: #087f84; --accent-2: #6751df; --success: #23835c; --warning: #ad6f19; --danger: #be4e63;
+  --shadow: 0 28px 75px rgba(46,78,112,.2); --card-shadow: inset 0 1px rgba(255,255,255,.8),0 16px 35px rgba(46,78,112,.1);
+  --sidebar-bg: rgba(233,241,248,.74); --sidebar-text: #17273b; --sidebar-muted: #667b91; --sidebar-line: rgba(38,74,110,.15);
+  --nav-active-text: #17344a; --nav-active-bg: linear-gradient(110deg,rgba(21,185,176,.18),rgba(103,81,223,.16)); --topbar-bg: rgba(238,245,250,.72);
+  --visual-bg: rgba(226,238,248,.65); --visual-text: #17273b; --login-panel-bg: rgba(238,245,250,.82); --button-text: #fff;
+  --smart-bg: linear-gradient(110deg,rgba(21,142,139,.14),rgba(103,81,223,.14)); --smart-text: #17273b; --smart-muted: #65778a; --smart-accent: #087f84;
+  --smart-line: rgba(8,127,132,.3); --smart-input-bg: rgba(255,255,255,.7); --smart-input-line: rgba(38,74,110,.2); --smart-input-text: #17273b;
+}
+html[data-color-scheme="light"] body[data-theme="05-glass"] { background: radial-gradient(circle at 15% 15%,#cfe5f8 0,transparent 34%),radial-gradient(circle at 88% 8%,rgba(151,130,255,.3),transparent 34%),radial-gradient(circle at 65% 90%,rgba(44,217,199,.18),transparent 30%),#e9f1f8; }
+html[data-color-scheme="light"] body[data-theme="05-glass"] .welcome-copy h1,
+html[data-color-scheme="light"] body[data-theme="05-glass"] .login-visual h1 { background: linear-gradient(90deg,#17273b,#087f84 60%,#6751df); -webkit-background-clip: text; color: transparent; }
+html[data-color-scheme="light"] body[data-theme="05-glass"] .login-visual,
+html[data-color-scheme="light"] body[data-theme="05-glass"] .login-card,
+html[data-color-scheme="light"] body[data-theme="05-glass"] .search-box input,
+html[data-color-scheme="light"] body[data-theme="05-glass"] .icon-button,
+html[data-color-scheme="light"] body[data-theme="05-glass"] .profile-button,
+html[data-color-scheme="light"] body[data-theme="05-glass"] .input-wrap input,
+html[data-color-scheme="light"] body[data-theme="05-glass"] .sso-button { background: rgba(255,255,255,.48); }
+
+/* 06 · Terminal Ops — paper terminal */
+html[data-color-scheme="light"] body[data-theme="06-terminal"] {
+  --bg: #e9f0e9; --surface: #f6faf5; --surface-2: #dce8dc; --text: #15371d; --muted: #5d8065; --line: #a9c3ae;
+  --accent: #167c34; --accent-2: #667d00; --success: #167c34; --warning: #7a7300; --danger: #b54343;
+  --shadow: 0 16px 42px rgba(27,75,38,.14); --sidebar-bg: #dbe7dc; --sidebar-text: #15371d; --sidebar-muted: #577760; --sidebar-line: #a6bda9;
+  --nav-active-text: #f5fff6; --nav-active-bg: #167c34; --topbar-bg: rgba(233,240,233,.95); --visual-bg: #dce9dd; --visual-text: #15371d;
+  --login-panel-bg: #eef4ed; --button-text: #fff; --smart-bg: #183d21; --smart-text: #dff5e3; --smart-muted: #94b79b; --smart-accent: #c8dc64;
+  --smart-line: #315f3c; --smart-input-bg: #0f2c17; --smart-input-line: #527b5a; --smart-input-text: #e8f9eb;
+}
+html[data-color-scheme="light"] body[data-theme="06-terminal"] { text-shadow: none; }
+html[data-color-scheme="light"] body[data-theme="06-terminal"] .search-box input,
+html[data-color-scheme="light"] body[data-theme="06-terminal"] .icon-button,
+html[data-color-scheme="light"] body[data-theme="06-terminal"] .profile-button,
+html[data-color-scheme="light"] body[data-theme="06-terminal"] .quick-card,
+html[data-color-scheme="light"] body[data-theme="06-terminal"] .input-wrap input,
+html[data-color-scheme="light"] body[data-theme="06-terminal"] .sso-button { background: var(--surface); }
+
+/* 07 · Bento Cloud — night shift bento */
+html[data-color-scheme="dark"] body[data-theme="07-bento"] {
+  --bg: #15172a; --surface: #20233b; --surface-2: #2a2e4c; --text: #f1f2ff; --muted: #a7abc8; --line: rgba(220,223,255,.14);
+  --accent: #968aff; --accent-2: #b8b0ff; --success: #65c994; --warning: #f0b658; --danger: #f07a8c;
+  --shadow: 0 22px 58px rgba(0,0,0,.32); --card-shadow: 0 10px 25px rgba(0,0,0,.12); --sidebar-bg: #101224; --sidebar-text: #f1f2ff;
+  --sidebar-muted: #9a9ebd; --sidebar-line: rgba(220,223,255,.12); --nav-active-text: #fff; --nav-active-bg: #7365e8; --topbar-bg: rgba(21,23,42,.9);
+  --visual-bg: #5145bf; --visual-text: #fff; --login-panel-bg: #15172a; --button-text: #fff;
+  --smart-bg: #312d59; --smart-text: #fff; --smart-muted: #bbb8d7; --smart-accent: #ffd17f; --smart-line: #4b4678;
+  --smart-input-bg: #1d2037; --smart-input-line: rgba(255,255,255,.14); --smart-input-text: #fff;
+}
+html[data-color-scheme="dark"] body[data-theme="07-bento"] { background: radial-gradient(circle at 12% 18%,#242846 0 4%,transparent 4.2%),radial-gradient(circle at 93% 76%,#292c52 0 8%,transparent 8.2%),#15172a; }
+html[data-color-scheme="dark"] body[data-theme="07-bento"] .metric-card,
+html[data-color-scheme="dark"] body[data-theme="07-bento"] .quick-card,
+html[data-color-scheme="dark"] body[data-theme="07-bento"] .storage-card,
+html[data-color-scheme="dark"] body[data-theme="07-bento"] .login-card,
+html[data-color-scheme="dark"] body[data-theme="07-bento"] .input-wrap input,
+html[data-color-scheme="dark"] body[data-theme="07-bento"] .sso-button { color: var(--text); background: var(--surface); }
+
+/* 08 · Neo Brutal — dark print */
+html[data-color-scheme="dark"] body[data-theme="08-brutal"] {
+  --bg: #17171a; --surface: #25252a; --surface-2: #323239; --text: #fff8df; --muted: #c8c1aa; --line: #fff8df;
+  --accent: #ff607c; --accent-2: #ffe45e; --success: #53d99a; --warning: #ffb43d; --danger: #ff607c;
+  --shadow: 8px 8px 0 #fff8df; --card-shadow: 4px 4px 0 #fff8df; --sidebar-bg: #6e2f44; --sidebar-text: #fff8df; --sidebar-muted: #e9bfcb;
+  --sidebar-line: #fff8df; --nav-active-text: #151515; --nav-active-bg: #ffe45e; --topbar-bg: #17171a; --visual-bg: #a73551; --visual-text: #fff8df;
+  --login-panel-bg: #3a3216; --button-text: #151515; --smart-bg: #6554b8; --smart-text: #fff8df; --smart-muted: #ddd5ff; --smart-accent: #ffe45e;
+  --smart-line: #fff8df; --smart-input-bg: #25252a; --smart-input-line: #fff8df; --smart-input-text: #fff8df;
+}
+html[data-color-scheme="dark"] body[data-theme="08-brutal"],
+html[data-color-scheme="dark"] body[data-theme="08-brutal"] .login-shell { background-color: var(--bg); }
+html[data-color-scheme="dark"] body[data-theme="08-brutal"] :is(.brand-symbol,.nav-item.is-active,.storage-card,.progress-track,.avatar,.date-line,.secondary-button,.upload-button,.metric-card,.metric-icon,.panel,.file-table td,.file-icon,.member-stack i,.quick-card,.quick-icon,.activity-dot,.smart-search input,.smart-search button,.login-visual,.concept-kicker,.deco-orbit,.deco-orbit::before,.deco-orbit::after,.deco-file,.visual-stat,.login-panel,.input-wrap input,.sso-button,.primary-button) { border-color: #fff8df; }
+html[data-color-scheme="dark"] body[data-theme="08-brutal"] :is(.brand-symbol,.nav-item.is-active,.storage-card,.search-box input,.icon-button,.profile-button,.secondary-button,.upload-button,.metric-card,.quick-card,.smart-strip,.login-visual,.deco-file,.login-panel,.input-wrap input,.sso-button,.primary-button) { box-shadow: 4px 4px 0 #fff8df; }
+html[data-color-scheme="dark"] body[data-theme="08-brutal"] .metric-card,
+html[data-color-scheme="dark"] body[data-theme="08-brutal"] .quick-card,
+html[data-color-scheme="dark"] body[data-theme="08-brutal"] .visual-stat { color: var(--text); background: var(--surface); }
+html[data-color-scheme="dark"] body[data-theme="08-brutal"] .file-table :is(th,td) { color: var(--text); }
+
+/* 09 · Executive Navy — boardroom dark */
+html[data-color-scheme="dark"] body[data-theme="09-executive"] {
+  --bg: #0e1823; --surface: #162333; --surface-2: #213247; --text: #f1eee6; --muted: #a6b0ba; --line: #34475a;
+  --accent: #c5a968; --accent-2: #e0c889; --success: #71b28f; --warning: #d8a052; --danger: #dd7272;
+  --shadow: 0 24px 65px rgba(0,0,0,.35); --card-shadow: 0 4px 15px rgba(0,0,0,.12); --sidebar-bg: #08121d; --sidebar-text: #f1eee6;
+  --sidebar-muted: #98a7b6; --sidebar-line: rgba(220,205,175,.18); --nav-active-text: #f1d799; --nav-active-bg: rgba(197,169,104,.12);
+  --topbar-bg: rgba(14,24,35,.95); --visual-bg: #081827; --visual-text: #f5f1e7; --login-panel-bg: #0e1823; --button-text: #f5f1e7;
+  --smart-bg: #102a43; --smart-text: #f5f1e7; --smart-muted: #b6c0ca; --smart-accent: #d6bc7a; --smart-line: #c5a968;
+  --smart-input-bg: #0b1b29; --smart-input-line: rgba(197,169,104,.35); --smart-input-text: #fff;
+}
+html[data-color-scheme="dark"] body[data-theme="09-executive"] .search-box input,
+html[data-color-scheme="dark"] body[data-theme="09-executive"] .icon-button,
+html[data-color-scheme="dark"] body[data-theme="09-executive"] .profile-button,
+html[data-color-scheme="dark"] body[data-theme="09-executive"] .panel-head,
+html[data-color-scheme="dark"] body[data-theme="09-executive"] .input-wrap input,
+html[data-color-scheme="dark"] body[data-theme="09-executive"] .sso-button { color: var(--text); background: var(--surface); }
+
+/* 10 · Aurora AI — polar daylight */
+html[data-color-scheme="light"] body[data-theme="10-aurora"] {
+  --bg: #edf0f8; --surface: rgba(255,255,255,.76); --surface-2: rgba(72,59,132,.08); --text: #211d37; --muted: #746f87; --line: rgba(61,48,113,.16);
+  --accent: #527a00; --accent-2: #704be0; --success: #527a00; --warning: #9b6800; --danger: #b94768;
+  --shadow: 0 28px 78px rgba(62,48,124,.2); --card-shadow: inset 0 1px #fff,0 18px 42px rgba(62,48,124,.09);
+  --sidebar-bg: rgba(239,241,249,.9); --sidebar-text: #211d37; --sidebar-muted: #746f87; --sidebar-line: rgba(61,48,113,.14);
+  --nav-active-text: #4d2fc0; --nav-active-bg: rgba(112,75,224,.1); --topbar-bg: rgba(237,240,248,.78); --visual-bg: transparent; --visual-text: #211d37;
+  --login-panel-bg: rgba(244,245,251,.88); --button-text: #fff; --smart-bg: linear-gradient(105deg,rgba(112,75,224,.16),rgba(117,170,15,.12));
+  --smart-text: #211d37; --smart-muted: #746f87; --smart-accent: #527a00; --smart-line: rgba(82,122,0,.3);
+  --smart-input-bg: rgba(255,255,255,.72); --smart-input-line: rgba(61,48,113,.18); --smart-input-text: #211d37;
+}
+html[data-color-scheme="light"] body[data-theme="10-aurora"] { background: radial-gradient(ellipse at 20% -10%,rgba(126,77,255,.2),transparent 38%),radial-gradient(ellipse at 95% 10%,rgba(156,218,72,.22),transparent 28%),#edf0f8; }
+html[data-color-scheme="light"] body[data-theme="10-aurora"] .welcome-copy h1,
+html[data-color-scheme="light"] body[data-theme="10-aurora"] .login-visual h1,
+html[data-color-scheme="light"] body[data-theme="10-aurora"] .login-card-head h2 { background: linear-gradient(90deg,#211d37,#704be0 62%,#527a00); -webkit-background-clip: text; color: transparent; }
+html[data-color-scheme="light"] body[data-theme="10-aurora"] .search-box input,
+html[data-color-scheme="light"] body[data-theme="10-aurora"] .icon-button,
+html[data-color-scheme="light"] body[data-theme="10-aurora"] .profile-button,
+html[data-color-scheme="light"] body[data-theme="10-aurora"] .panel-head,
+html[data-color-scheme="light"] body[data-theme="10-aurora"] .quick-card,
+html[data-color-scheme="light"] body[data-theme="10-aurora"] .login-card,
+html[data-color-scheme="light"] body[data-theme="10-aurora"] .input-wrap input,
+html[data-color-scheme="light"] body[data-theme="10-aurora"] .sso-button { color: var(--text); background: rgba(255,255,255,.55); }
+
+/* 11 · Line Andon — night shift */
+html[data-color-scheme="dark"] body[data-theme="11-line-andon"] {
+  --bg: #111618; --surface: #1a2123; --surface-2: #252e31; --text: #f0f4f3; --muted: #94a29f; --line: #364244;
+  --accent: #ffb21c; --accent-2: #ffcf65; --success: #4fc783; --warning: #ffb21c; --danger: #ff635b;
+  --shadow: 0 22px 60px rgba(0,0,0,.36); --card-shadow: inset 0 1px rgba(255,255,255,.03); --sidebar-bg: #0a0e0f; --sidebar-text: #f0f4f3;
+  --sidebar-muted: #84918e; --sidebar-line: #2b3436; --nav-active-text: #171b1c; --nav-active-bg: #ffb21c; --topbar-bg: rgba(17,22,24,.94);
+  --visual-bg: #0a0e0f; --visual-text: #f0f4f3; --login-panel-bg: #141a1c; --button-text: #151819;
+  --smart-bg: #ffb21c; --smart-text: #171b1c; --smart-muted: #60430b; --smart-accent: #171b1c; --smart-line: #ffb21c;
+  --smart-input-bg: #f6cc72; --smart-input-line: rgba(23,27,28,.34); --smart-input-text: #171b1c;
+}
+
+/* 12 · CNC Steel — daylight machine cell */
+html[data-color-scheme="light"] body[data-theme="12-cnc-steel"] {
+  --bg: #e8edef; --surface: #f8fafb; --surface-2: #dce4e7; --text: #172a31; --muted: #63777e; --line: #b7c5ca;
+  --accent: #007d91; --accent-2: #39a8b6; --success: #297b57; --warning: #b67819; --danger: #bc4b45;
+  --shadow: 0 22px 58px rgba(31,62,73,.17); --card-shadow: inset 0 1px #fff; --sidebar-bg: #d4dde0; --sidebar-text: #172a31;
+  --sidebar-muted: #5d7178; --sidebar-line: #afbdc2; --nav-active-text: #f6ffff; --nav-active-bg: #007d91; --topbar-bg: rgba(232,237,239,.94);
+  --visual-bg: #cbd6da; --visual-text: #172a31; --login-panel-bg: #edf2f3; --button-text: #fff;
+  --smart-bg: #173640; --smart-text: #edf9fb; --smart-muted: #a8c1c8; --smart-accent: #69d5df; --smart-line: #173640;
+  --smart-input-bg: #0f2830; --smart-input-line: #45636b; --smart-input-text: #edf9fb;
+}
+
+/* 13 · Quality Lab — dark inspection room */
+html[data-color-scheme="dark"] body[data-theme="13-quality-lab"] {
+  --bg: #10191b; --surface: #182326; --surface-2: #223033; --text: #edf6f5; --muted: #91a6a4; --line: #314346;
+  --accent: #5dd9c2; --accent-2: #82e8d5; --success: #5dd9a1; --warning: #f0ba59; --danger: #ff706f;
+  --shadow: 0 20px 58px rgba(0,0,0,.34); --card-shadow: inset 0 1px rgba(255,255,255,.035); --sidebar-bg: #0b1214; --sidebar-text: #edf6f5;
+  --sidebar-muted: #859a98; --sidebar-line: #29383a; --nav-active-text: #0d2421; --nav-active-bg: #5dd9c2; --topbar-bg: rgba(16,25,27,.95);
+  --visual-bg: #0b1517; --visual-text: #edf6f5; --login-panel-bg: #121d1f; --button-text: #0d2421;
+  --smart-bg: #173f3c; --smart-text: #edfffb; --smart-muted: #a8cfca; --smart-accent: #76e4d0; --smart-line: #2b6660;
+  --smart-input-bg: #0b2524; --smart-input-line: #3a716c; --smart-input-text: #edfffb;
+}
+
+/* 14 · Logistics Grid — night warehouse */
+html[data-color-scheme="dark"] body[data-theme="14-logistics-grid"] {
+  --bg: #12191c; --surface: #1b2529; --surface-2: #263338; --text: #f0f5f5; --muted: #98a7a9; --line: #37464b;
+  --accent: #ff8a32; --accent-2: #ffb06e; --success: #42c49a; --warning: #ffad3d; --danger: #f1645f;
+  --shadow: 0 22px 60px rgba(0,0,0,.35); --card-shadow: inset 0 1px rgba(255,255,255,.03); --sidebar-bg: #0b1012; --sidebar-text: #f0f5f5;
+  --sidebar-muted: #89999c; --sidebar-line: #2b373b; --nav-active-text: #1c120a; --nav-active-bg: #ff8a32; --topbar-bg: rgba(18,25,28,.95);
+  --visual-bg: #0d1518; --visual-text: #f0f5f5; --login-panel-bg: #151e22; --button-text: #1c120a;
+  --smart-bg: #123f40; --smart-text: #edffff; --smart-muted: #a8cdcd; --smart-accent: #61d1c7; --smart-line: #245e5f;
+  --smart-input-bg: #09282a; --smart-input-line: #3c6e70; --smart-input-text: #edffff;
+}
+
+/* 15 · Foundry Forge — daylight foundry archive */
+html[data-color-scheme="light"] body[data-theme="15-foundry-forge"] {
+  --bg: #e9e3dc; --surface: #f8f4ef; --surface-2: #ded5cb; --text: #302b28; --muted: #746a64; --line: #c5b8ac;
+  --accent: #9d4628; --accent-2: #c56a42; --success: #4b7b5b; --warning: #a96d22; --danger: #a83f38;
+  --shadow: 0 22px 58px rgba(61,44,35,.17); --card-shadow: inset 0 1px #fff; --sidebar-bg: #d5ccc3; --sidebar-text: #302b28;
+  --sidebar-muted: #6e645e; --sidebar-line: #b7aaa0; --nav-active-text: #fff7ee; --nav-active-bg: #9d4628; --topbar-bg: rgba(233,227,220,.95);
+  --visual-bg: #c9bdb2; --visual-text: #302b28; --login-panel-bg: #eee8e1; --button-text: #fff7ee;
+  --smart-bg: #3a312d; --smart-text: #fff6ed; --smart-muted: #c8b8ad; --smart-accent: #df895e; --smart-line: #3a312d;
+  --smart-input-bg: #241f1d; --smart-input-line: #6b5b52; --smart-input-text: #fff6ed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-color-scheme] body,
+  html[data-color-scheme] * { transition-duration: .01ms !important; }
+}

@@ -1,0 +1,99 @@
+:root {
+  --bg: #050b07;
+  --surface: #08110b;
+  --surface-2: #0d1a11;
+  --text: #8cff9f;
+  --muted: #4e9060;
+  --line: #1d4c29;
+  --accent: #78ff96;
+  --accent-2: #d5ff65;
+  --success: #78ff96;
+  --warning: #d5ff65;
+  --danger: #ff6262;
+  --radius: 0px;
+  --radius-sm: 0px;
+  --shadow: 0 0 35px rgba(76,255,115,.1);
+  --sidebar-width: 235px;
+  --sidebar-bg: #030705;
+  --sidebar-text: #8cff9f;
+  --sidebar-muted: #437c50;
+  --sidebar-line: #143a1e;
+  --nav-active-text: #041006;
+  --nav-active-bg: #78ff96;
+  --topbar-bg: rgba(3,7,5,.94);
+  --visual-bg: #030705;
+  --visual-text: #8cff9f;
+  --login-panel-bg: #050b07;
+  --button-text: #041006;
+  --smart-bg: #07160b;
+  --smart-text: #8cff9f;
+  --smart-muted: #4e9060;
+  --smart-accent: #d5ff65;
+  --smart-line: #2a6c38;
+  --smart-input-bg: #030705;
+  --smart-input-line: #2a6c38;
+  --smart-input-text: #8cff9f;
+  --font: "Cascadia Mono", "Courier New", "Microsoft YaHei", monospace;
+  color-scheme: dark;
+}
+
+body { background-image: radial-gradient(rgba(120,255,150,.12) .7px,transparent .7px); background-size: 4px 4px; text-shadow: 0 0 12px rgba(120,255,150,.12); }
+body::after { content: ""; position: fixed; inset: 0; z-index: 60; pointer-events: none; opacity: .11; background: repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 1px,transparent 1px 4px); }
+.brand-symbol { color: #78ff96; border: 1px solid currentColor; border-radius: 0; background: transparent; box-shadow: 0 0 12px rgba(120,255,150,.2); }
+.brand-name strong::before { content: "./"; color: var(--accent-2); }
+.sidebar { border-right-style: dashed; }
+.sidebar::before { content: "session: fw_ops_01\A status: encrypted"; white-space: pre; margin: -2px 9px 22px; order: -1; color: #437c50; font-size: 7px; line-height: 1.7; }
+.nav-label::before { content: "# "; }
+.nav-item { border: 1px solid transparent; }
+.nav-item::before { content: ">"; opacity: 0; }
+.nav-item.is-active::before, .nav-item:hover::before { opacity: 1; }
+.storage-card { border-style: dashed; }
+.storage-head::before { content: "df -h "; color: #d5ff65; }
+.avatar { border-radius: 0; }
+.topbar { border-bottom-style: dashed; }
+.search-box::before { content: "find:"; position: absolute; z-index: 1; left: 13px; top: 50%; color: var(--accent-2); font-size: 10px; transform: translateY(-50%); }
+.search-box > svg { display: none; }
+.search-box input { padding-left: 48px; background: #030705; }
+.icon-button, .profile-button { background: #030705; }
+.dashboard::before { content: "last login: Tue Aug 04 09:08:31 CST 2026\A File Workshop secure workspace initialized successfully."; white-space: pre; display: block; margin-bottom: 28px; color: #4e9060; font-size: 8px; line-height: 1.7; }
+.date-line::before { content: "[sys.time] "; color: var(--accent-2); }
+.welcome-copy h1 { font-weight: 500; letter-spacing: -.03em; }
+.welcome-copy h1::before { content: "$ "; color: var(--accent-2); }
+.secondary-button::before { content: "mkdir "; }
+.metric-card, .panel, .smart-strip { box-shadow: inset 0 0 30px rgba(120,255,150,.015); }
+.metric-card { border-style: dashed; }
+.metric-top::before { content: "["; }
+.metric-top::after { content: "]"; }
+.metric-icon { border: 1px solid currentColor; border-radius: 0; background: transparent; }
+.metric-value strong { font-weight: 500; }
+.panel { border-style: dashed; }
+.panel-head { border-bottom-style: dashed; }
+.panel-title h2::before { content: "// "; color: var(--accent-2); }
+.file-table td { border-top-style: dashed; }
+.file-table tr:hover td { color: #d5ff65; background: rgba(120,255,150,.035); }
+.file-icon { border: 1px solid currentColor; border-radius: 0; background: transparent; }
+.quick-card { border-style: dashed; background: #050b07; }
+.quick-icon { border-radius: 0; }
+.activity-dot { border-radius: 0; transform: rotate(45deg); }
+.smart-copy span::before { content: "[experimental] "; }
+.smart-search input::placeholder { color: #4e9060; }
+
+.login-visual { border-right: 1px dashed #1d4c29; }
+.login-visual::before { content: "FILE WORKSHOP SECURITY CONSOLE v1.0.0"; position: absolute; left: 40px; top: 105px; color: #4e9060; font-size: 8px; }
+.login-visual h1 { font-weight: 400; }
+.login-visual h1::before { content: "> "; color: var(--accent-2); }
+.login-visual h1::after { content: "_"; animation: cursorBlink 1s steps(1) infinite; }
+@keyframes cursorBlink { 50% { opacity: 0; } }
+.deco-grid { opacity: .035; }
+.deco-orbit { border-style: dashed; }
+.deco-file { border-style: dashed; }
+.visual-stat strong::before { content: "["; }
+.visual-stat strong::after { content: "]"; }
+.login-card-head h2 { font-weight: 400; }
+.login-card-head h2::before { content: "auth --user "; color: #4e9060; font-size: .36em; }
+.field > span::before { content: "> "; color: var(--accent-2); }
+.input-wrap input, .sso-button { background: #030705; }
+.input-wrap input:focus { box-shadow: 0 0 14px rgba(120,255,150,.16); }
+.primary-button { text-transform: lowercase; }
+.primary-button span::before { content: "./"; }
+

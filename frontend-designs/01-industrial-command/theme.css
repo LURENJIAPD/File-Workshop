@@ -1,0 +1,82 @@
+:root {
+  --bg: #11161a;
+  --surface: #1a2126;
+  --surface-2: #222b31;
+  --text: #edf1f2;
+  --muted: #87949b;
+  --line: #323d44;
+  --accent: #ffad0a;
+  --accent-2: #ffd166;
+  --success: #55c98c;
+  --warning: #ffad0a;
+  --danger: #ff665e;
+  --radius: 4px;
+  --radius-sm: 2px;
+  --shadow: 0 18px 50px rgba(0, 0, 0, .34);
+  --card-shadow: inset 0 1px rgba(255,255,255,.025);
+  --sidebar-bg: #0b0f12;
+  --sidebar-text: #e9edef;
+  --sidebar-muted: #748087;
+  --sidebar-line: #2a343a;
+  --nav-active-text: #15191b;
+  --nav-active-bg: #ffad0a;
+  --topbar-bg: rgba(17, 22, 26, .92);
+  --login-panel-bg: #151b1f;
+  --visual-bg: #0a0e10;
+  --visual-text: #f1f4f5;
+  --button-text: #111416;
+  --smart-bg: #ffad0a;
+  --smart-text: #15191b;
+  --smart-muted: #5b410d;
+  --smart-accent: #15191b;
+  --smart-line: #ffad0a;
+  --smart-input-bg: #f7c965;
+  --smart-input-line: rgba(20,25,27,.35);
+  --smart-input-text: #15191b;
+  --font: "Bahnschrift", "Arial Narrow", "Segoe UI", "Microsoft YaHei", sans-serif;
+  color-scheme: dark;
+}
+
+body { background-image: linear-gradient(rgba(255,255,255,.015) 1px, transparent 1px); background-size: 100% 4px; }
+.brand-symbol { border-radius: 2px; transform: skewX(-7deg); box-shadow: 4px 4px 0 #303a40; }
+.brand-name strong, .nav-label, .date-line, .concept-kicker { text-transform: uppercase; letter-spacing: .16em; }
+.sidebar { border-right-width: 2px; }
+.sidebar::before { content: "FW / NODE-01"; margin: -5px 8px 19px; order: -1; color: #5d686e; font: 700 8px/1 monospace; letter-spacing: .14em; }
+.nav-item { border-left: 2px solid transparent; border-radius: 0; }
+.nav-item.is-active { box-shadow: inset 4px 0 #fff4, 5px 0 0 #ffad0a; }
+.storage-card { position: relative; overflow: hidden; border-style: dashed; }
+.storage-card::after { content: "ONLINE"; position: absolute; right: 10px; bottom: 8px; color: #55c98c; font: 700 7px/1 monospace; }
+.topbar { border-bottom-width: 2px; }
+.search-box input, .icon-button, .profile-button { background: #0d1215; }
+.dashboard { background-image: linear-gradient(90deg, rgba(255,173,10,.025) 1px, transparent 1px); background-size: 56px 100%; }
+.welcome-copy h1 { font-weight: 760; text-transform: uppercase; }
+.welcome-copy h1::after { content: " / SHIFT A"; color: var(--accent); font: 700 10px/1 monospace; letter-spacing: .12em; }
+.metric-card, .panel { position: relative; }
+.metric-card::before, .panel::before { content: ""; position: absolute; top: -1px; left: -1px; width: 16px; height: 3px; background: var(--accent); }
+.metric-top, .panel-title span, .file-table th { text-transform: uppercase; letter-spacing: .08em; }
+.metric-value strong { font-family: "Bahnschrift", monospace; font-weight: 500; }
+.panel-head { background: #151b1f; }
+.file-table tr:hover td { background: rgba(255,173,10,.045); }
+.file-icon { border: 1px solid color-mix(in srgb, var(--file-color) 65%, transparent); border-radius: 1px; }
+.quick-card { background: #151b1f; border-style: dashed; }
+.quick-icon { border-radius: 2px; }
+.smart-strip::after { content: "AI SEARCH / SECURE CHANNEL"; position: absolute; right: 20px; top: 12px; color: #15191b; opacity: .4; font: 700 7px/1 monospace; letter-spacing: .12em; }
+
+.login-visual { background-image: linear-gradient(135deg, #080b0d 0 58%, #ffad0a 58% 59%, #151b1f 59%); }
+.login-visual h1 { text-transform: uppercase; font-weight: 760; }
+.login-visual h1::first-line { color: #ffad0a; }
+.login-visual-copy > p { max-width: 480px; }
+.login-visual .deco-grid { opacity: .13; background-size: 32px 32px; }
+.deco-file { width: 130px; height: 168px; border-width: 2px; border-color: #ffad0a; opacity: .7; }
+.deco-orbit { border-style: dashed; border-color: #ffad0a; }
+.visual-stat { padding-left: 12px; border-left: 2px solid #ffad0a; }
+.login-panel::before { content: "AUTHORIZED PERSONNEL ONLY"; position: absolute; left: 0; top: 0; right: 0; height: 25px; display: grid; place-items: center; color: #15191b; background: repeating-linear-gradient(-45deg,#ffad0a 0 8px,#e09300 8px 16px); font: 800 8px/1 monospace; letter-spacing: .18em; }
+.login-card-head h2 { text-transform: uppercase; }
+.field > span, .form-options, .login-help { font-family: monospace; }
+.input-wrap input, .sso-button { background: #0d1215; }
+.primary-button { box-shadow: 5px 5px 0 #3d2c08; text-transform: uppercase; letter-spacing: .08em; }
+
+@media (max-width: 860px) {
+  .login-panel::before { display: grid; }
+}
+

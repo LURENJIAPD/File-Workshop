@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" href="data:,">
+  <title>File Workshop · 前端设计画廊</title>
+  <link rel="stylesheet" href="gallery.css">
+</head>
+<body>
+  <header class="gallery-header">
+    <a class="gallery-brand" href="#top" aria-label="返回顶部">
+      <span class="brand-mark"><i></i><i></i><i></i></span>
+      <span><strong>FILE WORKSHOP</strong><small>FRONTEND CONCEPT GALLERY</small></span>
+    </a>
+    <nav class="gallery-nav" aria-label="画廊导航">
+      <a href="#concepts">15 套方案</a>
+      <a href="README.md">使用说明</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="gallery-hero">
+      <div class="hero-copy">
+        <span class="eyebrow">FILE WORKSHOP · V1.0</span>
+        <h1>十五种性格，<br><em>同一个制造文件工作台。</em></h1>
+        <p>围绕制造企业的文件、空间、共享、审计与智能检索，探索十五种截然不同的界面语言。每套方案都包含登录页、主页及完整明暗主题，可离线运行。</p>
+        <div class="hero-actions">
+          <a class="primary-link" href="#concepts">开始比较 <span>↓</span></a>
+          <span class="plain-note">纯 HTML · CSS · JavaScript</span>
+        </div>
+      </div>
+      <div class="hero-object" aria-hidden="true">
+        <div class="object-ring ring-one"></div>
+        <div class="object-ring ring-two"></div>
+        <div class="object-core"><span>15</span><small>CONCEPTS</small></div>
+        <div class="object-tag tag-a">LOGIN</div>
+        <div class="object-tag tag-b">WORKSPACE</div>
+      </div>
+    </section>
+
+    <section class="control-bar" id="concepts">
+      <div>
+        <span class="section-count">01—15</span>
+        <h2>选择预览页面</h2>
+      </div>
+      <div class="preview-controls">
+        <div class="page-switch" role="group" aria-label="切换预览页面">
+          <button type="button" data-preview-page="login">登录页</button>
+          <button type="button" class="is-active" data-preview-page="home">主页</button>
+        </div>
+        <button class="gallery-theme-toggle" type="button" aria-label="切换为深色主题"><span aria-hidden="true">☀</span><strong>浅色预览</strong></button>
+      </div>
+    </section>
+
+    <section class="concept-grid" aria-label="设计方案列表">
+      <article class="concept-card" data-folder="01-industrial-command">
+        <div class="card-head"><span>01</span><div class="swatches"><i style="--c:#ffb000"></i><i style="--c:#15191d"></i><i style="--c:#2b3339"></i></div></div>
+        <div class="preview-frame"><iframe title="熔炉指挥台主页预览" loading="lazy" src="01-industrial-command/home.html?embed=1"></iframe></div>
+        <div class="card-body"><div><p>INDUSTRIAL COMMAND</p><h3>熔炉指挥台</h3></div><span class="card-tag">工业 · 状态</span></div>
+        <p class="card-desc">强状态、强层级、适合制造现场与运维驾驶舱。琥珀色用于关键动作和运行状态。</p>
+        <div class="card-links"><a href="01-industrial-command/login.html">登录页 ↗</a><a href="01-industrial-command/home.html">主页 ↗</a></div>
+      </article>
+
+      <article class="concept-card" data-folder="02-precision-light">
+        <div class="card-head"><span>02</span><div class="swatches"><i style="--c:#175cff"></i><i style="--c:#f5f5f2"></i><i style="--c:#171717"></i></div></div>
+        <div class="preview-frame"><iframe title="精密白主页预览" loading="lazy" src="02-precision-light/home.html?embed=1"></iframe></div>
+        <div class="card-body"><div><p>PRECISION LIGHT</p><h3>精密白</h3></div><span class="card-tag">极简 · 清晰</span></div>
+        <p class="card-desc">瑞士式排版和克制线条，信息密度高但不压迫，适合长时间日常办公。</p>
+        <div class="card-links"><a href="02-precision-light/login.html">登录页 ↗</a><a href="02-precision-light/home.html">主页 ↗</a></div>
+      </article>
+
+      <article class="concept-card" data-folder="03-blueprint-grid">
+        <div class="card-head"><span>03</span><div class="swatches"><i style="--c:#8ed8ff"></i><i style="--c:#063b63"></i><i style="--c:#0a5687"></i></div></div>
+        <div class="preview-frame"><iframe title="工程蓝图主页预览" loading="lazy" src="03-blueprint-grid/home.html?embed=1"></iframe></div>
+        <div class="card-body"><div><p>BLUEPRINT GRID</p><h3>工程蓝图</h3></div><span class="card-tag">网格 · 技术</span></div>
+        <p class="card-desc">借鉴工程图纸、坐标和标注系统，天然贴近工艺、研发与设备资料场景。</p>
+        <div class="card-links"><a href="03-blueprint-grid/login.html">登录页 ↗</a><a href="03-blueprint-grid/home.html">主页 ↗</a></div>
+      </article>
+
+      <article class="concept-card" data-folder="04-warm-archive">
+        <div class="card-head"><span>04</span><div class="swatches"><i style="--c:#d76231"></i><i style="--c:#f2eadc"></i><i style="--c:#5d4338"></i></div></div>
+        <div class="preview-frame"><iframe title="暖木档案室主页预览" loading="lazy" src="04-warm-archive/home.html?embed=1"></iframe></div>
+        <div class="card-body"><div><p>WARM ARCHIVE</p><h3>暖木档案室</h3></div><span class="card-tag">温暖 · 纸感</span></div>
+        <p class="card-desc">像一本整理良好的档案册，降低系统距离感，适合行政资料和跨年龄用户。</p>
+        <div class="card-links"><a href="04-warm-archive/login.html">登录页 ↗</a><a href="04-warm-archive/home.html">主页 ↗</a></div>
+      </article>
+
+      <article class="concept-card" data-folder="05-glass-horizon">
+        <div class="card-head"><span>05</span><div class="swatches"><i style="--c:#64f0e5"></i><i style="--c:#6955ff"></i><i style="--c:#10152d"></i></div></div>
+        <div class="preview-frame"><iframe title="玻璃地平线主页预览" loading="lazy" src="05-glass-horizon/home.html?embed=1"></iframe></div>
+        <div class="card-body"><div><p>GLASS HORIZON</p><h3>玻璃地平线</h3></div><span class="card-tag">玻璃 · 空间</span></div>
+        <p class="card-desc">透明层次、空间渐变和柔和光晕，适合现代化展示与管理驾驶舱。</p>
+        <div class="card-links"><a href="05-glass-horizon/login.html">登录页 ↗</a><a href="05-glass-horizon/home.html">主页 ↗</a></div>
+      </article>
+
+      <article class="concept-card" data-folder="06-terminal-ops">
+        <div class="card-head"><span>06</span><div class="swatches"><i style="--c:#78ff96"></i><i style="--c:#07110a"></i><i style="--c:#17331e"></i></div></div>
+        <div class="preview-frame"><iframe title="终端机房主页预览" loading="lazy" src="06-terminal-ops/home.html?embed=1"></iframe></div>
+        <div class="card-body"><div><p>TERMINAL OPS</p><h3>终端机房</h3></div><span class="card-tag">终端 · 高效</span></div>
+        <p class="card-desc">单色终端语言、键盘提示和运行日志感，适合技术人员与管理员。</p>
+        <div class="card-links"><a href="06-terminal-ops/login.html">登录页 ↗</a><a href="06-terminal-ops/home.html">主页 ↗</a></div>
+      </article>
+
+      <article class="concept-card" data-folder="07-bento-cloud">
+        <div class="card-head"><span>07</span><div class="swatches"><i style="--c:#6b5cff"></i><i style="--c:#ecf7ff"></i><i style="--c:#ffcd73"></i></div></div>
+        <div class="preview-frame"><iframe title="云朵便当主页预览" loading="lazy" src="07-bento-cloud/home.html?embed=1"></iframe></div>
+        <div class="card-body"><div><p>BENTO CLOUD</p><h3>云朵便当</h3></div><span class="card-tag">柔和 · 模块</span></div>
+        <p class="card-desc">模块化 Bento 卡片和柔和色块，友好、直观，适合多角色协作团队。</p>
+        <div class="card-links"><a href="07-bento-cloud/login.html">登录页 ↗</a><a href="07-bento-cloud/home.html">主页 ↗</a></div>
+      </article>
+
+      <article class="concept-card" data-folder="08-neo-brutal">
+        <div class="card-head"><span>08</span><div class="swatches"><i style="--c:#ff4d6d"></i><i style="--c:#ffe45e"></i><i style="--c:#151515"></i></div></div>
+        <div class="preview-frame"><iframe title="新粗野主义主页预览" loading="lazy" src="08-neo-brutal/home.html?embed=1"></iframe></div>
+        <div class="card-body"><div><p>NEO BRUTAL</p><h3>新粗野主义</h3></div><span class="card-tag">大胆 · 高对比</span></div>
+        <p class="card-desc">粗边框、硬阴影和强色块，识别度极高，为内部创新工具建立鲜明个性。</p>
+        <div class="card-links"><a href="08-neo-brutal/login.html">登录页 ↗</a><a href="08-neo-brutal/home.html">主页 ↗</a></div>
+      </article>
+
+      <article class="concept-card" data-folder="09-executive-navy">
+        <div class="card-head"><span>09</span><div class="swatches"><i style="--c:#c8a86b"></i><i style="--c:#0c2340"></i><i style="--c:#f6f4ef"></i></div></div>
+        <div class="preview-frame"><iframe title="深海行政版主页预览" loading="lazy" src="09-executive-navy/home.html?embed=1"></iframe></div>
+        <div class="card-body"><div><p>EXECUTIVE NAVY</p><h3>深海行政版</h3></div><span class="card-tag">稳重 · 商务</span></div>
+        <p class="card-desc">深海军蓝、细金线和稳健留白，面向集团治理、管理层与合规场景。</p>
+        <div class="card-links"><a href="09-executive-navy/login.html">登录页 ↗</a><a href="09-executive-navy/home.html">主页 ↗</a></div>
+      </article>
+
+      <article class="concept-card" data-folder="10-aurora-ai">
+        <div class="card-head"><span>10</span><div class="swatches"><i style="--c:#a8ff35"></i><i style="--c:#7d4dff"></i><i style="--c:#080716"></i></div></div>
+        <div class="preview-frame"><iframe title="极光智舱主页预览" loading="lazy" src="10-aurora-ai/home.html?embed=1"></iframe></div>
+        <div class="card-body"><div><p>AURORA AI</p><h3>极光智舱</h3></div><span class="card-tag">未来 · 智能</span></div>
+        <p class="card-desc">极光色带、智能入口和动态氛围，突出 RAG 与 Agent 的下一代工作方式。</p>
+        <div class="card-links"><a href="10-aurora-ai/login.html">登录页 ↗</a><a href="10-aurora-ai/home.html">主页 ↗</a></div>
+      </article>
+
+      <article class="concept-card concept-card-industrial" data-folder="11-line-andon">
+        <div class="card-head"><span>11</span><div class="swatches"><i style="--c:#e99d17"></i><i style="--c:#cfd6d3"></i><i style="--c:#18201f"></i></div></div>
+        <div class="preview-frame"><iframe title="产线安灯主页预览" loading="lazy" src="11-line-andon/home.html?embed=1"></iframe></div>
+        <div class="card-body"><div><p>LINE ANDON</p><h3>产线安灯</h3></div><span class="card-tag">产线 · 状态</span></div>
+        <p class="card-desc">来自安灯系统、安全标识与车间看板的视觉语言，强调节拍、状态和生产资料的即时可达。</p>
+        <div class="card-links"><a href="11-line-andon/login.html">登录页 ↗</a><a href="11-line-andon/home.html">主页 ↗</a></div>
+      </article>
+
+      <article class="concept-card concept-card-industrial" data-folder="12-cnc-steel">
+        <div class="card-head"><span>12</span><div class="swatches"><i style="--c:#42d4e5"></i><i style="--c:#141f23"></i><i style="--c:#82969c"></i></div></div>
+        <div class="preview-frame"><iframe title="数控精工主页预览" loading="lazy" src="12-cnc-steel/home.html?embed=1"></iframe></div>
+        <div class="card-body"><div><p>CNC STEEL</p><h3>数控精工</h3></div><span class="card-tag">机床 · 精密</span></div>
+        <p class="card-desc">借鉴 CNC 坐标、机床面板和金属切削质感，适合数控程序、刀具清单与设备参数管理。</p>
+        <div class="card-links"><a href="12-cnc-steel/login.html">登录页 ↗</a><a href="12-cnc-steel/home.html">主页 ↗</a></div>
+      </article>
+
+      <article class="concept-card concept-card-industrial" data-folder="13-quality-lab">
+        <div class="card-head"><span>13</span><div class="swatches"><i style="--c:#008a78"></i><i style="--c:#edf4f2"></i><i style="--c:#d64848"></i></div></div>
+        <div class="preview-frame"><iframe title="质量实验室主页预览" loading="lazy" src="13-quality-lab/home.html?embed=1"></iframe></div>
+        <div class="card-body"><div><p>QUALITY LAB</p><h3>质量实验室</h3></div><span class="card-tag">质检 · 证据</span></div>
+        <p class="card-desc">以测量、校准与合格判定为核心，清晰区分正常、待复核和异常状态，适合质量体系文件。</p>
+        <div class="card-links"><a href="13-quality-lab/login.html">登录页 ↗</a><a href="13-quality-lab/home.html">主页 ↗</a></div>
+      </article>
+
+      <article class="concept-card concept-card-industrial" data-folder="14-logistics-grid">
+        <div class="card-head"><span>14</span><div class="swatches"><i style="--c:#e56618"></i><i style="--c:#0d7772"></i><i style="--c:#eeeae3"></i></div></div>
+        <div class="preview-frame"><iframe title="物流网格主页预览" loading="lazy" src="14-logistics-grid/home.html?embed=1"></iframe></div>
+        <div class="card-body"><div><p>LOGISTICS GRID</p><h3>物流网格</h3></div><span class="card-tag">仓储 · 流转</span></div>
+        <p class="card-desc">库位网格、物料路线与单据标签构成的模块化界面，面向仓储、AGV 和厂内物流资料。</p>
+        <div class="card-links"><a href="14-logistics-grid/login.html">登录页 ↗</a><a href="14-logistics-grid/home.html">主页 ↗</a></div>
+      </article>
+
+      <article class="concept-card concept-card-industrial" data-folder="15-foundry-forge">
+        <div class="card-head"><span>15</span><div class="swatches"><i style="--c:#d26a3d"></i><i style="--c:#211e1b"></i><i style="--c:#aa9d92"></i></div></div>
+        <div class="preview-frame"><iframe title="重装铸造主页预览" loading="lazy" src="15-foundry-forge/home.html?embed=1"></iframe></div>
+        <div class="card-body"><div><p>FOUNDRY FORGE</p><h3>重装铸造</h3></div><span class="card-tag">重工 · 档案</span></div>
+        <p class="card-desc">铸铁、铜锈、铭牌与工艺档案的耐久表达，适合铸锻、重装和大型装备制造企业。</p>
+        <div class="card-links"><a href="15-foundry-forge/login.html">登录页 ↗</a><a href="15-foundry-forge/home.html">主页 ↗</a></div>
+      </article>
+    </section>
+
+    <section class="gallery-outro">
+      <span>下一步</span>
+      <h2>选定视觉方向后，<br>再把它变成真正的产品系统。</h2>
+      <p>建议先从信息层级、长期使用舒适度、品牌气质和制造现场适配性四个维度筛选 2–3 套，再细化到正式设计规范。</p>
+    </section>
+  </main>
+
+  <footer><span>FILE WORKSHOP</span><span>15 DUAL-THEME FRONTEND CONCEPTS · 2026</span></footer>
+  <script src="gallery.js"></script>
+</body>
+</html>

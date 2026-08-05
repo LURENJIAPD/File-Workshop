@@ -1,0 +1,45 @@
+:root {
+  --bg: #e6e9e8; --surface: #f7f9f8; --surface-2: #dce1df; --text: #18201f; --muted: #68736f; --line: #bdc6c3;
+  --accent: #d88900; --accent-2: #f5b62d; --success: #208451; --warning: #c87900; --danger: #ce4038;
+  --radius: 3px; --radius-sm: 2px; --shadow: 0 20px 55px rgba(29,42,39,.17); --card-shadow: inset 0 1px #fff;
+  --sidebar-width: 244px; --sidebar-bg: #cfd6d3; --sidebar-text: #18201f; --sidebar-muted: #5f6c68; --sidebar-line: #aab6b2;
+  --nav-active-text: #161a19; --nav-active-bg: #e99d17; --topbar-bg: rgba(230,233,232,.94); --visual-bg: #c8cfcd; --visual-text: #18201f;
+  --login-panel-bg: #edf0ef; --button-text: #151918; --smart-bg: #27312f; --smart-text: #f4f7f6; --smart-muted: #b8c4c0;
+  --smart-accent: #ffc248; --smart-line: #27312f; --smart-input-bg: #121817; --smart-input-line: #52615d; --smart-input-text: #f4f7f6;
+  --font: "Bahnschrift", "Arial Narrow", "Segoe UI", "Microsoft YaHei", sans-serif;
+}
+body { background-image: linear-gradient(90deg,color-mix(in srgb,var(--text) 4%,transparent) 1px,transparent 1px); background-size: 64px 100%; }
+.brand-symbol { border-radius: 1px; transform: skewX(-9deg); box-shadow: 4px 0 0 color-mix(in srgb,var(--accent) 42%,var(--text)); }
+.brand-symbol::after { content: ""; position: absolute; inset: 7px -4px 7px auto; width: 2px; background: var(--accent); }
+.sidebar { border-right: 4px solid var(--accent); }
+.sidebar::before { content: "PLANT 03 / LINE A"; order: -1; margin: -6px 8px 17px; color: var(--sidebar-muted); font: 700 8px/1 monospace; letter-spacing: .16em; }
+.nav-label, .date-line, .panel-title span { text-transform: uppercase; }
+.nav-item { border-left: 3px solid transparent; }
+.nav-item.is-active { border-left-color: var(--text); }
+.storage-card { position: relative; }
+.storage-card::after { content: "SYNC"; position: absolute; right: 12px; bottom: 9px; color: var(--success); font: 800 7px/1 monospace; }
+.topbar { border-bottom-width: 3px; }
+.search-box input, .icon-button, .profile-button { background: var(--surface); }
+.welcome-copy h1 { text-transform: uppercase; }
+.plant-status { border-width: 2px; }
+.plant-status-item { border-right-width: 2px; }
+.plant-status-item strong { font-family: "Cascadia Mono", Consolas, monospace; }
+.metric-card, .panel { border-top: 3px solid var(--line); }
+.metric-card:hover, .panel:hover { border-top-color: var(--accent); }
+.metric-icon, .quick-icon { border-radius: 2px; }
+.panel-head { background: color-mix(in srgb,var(--surface-2) 52%,var(--surface)); }
+.file-table tr:hover td { background: color-mix(in srgb,var(--accent) 8%,transparent); }
+.quick-card { border-style: dashed; background: color-mix(in srgb,var(--surface) 78%,var(--surface-2)); }
+.smart-strip::after { content: "CONTROLLED DOCUMENT CHANNEL"; position: absolute; right: 22px; top: 11px; color: var(--smart-muted); font: 700 7px/1 monospace; letter-spacing: .15em; }
+.login-visual { background-image: linear-gradient(135deg,transparent 0 58%,var(--accent) 58% 59%,color-mix(in srgb,var(--surface-2) 70%,var(--bg)) 59%); }
+.login-visual::after { content: "AUTHORIZED PRODUCTION ACCESS"; position: absolute; left: 44px; bottom: 32px; color: var(--visual-text); font: 800 8px/1 monospace; letter-spacing: .18em; }
+.concept-kicker { padding-left: 12px; border-left: 4px solid var(--accent); opacity: 1; }
+.deco-orbit { border-color: var(--accent); border-style: dashed; }
+.deco-file { border-width: 3px; border-color: var(--accent); }
+.visual-stat { border-left: 3px solid var(--accent); padding-left: 12px; }
+.login-panel::before { content: ""; position: absolute; inset: 0 0 auto; height: 17px; background: repeating-linear-gradient(-45deg,var(--accent) 0 9px,color-mix(in srgb,var(--accent) 72%,#000) 9px 18px); }
+.login-card { padding: clamp(24px,3vw,38px); border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); }
+.input-wrap input, .sso-button { background: var(--surface); }
+.primary-button { box-shadow: 5px 5px 0 color-mix(in srgb,var(--accent) 32%,var(--text)); text-transform: uppercase; }
+@media (max-width:860px) { .login-panel::before { display: block; } }
+

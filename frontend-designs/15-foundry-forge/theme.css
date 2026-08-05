@@ -1,0 +1,43 @@
+:root {
+  --bg: #171513; --surface: #211e1b; --surface-2: #2e2925; --text: #f1e9df; --muted: #aa9d92; --line: #4b413a;
+  --accent: #d26a3d; --accent-2: #eb9169; --success: #73a57c; --warning: #d69a45; --danger: #df685d;
+  --radius: 2px; --radius-sm: 1px; --shadow: 0 24px 64px rgba(0,0,0,.42); --card-shadow: inset 0 1px rgba(255,255,255,.025),0 6px 0 rgba(0,0,0,.12);
+  --sidebar-width: 252px; --sidebar-bg: #0e0d0c; --sidebar-text: #f1e9df; --sidebar-muted: #998d83; --sidebar-line: #372f2a;
+  --nav-active-text: #fff4ea; --nav-active-bg: #823a24; --topbar-bg: rgba(23,21,19,.95); --visual-bg: #0f0e0d; --visual-text: #f1e9df;
+  --login-panel-bg: #1a1816; --button-text: #fff3e9; --smart-bg: #3c2b24; --smart-text: #fff3ea; --smart-muted: #cbb8ac;
+  --smart-accent: #ec8b61; --smart-line: #6b4232; --smart-input-bg: #1d1714; --smart-input-line: #6d5145; --smart-input-text: #fff3ea;
+  --font: "Roboto Slab", "Bahnschrift", "Segoe UI", "Microsoft YaHei", sans-serif;
+}
+body { background-image: radial-gradient(color-mix(in srgb,var(--text) 5%,transparent) .8px,transparent .8px); background-size: 7px 7px; }
+.brand-symbol { position: relative; border-radius: 50%; background: var(--accent); box-shadow: inset 0 0 0 6px color-mix(in srgb,var(--text) 18%,transparent),0 0 0 2px var(--line); }
+.brand-symbol::before, .brand-symbol::after { content: ""; position: absolute; top: 50%; width: 5px; height: 5px; border-radius: 50%; background: var(--text); transform: translateY(-50%); }
+.brand-symbol::before { left: 5px; } .brand-symbol::after { right: 5px; }
+.sidebar { border-right: 3px double var(--sidebar-line); }
+.sidebar::before { content: "FOUNDRY RECORDS · SINCE 1968"; order: -1; margin: -4px 8px 18px; color: var(--sidebar-muted); font: 700 7px/1 monospace; letter-spacing: .14em; }
+.nav-item { border-bottom: 1px solid transparent; }
+.nav-item.is-active { border-bottom-color: var(--accent); box-shadow: inset 4px 0 var(--accent); }
+.storage-card { border-style: double; border-width: 3px; }
+.search-box input, .icon-button, .profile-button { background: var(--surface); }
+.welcome-copy h1 { font-family: Georgia,"Songti SC",serif; font-weight: 500; }
+.plant-status { border-width: 3px; border-style: double; }
+.plant-status-item strong { color: var(--accent-2); }
+.metric-card, .panel { border-width: 3px; border-style: double; }
+.metric-icon, .quick-icon { border-radius: 50%; }
+.panel-head { background: color-mix(in srgb,var(--surface-2) 52%,var(--surface)); }
+.file-table tr:hover td { background: color-mix(in srgb,var(--accent) 7%,transparent); }
+.file-icon { border-radius: 2px; }
+.quick-card { border-style: solid; background: color-mix(in srgb,var(--surface) 86%,var(--surface-2)); }
+.activity-dot { box-shadow: 0 0 0 2px var(--line); }
+.smart-strip { border-width: 3px; border-style: double; }
+.smart-strip::after { content: "HEAT / PRESS / TRACE / ARCHIVE"; position: absolute; right: 22px; top: 12px; color: var(--smart-muted); opacity: .6; font: 700 7px/1 monospace; letter-spacing: .16em; }
+.login-visual { background-image: radial-gradient(circle at 73% 32%,color-mix(in srgb,var(--accent) 24%,transparent),transparent 26%),linear-gradient(145deg,transparent,color-mix(in srgb,var(--accent) 8%,transparent)); }
+.login-visual::after { content: "CAST · FORGE · MACHINE · ASSEMBLE"; position: absolute; left: 44px; bottom: 34px; color: var(--accent-2); font: 700 8px/1 monospace; letter-spacing: .18em; }
+.concept-kicker { color: var(--accent-2); opacity: 1; }
+.deco-orbit { border: 3px double var(--accent); }
+.deco-file { border-width: 3px; border-color: var(--accent); box-shadow: 8px 8px 0 color-mix(in srgb,var(--accent) 16%,transparent); }
+.visual-stat { padding-left: 13px; border-left: 3px double var(--accent); }
+.login-card { padding: 36px; border: 3px double var(--line); background: var(--surface); box-shadow: var(--shadow); }
+.login-card-head h2 { font-family: Georgia,"Songti SC",serif; font-weight: 500; }
+.input-wrap input, .sso-button { background: var(--surface); }
+.primary-button { border-width: 2px; box-shadow: 5px 5px 0 color-mix(in srgb,var(--accent) 18%,#000); }
+

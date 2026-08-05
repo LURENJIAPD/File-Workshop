@@ -1,0 +1,17 @@
+version: "2"
+
+sql:
+  - engine: "postgresql"
+    schema: "migrations"
+    queries: "internal/platform/database/queries"
+    gen:
+      go:
+        package: "dbgen"
+        out: "internal/platform/database/dbgen"
+        sql_package: "pgx/v5"
+        emit_interface: true
+        emit_empty_slices: true
+        emit_result_struct_pointers: true
+        emit_params_struct_pointers: true
+        omit_unused_structs: true
+

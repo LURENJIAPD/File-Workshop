@@ -1,0 +1,81 @@
+:root {
+  --bg: #eee5d6;
+  --surface: #faf5ea;
+  --surface-2: #e8decd;
+  --text: #4c382f;
+  --muted: #8b776c;
+  --line: #d5c6b2;
+  --accent: #c9572d;
+  --accent-2: #e89b5a;
+  --success: #5f8b62;
+  --warning: #c8872c;
+  --danger: #b8493f;
+  --radius: 18px;
+  --radius-sm: 11px;
+  --shadow: 0 18px 45px rgba(91, 62, 44, .15);
+  --card-shadow: 0 7px 18px rgba(92,62,44,.07);
+  --sidebar-width: 248px;
+  --sidebar-bg: #5b4036;
+  --sidebar-text: #fff8eb;
+  --sidebar-muted: #cbb8a8;
+  --sidebar-line: rgba(255,248,235,.18);
+  --nav-active-text: #5b4036;
+  --nav-active-bg: #f1d29f;
+  --topbar-bg: rgba(238,229,214,.88);
+  --visual-bg: #5b4036;
+  --visual-text: #fff8eb;
+  --login-panel-bg: #f8f1e5;
+  --smart-bg: #5b4036;
+  --smart-text: #fff8eb;
+  --smart-muted: #ccb9a8;
+  --smart-accent: #f3b66e;
+  --smart-line: #5b4036;
+  --smart-input-bg: #fff8eb;
+  --smart-input-line: #d4b89d;
+  --smart-input-text: #4c382f;
+  --font: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+body { background-image: radial-gradient(rgba(90,63,50,.07) .7px, transparent .7px); background-size: 6px 6px; }
+h1, h2, h3, .brand-name strong, .metric-value strong { font-family: Georgia, "Noto Serif SC", "Songti SC", serif; }
+.brand-symbol { background: #c9572d; border-radius: 50% 50% 45% 45%; transform: rotate(-4deg); }
+.brand-name strong { letter-spacing: .02em; }
+.sidebar { padding-inline: 16px; border-right: 0; box-shadow: 8px 0 24px rgba(75,51,40,.08); }
+.sidebar .brand-lockup { padding-top: 6px; }
+.nav-item { min-height: 44px; }
+.storage-card { background: rgba(255,248,235,.08); }
+.sidebar-user { border-top: 1px solid rgba(255,255,255,.12); border-radius: 0; }
+.topbar { border: 0; }
+.search-box input, .icon-button, .profile-button { box-shadow: 0 3px 10px rgba(91,62,44,.05); }
+.dashboard { padding-top: 30px; }
+.welcome-copy h1 { font-weight: 500; }
+.welcome-copy p::before { content: "今日摘要 · "; color: var(--accent); font-weight: 700; }
+.secondary-button, .upload-button { border-radius: 999px; }
+.metric-card { min-height: 135px; }
+.metric-icon { border-radius: 50%; }
+.metric-value strong { font-weight: 500; }
+.panel-head { border-bottom-style: dashed; }
+.file-table td { border-top-style: dashed; }
+.file-icon { border-radius: 8px 8px 3px 3px; }
+.quick-card { background: #f4eadb; }
+.quick-card:nth-child(1) { transform: rotate(-1deg); }
+.quick-card:nth-child(2) { transform: rotate(1deg); }
+.activity-dot { border-color: #faf5ea; }
+.smart-strip { box-shadow: 0 12px 30px rgba(75,51,40,.16); }
+.smart-strip::after { content: "✦"; position: absolute; right: 4%; top: -24px; color: #f3b66e; font: 100px/1 Georgia,serif; opacity: .12; }
+
+.login-visual { background-image: radial-gradient(circle at 20% 20%, rgba(255,255,255,.08), transparent 35%), linear-gradient(135deg,#6b4a3e,#4f372f); }
+.login-visual h1 { font-family: Georgia, "Noto Serif SC", "Songti SC", serif; font-weight: 500; letter-spacing: -.03em; }
+.login-visual-copy > p { color: #ead9c7; }
+.deco-grid { opacity: .035; }
+.deco-orbit { border-color: #f3b66e; }
+.deco-orbit::after { background: #f3b66e; }
+.deco-file { border-radius: 8px; border-color: #f3b66e; transform: rotate(7deg); }
+.visual-stats { padding-top: 22px; border-top: 1px solid rgba(255,255,255,.18); }
+.visual-stat strong { font-family: Georgia,serif; font-weight: 500; }
+.login-panel::after { content: "FILE WORKSHOP · 安全访问"; position: absolute; left: 50%; bottom: 24px; color: #a08b7e; font: 9px/1 Georgia,serif; letter-spacing: .15em; transform: translateX(-50%); white-space: nowrap; }
+.login-card { padding: clamp(20px,3vw,38px); border: 1px solid #dfd0bd; border-radius: 22px; background: #fffaf0; box-shadow: 0 25px 70px rgba(91,62,44,.11); }
+.login-card-head h2 { font-family: Georgia, "Noto Serif SC", serif; font-weight: 500; }
+.input-wrap input, .sso-button { background: #fffdf8; }
+.primary-button { border-radius: 999px; }
+
