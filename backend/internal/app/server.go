@@ -13,6 +13,9 @@ import (
 	identityrepository "file-workshop/backend/internal/modules/identity/repository"
 	"file-workshop/backend/internal/modules/identity/security"
 	identitytransport "file-workshop/backend/internal/modules/identity/transport"
+	organizationsapplication "file-workshop/backend/internal/modules/organizations/application"
+	organizationsrepository "file-workshop/backend/internal/modules/organizations/repository"
+	organizationstransport "file-workshop/backend/internal/modules/organizations/transport"
 	usersapplication "file-workshop/backend/internal/modules/users/application"
 	usersrepository "file-workshop/backend/internal/modules/users/repository"
 	userstransport "file-workshop/backend/internal/modules/users/transport"
@@ -88,7 +91,10 @@ func RunServer(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 	usersRepository := usersrepository.NewPostgreSQL(postgresPool)
 	usersService := usersapplication.NewService(usersRepository, usersRepository, domain.NewArgon2IDHasher(), time.Now)
 	usersHandler := userstransport.NewHandler(usersService, identityService, cfg.Auth)
-	router := httpserver.NewRouter(httpserver.NewAPIHandler(healthHandler, identityHandler, usersHandler), logger, cfg.Auth.AllowedOrigins)
+	organizationsRepository := organizationsrepository.NewPostgreSQL(postgresPool)
+	organizationsService := organizationsapplication.NewService(organizationsRepository, organizationsRepository, time.Now)
+	organizationsHandler := organizationstransport.NewHandler(organizationsService, identityService, cfg.Auth)
+	router := httpserver.NewRouter(httpserver.NewAPIHandler(healthHandler, identityHandler, usersHandler, organizationsHandler), logger, cfg.Auth.AllowedOrigins)
 	server := httpserver.NewServer(cfg.HTTP, router)
 
 	serverErrors := make(chan error, 1)

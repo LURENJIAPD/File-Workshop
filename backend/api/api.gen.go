@@ -91,6 +91,198 @@ func (e HealthStatus) Valid() bool {
 	}
 }
 
+// Defines values for OrganizationChangeOperationStatus.
+const (
+	OrganizationChangeOperationStatusFAILED  OrganizationChangeOperationStatus = "FAILED"
+	OrganizationChangeOperationStatusPENDING OrganizationChangeOperationStatus = "PENDING"
+	OrganizationChangeOperationStatusSKIPPED OrganizationChangeOperationStatus = "SKIPPED"
+	OrganizationChangeOperationStatusSUCCESS OrganizationChangeOperationStatus = "SUCCESS"
+)
+
+// Valid indicates whether the value is a known member of the OrganizationChangeOperationStatus enum.
+func (e OrganizationChangeOperationStatus) Valid() bool {
+	switch e {
+	case OrganizationChangeOperationStatusFAILED:
+		return true
+	case OrganizationChangeOperationStatusPENDING:
+		return true
+	case OrganizationChangeOperationStatusSKIPPED:
+		return true
+	case OrganizationChangeOperationStatusSUCCESS:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OrganizationChangeOperationType.
+const (
+	CREATENODE       OrganizationChangeOperationType = "CREATE_NODE"
+	MERGENODE        OrganizationChangeOperationType = "MERGE_NODE"
+	MOVEMEMBER       OrganizationChangeOperationType = "MOVE_MEMBER"
+	MOVENODE         OrganizationChangeOperationType = "MOVE_NODE"
+	MOVESPACECONTENT OrganizationChangeOperationType = "MOVE_SPACE_CONTENT"
+)
+
+// Valid indicates whether the value is a known member of the OrganizationChangeOperationType enum.
+func (e OrganizationChangeOperationType) Valid() bool {
+	switch e {
+	case CREATENODE:
+		return true
+	case MERGENODE:
+		return true
+	case MOVEMEMBER:
+		return true
+	case MOVENODE:
+		return true
+	case MOVESPACECONTENT:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OrganizationChangePlanAction.
+const (
+	APPROVE  OrganizationChangePlanAction = "APPROVE"
+	CANCEL   OrganizationChangePlanAction = "CANCEL"
+	EXECUTE  OrganizationChangePlanAction = "EXECUTE"
+	VALIDATE OrganizationChangePlanAction = "VALIDATE"
+)
+
+// Valid indicates whether the value is a known member of the OrganizationChangePlanAction enum.
+func (e OrganizationChangePlanAction) Valid() bool {
+	switch e {
+	case APPROVE:
+		return true
+	case CANCEL:
+		return true
+	case EXECUTE:
+		return true
+	case VALIDATE:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OrganizationChangePlanStatus.
+const (
+	OrganizationChangePlanStatusAPPROVED  OrganizationChangePlanStatus = "APPROVED"
+	OrganizationChangePlanStatusCANCELLED OrganizationChangePlanStatus = "CANCELLED"
+	OrganizationChangePlanStatusCOMPLETED OrganizationChangePlanStatus = "COMPLETED"
+	OrganizationChangePlanStatusDRAFT     OrganizationChangePlanStatus = "DRAFT"
+	OrganizationChangePlanStatusEXECUTING OrganizationChangePlanStatus = "EXECUTING"
+	OrganizationChangePlanStatusFAILED    OrganizationChangePlanStatus = "FAILED"
+	OrganizationChangePlanStatusVALIDATED OrganizationChangePlanStatus = "VALIDATED"
+)
+
+// Valid indicates whether the value is a known member of the OrganizationChangePlanStatus enum.
+func (e OrganizationChangePlanStatus) Valid() bool {
+	switch e {
+	case OrganizationChangePlanStatusAPPROVED:
+		return true
+	case OrganizationChangePlanStatusCANCELLED:
+		return true
+	case OrganizationChangePlanStatusCOMPLETED:
+		return true
+	case OrganizationChangePlanStatusDRAFT:
+		return true
+	case OrganizationChangePlanStatusEXECUTING:
+		return true
+	case OrganizationChangePlanStatusFAILED:
+		return true
+	case OrganizationChangePlanStatusVALIDATED:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OrganizationChangePlanType.
+const (
+	BULKRESTRUCTURE OrganizationChangePlanType = "BULK_RESTRUCTURE"
+	MERGE           OrganizationChangePlanType = "MERGE"
+	MOVE            OrganizationChangePlanType = "MOVE"
+	SPLIT           OrganizationChangePlanType = "SPLIT"
+)
+
+// Valid indicates whether the value is a known member of the OrganizationChangePlanType enum.
+func (e OrganizationChangePlanType) Valid() bool {
+	switch e {
+	case BULKRESTRUCTURE:
+		return true
+	case MERGE:
+		return true
+	case MOVE:
+		return true
+	case SPLIT:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OrganizationMembershipStatus.
+const (
+	OrganizationMembershipStatusACTIVE   OrganizationMembershipStatus = "ACTIVE"
+	OrganizationMembershipStatusINACTIVE OrganizationMembershipStatus = "INACTIVE"
+)
+
+// Valid indicates whether the value is a known member of the OrganizationMembershipStatus enum.
+func (e OrganizationMembershipStatus) Valid() bool {
+	switch e {
+	case OrganizationMembershipStatusACTIVE:
+		return true
+	case OrganizationMembershipStatusINACTIVE:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OrganizationMembershipType.
+const (
+	MEMBER  OrganizationMembershipType = "MEMBER"
+	PRIMARY OrganizationMembershipType = "PRIMARY"
+)
+
+// Valid indicates whether the value is a known member of the OrganizationMembershipType enum.
+func (e OrganizationMembershipType) Valid() bool {
+	switch e {
+	case MEMBER:
+		return true
+	case PRIMARY:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OrganizationStatus.
+const (
+	OrganizationStatusACTIVE   OrganizationStatus = "ACTIVE"
+	OrganizationStatusARCHIVED OrganizationStatus = "ARCHIVED"
+	OrganizationStatusDELETED  OrganizationStatus = "DELETED"
+	OrganizationStatusDISABLED OrganizationStatus = "DISABLED"
+)
+
+// Valid indicates whether the value is a known member of the OrganizationStatus enum.
+func (e OrganizationStatus) Valid() bool {
+	switch e {
+	case OrganizationStatusACTIVE:
+		return true
+	case OrganizationStatusARCHIVED:
+		return true
+	case OrganizationStatusDELETED:
+		return true
+	case OrganizationStatusDISABLED:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SessionSummaryStatus.
 const (
 	SessionSummaryStatusACTIVE  SessionSummaryStatus = "ACTIVE"
@@ -106,6 +298,51 @@ func (e SessionSummaryStatus) Valid() bool {
 	case SessionSummaryStatusEXPIRED:
 		return true
 	case SessionSummaryStatusREVOKED:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SpaceStatus.
+const (
+	SpaceStatusACTIVE   SpaceStatus = "ACTIVE"
+	SpaceStatusARCHIVED SpaceStatus = "ARCHIVED"
+	SpaceStatusDELETED  SpaceStatus = "DELETED"
+	SpaceStatusFROZEN   SpaceStatus = "FROZEN"
+)
+
+// Valid indicates whether the value is a known member of the SpaceStatus enum.
+func (e SpaceStatus) Valid() bool {
+	switch e {
+	case SpaceStatusACTIVE:
+		return true
+	case SpaceStatusARCHIVED:
+		return true
+	case SpaceStatusDELETED:
+		return true
+	case SpaceStatusFROZEN:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SpaceType.
+const (
+	ORGANIZATION SpaceType = "ORGANIZATION"
+	PERSONAL     SpaceType = "PERSONAL"
+	PUBLIC       SpaceType = "PUBLIC"
+)
+
+// Valid indicates whether the value is a known member of the SpaceType enum.
+func (e SpaceType) Valid() bool {
+	switch e {
+	case ORGANIZATION:
+		return true
+	case PERSONAL:
+		return true
+	case PUBLIC:
 		return true
 	default:
 		return false
@@ -175,6 +412,25 @@ func (e UserStatus) Valid() bool {
 	}
 }
 
+// AddOrganizationChangeOperationRequest defines model for AddOrganizationChangeOperationRequest.
+type AddOrganizationChangeOperationRequest struct {
+	Operation              map[string]interface{}          `json:"operation"`
+	OperationSchemaVersion int                             `json:"operationSchemaVersion"`
+	OperationType          OrganizationChangeOperationType `json:"operationType"`
+	SequenceNumber         int                             `json:"sequenceNumber"`
+	SourceOrganizationId   *openapi_types.UUID             `json:"sourceOrganizationId,omitempty"`
+	TargetOrganizationId   *openapi_types.UUID             `json:"targetOrganizationId,omitempty"`
+}
+
+// AddOrganizationMemberRequest defines model for AddOrganizationMemberRequest.
+type AddOrganizationMemberRequest struct {
+	EffectiveFrom  *time.Time                 `json:"effectiveFrom,omitempty"`
+	EffectiveUntil *time.Time                 `json:"effectiveUntil,omitempty"`
+	JobTitle       *string                    `json:"jobTitle,omitempty"`
+	MembershipType OrganizationMembershipType `json:"membershipType"`
+	UserId         openapi_types.UUID         `json:"userId"`
+}
+
 // AuthTokenResponse defines model for AuthTokenResponse.
 type AuthTokenResponse struct {
 	AccessToken string `json:"accessToken"`
@@ -203,6 +459,20 @@ type AuthenticatedUser struct {
 // AuthenticatedUserSystemRole defines model for AuthenticatedUser.SystemRole.
 type AuthenticatedUserSystemRole string
 
+// ChangeOrganizationStatusRequest defines model for ChangeOrganizationStatusRequest.
+type ChangeOrganizationStatusRequest struct {
+	Reason     string             `json:"reason"`
+	RowVersion int64              `json:"rowVersion"`
+	Status     OrganizationStatus `json:"status"`
+}
+
+// ChangeSpaceStatusRequest defines model for ChangeSpaceStatusRequest.
+type ChangeSpaceStatusRequest struct {
+	Reason     string      `json:"reason"`
+	RowVersion int64       `json:"rowVersion"`
+	Status     SpaceStatus `json:"status"`
+}
+
 // ComponentHealth defines model for ComponentHealth.
 type ComponentHealth struct {
 	LatencyMs int64           `json:"latencyMs"`
@@ -212,6 +482,30 @@ type ComponentHealth struct {
 
 // ComponentStatus defines model for ComponentStatus.
 type ComponentStatus string
+
+// CreateOrganizationChangePlanRequest defines model for CreateOrganizationChangePlanRequest.
+type CreateOrganizationChangePlanRequest struct {
+	ExpectedTreeVersion int64                      `json:"expectedTreeVersion"`
+	Name                string                     `json:"name"`
+	PlanType            OrganizationChangePlanType `json:"planType"`
+}
+
+// CreateOrganizationRequest defines model for CreateOrganizationRequest.
+type CreateOrganizationRequest struct {
+	Code                 *string             `json:"code,omitempty"`
+	Name                 string              `json:"name"`
+	ParentOrganizationId *openapi_types.UUID `json:"parentOrganizationId,omitempty"`
+	SortOrder            *int                `json:"sortOrder,omitempty"`
+	SpaceQuotaBytes      int64               `json:"spaceQuotaBytes"`
+	TypeLabel            *string             `json:"typeLabel,omitempty"`
+}
+
+// CreatePublicSpaceRequest defines model for CreatePublicSpaceRequest.
+type CreatePublicSpaceRequest struct {
+	Config     *map[string]interface{} `json:"config,omitempty"`
+	Name       string                  `json:"name"`
+	QuotaBytes int64                   `json:"quotaBytes"`
+}
 
 // CreateUserRequest defines model for CreateUserRequest.
 type CreateUserRequest struct {
@@ -260,6 +554,158 @@ type LoginRequest struct {
 	Username string  `json:"username"`
 }
 
+// MoveOrganizationRequest defines model for MoveOrganizationRequest.
+type MoveOrganizationRequest struct {
+	// NewParentOrganizationId 省略表示移动为根组织。
+	NewParentOrganizationId *openapi_types.UUID `json:"newParentOrganizationId,omitempty"`
+	Reason                  *string             `json:"reason,omitempty"`
+	RowVersion              int64               `json:"rowVersion"`
+}
+
+// Organization defines model for Organization.
+type Organization struct {
+	Code                 *string             `json:"code,omitempty"`
+	CreatedAt            time.Time           `json:"createdAt"`
+	CreatedByUserId      openapi_types.UUID  `json:"createdByUserId"`
+	DeletedAt            *time.Time          `json:"deletedAt,omitempty"`
+	Depth                int                 `json:"depth"`
+	Name                 string              `json:"name"`
+	NormalizedCode       *string             `json:"normalizedCode,omitempty"`
+	NormalizedName       string              `json:"normalizedName"`
+	OrganizationId       openapi_types.UUID  `json:"organizationId"`
+	ParentOrganizationId *openapi_types.UUID `json:"parentOrganizationId,omitempty"`
+	PathCache            *string             `json:"pathCache,omitempty"`
+	RowVersion           int64               `json:"rowVersion"`
+	SortOrder            int                 `json:"sortOrder"`
+	Status               OrganizationStatus  `json:"status"`
+	TreeVersion          int64               `json:"treeVersion"`
+	TypeLabel            *string             `json:"typeLabel,omitempty"`
+	UpdatedAt            time.Time           `json:"updatedAt"`
+}
+
+// OrganizationChangeOperation defines model for OrganizationChangeOperation.
+type OrganizationChangeOperation struct {
+	CompletedAt            *time.Time                        `json:"completedAt,omitempty"`
+	CreatedAt              time.Time                         `json:"createdAt"`
+	FailureCode            *string                           `json:"failureCode,omitempty"`
+	Operation              map[string]interface{}            `json:"operation"`
+	OperationId            openapi_types.UUID                `json:"operationId"`
+	OperationSchemaVersion int                               `json:"operationSchemaVersion"`
+	OperationType          OrganizationChangeOperationType   `json:"operationType"`
+	PlanId                 openapi_types.UUID                `json:"planId"`
+	RowVersion             int64                             `json:"rowVersion"`
+	SequenceNumber         int                               `json:"sequenceNumber"`
+	SourceOrganizationId   *openapi_types.UUID               `json:"sourceOrganizationId,omitempty"`
+	Status                 OrganizationChangeOperationStatus `json:"status"`
+	TargetOrganizationId   *openapi_types.UUID               `json:"targetOrganizationId,omitempty"`
+	UpdatedAt              time.Time                         `json:"updatedAt"`
+}
+
+// OrganizationChangeOperationStatus defines model for OrganizationChangeOperationStatus.
+type OrganizationChangeOperationStatus string
+
+// OrganizationChangeOperationType defines model for OrganizationChangeOperationType.
+type OrganizationChangeOperationType string
+
+// OrganizationChangePlan defines model for OrganizationChangePlan.
+type OrganizationChangePlan struct {
+	ApprovedAt          *time.Time                    `json:"approvedAt,omitempty"`
+	ApprovedByUserId    *openapi_types.UUID           `json:"approvedByUserId,omitempty"`
+	CompletedAt         *time.Time                    `json:"completedAt,omitempty"`
+	CreatedAt           time.Time                     `json:"createdAt"`
+	CreatedByUserId     openapi_types.UUID            `json:"createdByUserId"`
+	ExpectedTreeVersion int64                         `json:"expectedTreeVersion"`
+	FailureCode         *string                       `json:"failureCode,omitempty"`
+	Name                string                        `json:"name"`
+	Operations          []OrganizationChangeOperation `json:"operations"`
+	PlanId              openapi_types.UUID            `json:"planId"`
+	PlanType            OrganizationChangePlanType    `json:"planType"`
+	RowVersion          int64                         `json:"rowVersion"`
+	StartedAt           *time.Time                    `json:"startedAt,omitempty"`
+	Status              OrganizationChangePlanStatus  `json:"status"`
+	UpdatedAt           time.Time                     `json:"updatedAt"`
+	ValidatedAt         *time.Time                    `json:"validatedAt,omitempty"`
+}
+
+// OrganizationChangePlanAction defines model for OrganizationChangePlanAction.
+type OrganizationChangePlanAction string
+
+// OrganizationChangePlanListResponse defines model for OrganizationChangePlanListResponse.
+type OrganizationChangePlanListResponse struct {
+	Items     []OrganizationChangePlan `json:"items"`
+	Page      Page                     `json:"page"`
+	PageSize  PageSize                 `json:"pageSize"`
+	RequestId string                   `json:"requestId"`
+	Total     int64                    `json:"total"`
+}
+
+// OrganizationChangePlanResponse defines model for OrganizationChangePlanResponse.
+type OrganizationChangePlanResponse struct {
+	Plan      OrganizationChangePlan `json:"plan"`
+	RequestId string                 `json:"requestId"`
+}
+
+// OrganizationChangePlanStatus defines model for OrganizationChangePlanStatus.
+type OrganizationChangePlanStatus string
+
+// OrganizationChangePlanType defines model for OrganizationChangePlanType.
+type OrganizationChangePlanType string
+
+// OrganizationListResponse defines model for OrganizationListResponse.
+type OrganizationListResponse struct {
+	Items     []Organization `json:"items"`
+	Page      Page           `json:"page"`
+	PageSize  PageSize       `json:"pageSize"`
+	RequestId string         `json:"requestId"`
+	Total     int64          `json:"total"`
+}
+
+// OrganizationMembership defines model for OrganizationMembership.
+type OrganizationMembership struct {
+	CreatedAt       time.Time                    `json:"createdAt"`
+	CreatedByUserId openapi_types.UUID           `json:"createdByUserId"`
+	EffectiveFrom   time.Time                    `json:"effectiveFrom"`
+	EffectiveUntil  *time.Time                   `json:"effectiveUntil,omitempty"`
+	JobTitle        *string                      `json:"jobTitle,omitempty"`
+	MembershipId    openapi_types.UUID           `json:"membershipId"`
+	MembershipType  OrganizationMembershipType   `json:"membershipType"`
+	OrganizationId  openapi_types.UUID           `json:"organizationId"`
+	RowVersion      int64                        `json:"rowVersion"`
+	Status          OrganizationMembershipStatus `json:"status"`
+	UpdatedAt       time.Time                    `json:"updatedAt"`
+	UserId          openapi_types.UUID           `json:"userId"`
+}
+
+// OrganizationMembershipListResponse defines model for OrganizationMembershipListResponse.
+type OrganizationMembershipListResponse struct {
+	Items     []OrganizationMembership `json:"items"`
+	Page      Page                     `json:"page"`
+	PageSize  PageSize                 `json:"pageSize"`
+	RequestId string                   `json:"requestId"`
+	Total     int64                    `json:"total"`
+}
+
+// OrganizationMembershipResponse defines model for OrganizationMembershipResponse.
+type OrganizationMembershipResponse struct {
+	Membership OrganizationMembership `json:"membership"`
+	RequestId  string                 `json:"requestId"`
+}
+
+// OrganizationMembershipStatus defines model for OrganizationMembershipStatus.
+type OrganizationMembershipStatus string
+
+// OrganizationMembershipType defines model for OrganizationMembershipType.
+type OrganizationMembershipType string
+
+// OrganizationResponse defines model for OrganizationResponse.
+type OrganizationResponse struct {
+	Organization Organization `json:"organization"`
+	RequestId    string       `json:"requestId"`
+}
+
+// OrganizationStatus defines model for OrganizationStatus.
+type OrganizationStatus string
+
 // Page defines model for Page.
 type Page = int
 
@@ -271,6 +717,19 @@ type PaginationMeta struct {
 	Page     Page     `json:"page"`
 	PageSize PageSize `json:"pageSize"`
 	Total    *int64   `json:"total,omitempty"`
+}
+
+// ProvisionPersonalSpaceRequest defines model for ProvisionPersonalSpaceRequest.
+type ProvisionPersonalSpaceRequest struct {
+	Config     *map[string]interface{} `json:"config,omitempty"`
+	Name       string                  `json:"name"`
+	QuotaBytes int64                   `json:"quotaBytes"`
+}
+
+// RemoveOrganizationMemberRequest defines model for RemoveOrganizationMemberRequest.
+type RemoveOrganizationMemberRequest struct {
+	Reason     string `json:"reason"`
+	RowVersion int64  `json:"rowVersion"`
 }
 
 // ResetUserPasswordRequest defines model for ResetUserPasswordRequest.
@@ -292,8 +751,60 @@ type SessionSummary struct {
 // SessionSummaryStatus defines model for SessionSummary.Status.
 type SessionSummaryStatus string
 
+// Space defines model for Space.
+type Space struct {
+	AclVersion          int64                  `json:"aclVersion"`
+	Config              map[string]interface{} `json:"config"`
+	ConfigSchemaVersion int                    `json:"configSchemaVersion"`
+	CreatedAt           time.Time              `json:"createdAt"`
+	CreatedByUserId     openapi_types.UUID     `json:"createdByUserId"`
+	DeletedAt           *time.Time             `json:"deletedAt,omitempty"`
+	Name                string                 `json:"name"`
+	NormalizedName      string                 `json:"normalizedName"`
+	OrganizationId      *openapi_types.UUID    `json:"organizationId,omitempty"`
+	OwnerUserId         *openapi_types.UUID    `json:"ownerUserId,omitempty"`
+	QuotaBytes          int64                  `json:"quotaBytes"`
+	ReservedBytes       int64                  `json:"reservedBytes"`
+	RootFolderId        *openapi_types.UUID    `json:"rootFolderId,omitempty"`
+	RowVersion          int64                  `json:"rowVersion"`
+	SecurityEpoch       int64                  `json:"securityEpoch"`
+	SpaceId             openapi_types.UUID     `json:"spaceId"`
+	SpaceType           SpaceType              `json:"spaceType"`
+	Status              SpaceStatus            `json:"status"`
+	UpdatedAt           time.Time              `json:"updatedAt"`
+	UsedBytes           int64                  `json:"usedBytes"`
+}
+
+// SpaceListResponse defines model for SpaceListResponse.
+type SpaceListResponse struct {
+	Items     []Space  `json:"items"`
+	Page      Page     `json:"page"`
+	PageSize  PageSize `json:"pageSize"`
+	RequestId string   `json:"requestId"`
+	Total     int64    `json:"total"`
+}
+
+// SpaceResponse defines model for SpaceResponse.
+type SpaceResponse struct {
+	RequestId string `json:"requestId"`
+	Space     Space  `json:"space"`
+}
+
+// SpaceStatus defines model for SpaceStatus.
+type SpaceStatus string
+
+// SpaceType defines model for SpaceType.
+type SpaceType string
+
 // SystemRole defines model for SystemRole.
 type SystemRole string
+
+// TransitionOrganizationChangePlanRequest defines model for TransitionOrganizationChangePlanRequest.
+type TransitionOrganizationChangePlanRequest struct {
+	Action     OrganizationChangePlanAction `json:"action"`
+	Reason     *string                      `json:"reason,omitempty"`
+	RowVersion int64                        `json:"rowVersion"`
+}
 
 // UpdateCurrentUserRequest defines model for UpdateCurrentUserRequest.
 type UpdateCurrentUserRequest struct {
@@ -307,6 +818,38 @@ type UpdateCurrentUserRequest struct {
 	Phone      *string `json:"phone,omitempty"`
 	RowVersion int64   `json:"rowVersion"`
 	Timezone   *string `json:"timezone,omitempty"`
+}
+
+// UpdateOrganizationMemberRequest defines model for UpdateOrganizationMemberRequest.
+type UpdateOrganizationMemberRequest struct {
+	EffectiveUntil *time.Time `json:"effectiveUntil,omitempty"`
+
+	// JobTitle 空字符串表示清除职务显示值。
+	JobTitle       *string                       `json:"jobTitle,omitempty"`
+	MembershipType *OrganizationMembershipType   `json:"membershipType,omitempty"`
+	RowVersion     int64                         `json:"rowVersion"`
+	Status         *OrganizationMembershipStatus `json:"status,omitempty"`
+}
+
+// UpdateOrganizationRequest defines model for UpdateOrganizationRequest.
+type UpdateOrganizationRequest struct {
+	// Code 空字符串表示清除组织编码。
+	Code       *string `json:"code,omitempty"`
+	Name       *string `json:"name,omitempty"`
+	RowVersion int64   `json:"rowVersion"`
+	SortOrder  *int    `json:"sortOrder,omitempty"`
+
+	// TypeLabel 空字符串表示清除类型标签。
+	TypeLabel *string `json:"typeLabel,omitempty"`
+}
+
+// UpdateSpaceRequest defines model for UpdateSpaceRequest.
+type UpdateSpaceRequest struct {
+	Config              *map[string]interface{} `json:"config,omitempty"`
+	ConfigSchemaVersion *int                    `json:"configSchemaVersion,omitempty"`
+	Name                *string                 `json:"name,omitempty"`
+	QuotaBytes          *int64                  `json:"quotaBytes,omitempty"`
+	RowVersion          int64                   `json:"rowVersion"`
 }
 
 // UpdateUserRequest defines model for UpdateUserRequest.
@@ -401,14 +944,26 @@ type UserStatus string
 // IdempotencyKeyHeader defines model for IdempotencyKeyHeader.
 type IdempotencyKeyHeader = string
 
+// MembershipIdPath defines model for MembershipIdPath.
+type MembershipIdPath = openapi_types.UUID
+
+// OrganizationIdPath defines model for OrganizationIdPath.
+type OrganizationIdPath = openapi_types.UUID
+
 // PageQuery defines model for PageQuery.
 type PageQuery = int
 
 // PageSizeQuery defines model for PageSizeQuery.
 type PageSizeQuery = int
 
+// PlanIdPath defines model for PlanIdPath.
+type PlanIdPath = openapi_types.UUID
+
 // SessionIdPath defines model for SessionIdPath.
 type SessionIdPath = openapi_types.UUID
+
+// SpaceIdPath defines model for SpaceIdPath.
+type SpaceIdPath = openapi_types.UUID
 
 // UserIdPath defines model for UserIdPath.
 type UserIdPath = openapi_types.UUID
@@ -440,6 +995,80 @@ type SecurityRejected = ErrorResponse
 // TooManyRequests defines model for TooManyRequests.
 type TooManyRequests = ErrorResponse
 
+// ListOrganizationChangePlansParams defines parameters for ListOrganizationChangePlans.
+type ListOrganizationChangePlansParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize *PageSizeQuery                `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+	Status   *OrganizationChangePlanStatus `form:"status,omitempty" json:"status,omitempty"`
+}
+
+// CreateOrganizationChangePlanParams defines parameters for CreateOrganizationChangePlan.
+type CreateOrganizationChangePlanParams struct {
+	// IdempotencyKey 可重试写请求的稳定幂等键。
+	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
+}
+
+// AddOrganizationChangeOperationParams defines parameters for AddOrganizationChangeOperation.
+type AddOrganizationChangeOperationParams struct {
+	// IdempotencyKey 可重试写请求的稳定幂等键。
+	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
+}
+
+// ListOrganizationsParams defines parameters for ListOrganizations.
+type ListOrganizationsParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize             *PageSizeQuery      `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+	ParentOrganizationId *openapi_types.UUID `form:"parentOrganizationId,omitempty" json:"parentOrganizationId,omitempty"`
+	Status               *OrganizationStatus `form:"status,omitempty" json:"status,omitempty"`
+}
+
+// CreateOrganizationParams defines parameters for CreateOrganization.
+type CreateOrganizationParams struct {
+	// IdempotencyKey 可重试写请求的稳定幂等键。
+	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
+}
+
+// ListOrganizationMembersParams defines parameters for ListOrganizationMembers.
+type ListOrganizationMembersParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize *PageSizeQuery                `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+	Status   *OrganizationMembershipStatus `form:"status,omitempty" json:"status,omitempty"`
+}
+
+// AddOrganizationMemberParams defines parameters for AddOrganizationMember.
+type AddOrganizationMemberParams struct {
+	// IdempotencyKey 可重试写请求的稳定幂等键。
+	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
+}
+
+// ListSpacesParams defines parameters for ListSpaces.
+type ListSpacesParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize       *PageSizeQuery      `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+	SpaceType      *SpaceType          `form:"spaceType,omitempty" json:"spaceType,omitempty"`
+	Status         *SpaceStatus        `form:"status,omitempty" json:"status,omitempty"`
+	OrganizationId *openapi_types.UUID `form:"organizationId,omitempty" json:"organizationId,omitempty"`
+	OwnerUserId    *openapi_types.UUID `form:"ownerUserId,omitempty" json:"ownerUserId,omitempty"`
+}
+
+// CreatePublicSpaceParams defines parameters for CreatePublicSpace.
+type CreatePublicSpaceParams struct {
+	// IdempotencyKey 可重试写请求的稳定幂等键。
+	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
+}
+
 // ListUsersParams defines parameters for ListUsers.
 type ListUsersParams struct {
 	// Page 从 1 开始的页码。
@@ -457,6 +1086,21 @@ type CreateUserParams struct {
 	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
 }
 
+// ProvisionUserPersonalSpaceParams defines parameters for ProvisionUserPersonalSpace.
+type ProvisionUserPersonalSpaceParams struct {
+	// IdempotencyKey 可重试写请求的稳定幂等键。
+	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
+}
+
+// ListCurrentUserOrganizationsParams defines parameters for ListCurrentUserOrganizations.
+type ListCurrentUserOrganizationsParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize *PageSizeQuery `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+}
+
 // ListCurrentUserSessionsParams defines parameters for ListCurrentUserSessions.
 type ListCurrentUserSessionsParams struct {
 	// Page 从 1 开始的页码。
@@ -465,6 +1109,45 @@ type ListCurrentUserSessionsParams struct {
 	// PageSize 每页数量，最大 200。
 	PageSize *PageSizeQuery `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 }
+
+// CreateOrganizationChangePlanJSONRequestBody defines body for CreateOrganizationChangePlan for application/json ContentType.
+type CreateOrganizationChangePlanJSONRequestBody = CreateOrganizationChangePlanRequest
+
+// AddOrganizationChangeOperationJSONRequestBody defines body for AddOrganizationChangeOperation for application/json ContentType.
+type AddOrganizationChangeOperationJSONRequestBody = AddOrganizationChangeOperationRequest
+
+// TransitionOrganizationChangePlanJSONRequestBody defines body for TransitionOrganizationChangePlan for application/json ContentType.
+type TransitionOrganizationChangePlanJSONRequestBody = TransitionOrganizationChangePlanRequest
+
+// CreateOrganizationJSONRequestBody defines body for CreateOrganization for application/json ContentType.
+type CreateOrganizationJSONRequestBody = CreateOrganizationRequest
+
+// UpdateOrganizationJSONRequestBody defines body for UpdateOrganization for application/json ContentType.
+type UpdateOrganizationJSONRequestBody = UpdateOrganizationRequest
+
+// AddOrganizationMemberJSONRequestBody defines body for AddOrganizationMember for application/json ContentType.
+type AddOrganizationMemberJSONRequestBody = AddOrganizationMemberRequest
+
+// RemoveOrganizationMemberJSONRequestBody defines body for RemoveOrganizationMember for application/json ContentType.
+type RemoveOrganizationMemberJSONRequestBody = RemoveOrganizationMemberRequest
+
+// UpdateOrganizationMemberJSONRequestBody defines body for UpdateOrganizationMember for application/json ContentType.
+type UpdateOrganizationMemberJSONRequestBody = UpdateOrganizationMemberRequest
+
+// MoveOrganizationJSONRequestBody defines body for MoveOrganization for application/json ContentType.
+type MoveOrganizationJSONRequestBody = MoveOrganizationRequest
+
+// ChangeOrganizationStatusJSONRequestBody defines body for ChangeOrganizationStatus for application/json ContentType.
+type ChangeOrganizationStatusJSONRequestBody = ChangeOrganizationStatusRequest
+
+// CreatePublicSpaceJSONRequestBody defines body for CreatePublicSpace for application/json ContentType.
+type CreatePublicSpaceJSONRequestBody = CreatePublicSpaceRequest
+
+// UpdateSpaceJSONRequestBody defines body for UpdateSpace for application/json ContentType.
+type UpdateSpaceJSONRequestBody = UpdateSpaceRequest
+
+// ChangeSpaceStatusJSONRequestBody defines body for ChangeSpaceStatus for application/json ContentType.
+type ChangeSpaceStatusJSONRequestBody = ChangeSpaceStatusRequest
 
 // CreateUserJSONRequestBody defines body for CreateUser for application/json ContentType.
 type CreateUserJSONRequestBody = CreateUserRequest
@@ -487,6 +1170,9 @@ type LockUserJSONRequestBody = UserStateChangeRequest
 // ResetUserPasswordJSONRequestBody defines body for ResetUserPassword for application/json ContentType.
 type ResetUserPasswordJSONRequestBody = ResetUserPasswordRequest
 
+// ProvisionUserPersonalSpaceJSONRequestBody defines body for ProvisionUserPersonalSpace for application/json ContentType.
+type ProvisionUserPersonalSpaceJSONRequestBody = ProvisionPersonalSpaceRequest
+
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
 
@@ -495,6 +1181,66 @@ type UpdateCurrentUserJSONRequestBody = UpdateCurrentUserRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// ListOrganizationChangePlans 分页查询组织重组计划
+	// (GET /api/v1/admin/organization-change-plans)
+	ListOrganizationChangePlans(c *gin.Context, params ListOrganizationChangePlansParams)
+	// CreateOrganizationChangePlan 创建组织重组计划
+	// (POST /api/v1/admin/organization-change-plans)
+	CreateOrganizationChangePlan(c *gin.Context, params CreateOrganizationChangePlanParams)
+	// GetOrganizationChangePlan 获取组织重组计划及操作
+	// (GET /api/v1/admin/organization-change-plans/{planId})
+	GetOrganizationChangePlan(c *gin.Context, planId PlanIdPath)
+	// AddOrganizationChangeOperation 向 DRAFT 计划添加操作
+	// (POST /api/v1/admin/organization-change-plans/{planId}/operations)
+	AddOrganizationChangeOperation(c *gin.Context, planId PlanIdPath, params AddOrganizationChangeOperationParams)
+	// TransitionOrganizationChangePlan 校验、批准、执行或取消重组计划
+	// (POST /api/v1/admin/organization-change-plans/{planId}/transition)
+	TransitionOrganizationChangePlan(c *gin.Context, planId PlanIdPath)
+	// ListOrganizations 分页查询组织
+	// (GET /api/v1/admin/organizations)
+	ListOrganizations(c *gin.Context, params ListOrganizationsParams)
+	// CreateOrganization 创建组织及其组织空间
+	// (POST /api/v1/admin/organizations)
+	CreateOrganization(c *gin.Context, params CreateOrganizationParams)
+	// GetOrganization 获取组织详情
+	// (GET /api/v1/admin/organizations/{organizationId})
+	GetOrganization(c *gin.Context, organizationId OrganizationIdPath)
+	// UpdateOrganization 修改组织基本资料
+	// (PATCH /api/v1/admin/organizations/{organizationId})
+	UpdateOrganization(c *gin.Context, organizationId OrganizationIdPath)
+	// ListOrganizationMembers 分页查询组织成员关系
+	// (GET /api/v1/admin/organizations/{organizationId}/members)
+	ListOrganizationMembers(c *gin.Context, organizationId OrganizationIdPath, params ListOrganizationMembersParams)
+	// AddOrganizationMember 添加组织成员关系
+	// (POST /api/v1/admin/organizations/{organizationId}/members)
+	AddOrganizationMember(c *gin.Context, organizationId OrganizationIdPath, params AddOrganizationMemberParams)
+	// RemoveOrganizationMember 停用组织成员关系
+	// (DELETE /api/v1/admin/organizations/{organizationId}/members/{membershipId})
+	RemoveOrganizationMember(c *gin.Context, organizationId OrganizationIdPath, membershipId MembershipIdPath)
+	// UpdateOrganizationMember 修改组织成员关系
+	// (PATCH /api/v1/admin/organizations/{organizationId}/members/{membershipId})
+	UpdateOrganizationMember(c *gin.Context, organizationId OrganizationIdPath, membershipId MembershipIdPath)
+	// MoveOrganization 移动组织节点
+	// (POST /api/v1/admin/organizations/{organizationId}/move)
+	MoveOrganization(c *gin.Context, organizationId OrganizationIdPath)
+	// ChangeOrganizationStatus 改变组织状态
+	// (PUT /api/v1/admin/organizations/{organizationId}/status)
+	ChangeOrganizationStatus(c *gin.Context, organizationId OrganizationIdPath)
+	// ListSpaces 分页查询空间
+	// (GET /api/v1/admin/spaces)
+	ListSpaces(c *gin.Context, params ListSpacesParams)
+	// CreatePublicSpace 创建命名公共空间
+	// (POST /api/v1/admin/spaces)
+	CreatePublicSpace(c *gin.Context, params CreatePublicSpaceParams)
+	// GetSpace 获取空间详情
+	// (GET /api/v1/admin/spaces/{spaceId})
+	GetSpace(c *gin.Context, spaceId SpaceIdPath)
+	// UpdateSpace 修改空间名称、配额或配置
+	// (PATCH /api/v1/admin/spaces/{spaceId})
+	UpdateSpace(c *gin.Context, spaceId SpaceIdPath)
+	// ChangeSpaceStatus 改变空间状态
+	// (PUT /api/v1/admin/spaces/{spaceId}/status)
+	ChangeSpaceStatus(c *gin.Context, spaceId SpaceIdPath)
 	// ListUsers 分页查询用户
 	// (GET /api/v1/admin/users)
 	ListUsers(c *gin.Context, params ListUsersParams)
@@ -522,6 +1268,9 @@ type ServerInterface interface {
 	// ResetUserPassword 管理员重置本地用户密码
 	// (PUT /api/v1/admin/users/{userId}/password)
 	ResetUserPassword(c *gin.Context, userId UserIdPath)
+	// ProvisionUserPersonalSpace 为用户幂等创建个人空间
+	// (POST /api/v1/admin/users/{userId}/personal-space)
+	ProvisionUserPersonalSpace(c *gin.Context, userId UserIdPath, params ProvisionUserPersonalSpaceParams)
 	// Login 使用用户名和密码登录
 	// (POST /api/v1/auth/login)
 	Login(c *gin.Context)
@@ -540,6 +1289,12 @@ type ServerInterface interface {
 	// UpdateCurrentUser 修改当前用户资料
 	// (PATCH /api/v1/users/me)
 	UpdateCurrentUser(c *gin.Context)
+	// ListCurrentUserOrganizations 分页获取当前用户的有效组织关系
+	// (GET /api/v1/users/me/organizations)
+	ListCurrentUserOrganizations(c *gin.Context, params ListCurrentUserOrganizationsParams)
+	// GetCurrentUserPersonalSpace 获取当前用户个人空间
+	// (GET /api/v1/users/me/personal-space)
+	GetCurrentUserPersonalSpace(c *gin.Context)
 	// ListCurrentUserSessions 分页查询当前用户会话
 	// (GET /api/v1/users/me/sessions)
 	ListCurrentUserSessions(c *gin.Context, params ListCurrentUserSessionsParams)
@@ -562,6 +1317,745 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(c *gin.Context)
+
+// ListOrganizationChangePlans operation middleware
+func (siw *ServerInterfaceWrapper) ListOrganizationChangePlans(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListOrganizationChangePlansParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", c.Request.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter status: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListOrganizationChangePlans(c, params)
+}
+
+// CreateOrganizationChangePlan operation middleware
+func (siw *ServerInterfaceWrapper) CreateOrganizationChangePlan(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateOrganizationChangePlanParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKeyHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreateOrganizationChangePlan(c, params)
+}
+
+// GetOrganizationChangePlan operation middleware
+func (siw *ServerInterfaceWrapper) GetOrganizationChangePlan(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "planId" -------------
+	var planId PlanIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "planId", c.Param("planId"), &planId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter planId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetOrganizationChangePlan(c, planId)
+}
+
+// AddOrganizationChangeOperation operation middleware
+func (siw *ServerInterfaceWrapper) AddOrganizationChangeOperation(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "planId" -------------
+	var planId PlanIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "planId", c.Param("planId"), &planId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter planId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AddOrganizationChangeOperationParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKeyHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.AddOrganizationChangeOperation(c, planId, params)
+}
+
+// TransitionOrganizationChangePlan operation middleware
+func (siw *ServerInterfaceWrapper) TransitionOrganizationChangePlan(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "planId" -------------
+	var planId PlanIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "planId", c.Param("planId"), &planId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter planId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.TransitionOrganizationChangePlan(c, planId)
+}
+
+// ListOrganizations operation middleware
+func (siw *ServerInterfaceWrapper) ListOrganizations(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListOrganizationsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "parentOrganizationId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "parentOrganizationId", c.Request.URL.Query(), &params.ParentOrganizationId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter parentOrganizationId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", c.Request.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter status: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListOrganizations(c, params)
+}
+
+// CreateOrganization operation middleware
+func (siw *ServerInterfaceWrapper) CreateOrganization(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateOrganizationParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKeyHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreateOrganization(c, params)
+}
+
+// GetOrganization operation middleware
+func (siw *ServerInterfaceWrapper) GetOrganization(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "organizationId" -------------
+	var organizationId OrganizationIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "organizationId", c.Param("organizationId"), &organizationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter organizationId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetOrganization(c, organizationId)
+}
+
+// UpdateOrganization operation middleware
+func (siw *ServerInterfaceWrapper) UpdateOrganization(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "organizationId" -------------
+	var organizationId OrganizationIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "organizationId", c.Param("organizationId"), &organizationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter organizationId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateOrganization(c, organizationId)
+}
+
+// ListOrganizationMembers operation middleware
+func (siw *ServerInterfaceWrapper) ListOrganizationMembers(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "organizationId" -------------
+	var organizationId OrganizationIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "organizationId", c.Param("organizationId"), &organizationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter organizationId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListOrganizationMembersParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", c.Request.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter status: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListOrganizationMembers(c, organizationId, params)
+}
+
+// AddOrganizationMember operation middleware
+func (siw *ServerInterfaceWrapper) AddOrganizationMember(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "organizationId" -------------
+	var organizationId OrganizationIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "organizationId", c.Param("organizationId"), &organizationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter organizationId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AddOrganizationMemberParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKeyHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.AddOrganizationMember(c, organizationId, params)
+}
+
+// RemoveOrganizationMember operation middleware
+func (siw *ServerInterfaceWrapper) RemoveOrganizationMember(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "organizationId" -------------
+	var organizationId OrganizationIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "organizationId", c.Param("organizationId"), &organizationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter organizationId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Path parameter "membershipId" -------------
+	var membershipId MembershipIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "membershipId", c.Param("membershipId"), &membershipId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter membershipId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.RemoveOrganizationMember(c, organizationId, membershipId)
+}
+
+// UpdateOrganizationMember operation middleware
+func (siw *ServerInterfaceWrapper) UpdateOrganizationMember(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "organizationId" -------------
+	var organizationId OrganizationIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "organizationId", c.Param("organizationId"), &organizationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter organizationId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Path parameter "membershipId" -------------
+	var membershipId MembershipIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "membershipId", c.Param("membershipId"), &membershipId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter membershipId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateOrganizationMember(c, organizationId, membershipId)
+}
+
+// MoveOrganization operation middleware
+func (siw *ServerInterfaceWrapper) MoveOrganization(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "organizationId" -------------
+	var organizationId OrganizationIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "organizationId", c.Param("organizationId"), &organizationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter organizationId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.MoveOrganization(c, organizationId)
+}
+
+// ChangeOrganizationStatus operation middleware
+func (siw *ServerInterfaceWrapper) ChangeOrganizationStatus(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "organizationId" -------------
+	var organizationId OrganizationIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "organizationId", c.Param("organizationId"), &organizationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter organizationId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ChangeOrganizationStatus(c, organizationId)
+}
+
+// ListSpaces operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaces(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListSpacesParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "spaceType" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "spaceType", c.Request.URL.Query(), &params.SpaceType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter spaceType: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", c.Request.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter status: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "organizationId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "organizationId", c.Request.URL.Query(), &params.OrganizationId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter organizationId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "ownerUserId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "ownerUserId", c.Request.URL.Query(), &params.OwnerUserId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter ownerUserId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListSpaces(c, params)
+}
+
+// CreatePublicSpace operation middleware
+func (siw *ServerInterfaceWrapper) CreatePublicSpace(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreatePublicSpaceParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKeyHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreatePublicSpace(c, params)
+}
+
+// GetSpace operation middleware
+func (siw *ServerInterfaceWrapper) GetSpace(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", c.Param("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter spaceId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetSpace(c, spaceId)
+}
+
+// UpdateSpace operation middleware
+func (siw *ServerInterfaceWrapper) UpdateSpace(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", c.Param("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter spaceId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateSpace(c, spaceId)
+}
+
+// ChangeSpaceStatus operation middleware
+func (siw *ServerInterfaceWrapper) ChangeSpaceStatus(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", c.Param("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter spaceId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ChangeSpaceStatus(c, spaceId)
+}
 
 // ListUsers operation middleware
 func (siw *ServerInterfaceWrapper) ListUsers(c *gin.Context) {
@@ -832,6 +2326,58 @@ func (siw *ServerInterfaceWrapper) ResetUserPassword(c *gin.Context) {
 	siw.Handler.ResetUserPassword(c, userId)
 }
 
+// ProvisionUserPersonalSpace operation middleware
+func (siw *ServerInterfaceWrapper) ProvisionUserPersonalSpace(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "userId" -------------
+	var userId UserIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userId", c.Param("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter userId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ProvisionUserPersonalSpaceParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKeyHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ProvisionUserPersonalSpace(c, userId, params)
+}
+
 // Login operation middleware
 func (siw *ServerInterfaceWrapper) Login(c *gin.Context) {
 
@@ -908,6 +2454,54 @@ func (siw *ServerInterfaceWrapper) UpdateCurrentUser(c *gin.Context) {
 	}
 
 	siw.Handler.UpdateCurrentUser(c)
+}
+
+// ListCurrentUserOrganizations operation middleware
+func (siw *ServerInterfaceWrapper) ListCurrentUserOrganizations(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCurrentUserOrganizationsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListCurrentUserOrganizations(c, params)
+}
+
+// GetCurrentUserPersonalSpace operation middleware
+func (siw *ServerInterfaceWrapper) GetCurrentUserPersonalSpace(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetCurrentUserPersonalSpace(c)
 }
 
 // ListCurrentUserSessions operation middleware
@@ -1042,6 +2636,29 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/api/v1/admin/users/:userId/enable", wrapper.EnableUser)
 	router.POST(options.BaseURL+"/api/v1/admin/users/:userId/lock", wrapper.LockUser)
 	router.PUT(options.BaseURL+"/api/v1/admin/users/:userId/password", wrapper.ResetUserPassword)
+	router.GET(options.BaseURL+"/api/v1/users/me/organizations", wrapper.ListCurrentUserOrganizations)
+	router.GET(options.BaseURL+"/api/v1/users/me/personal-space", wrapper.GetCurrentUserPersonalSpace)
+	router.POST(options.BaseURL+"/api/v1/admin/users/:userId/personal-space", wrapper.ProvisionUserPersonalSpace)
+	router.GET(options.BaseURL+"/api/v1/admin/organizations", wrapper.ListOrganizations)
+	router.POST(options.BaseURL+"/api/v1/admin/organizations", wrapper.CreateOrganization)
+	router.GET(options.BaseURL+"/api/v1/admin/organizations/:organizationId", wrapper.GetOrganization)
+	router.PATCH(options.BaseURL+"/api/v1/admin/organizations/:organizationId", wrapper.UpdateOrganization)
+	router.POST(options.BaseURL+"/api/v1/admin/organizations/:organizationId/move", wrapper.MoveOrganization)
+	router.PUT(options.BaseURL+"/api/v1/admin/organizations/:organizationId/status", wrapper.ChangeOrganizationStatus)
+	router.GET(options.BaseURL+"/api/v1/admin/organizations/:organizationId/members", wrapper.ListOrganizationMembers)
+	router.POST(options.BaseURL+"/api/v1/admin/organizations/:organizationId/members", wrapper.AddOrganizationMember)
+	router.DELETE(options.BaseURL+"/api/v1/admin/organizations/:organizationId/members/:membershipId", wrapper.RemoveOrganizationMember)
+	router.PATCH(options.BaseURL+"/api/v1/admin/organizations/:organizationId/members/:membershipId", wrapper.UpdateOrganizationMember)
+	router.GET(options.BaseURL+"/api/v1/admin/spaces", wrapper.ListSpaces)
+	router.POST(options.BaseURL+"/api/v1/admin/spaces", wrapper.CreatePublicSpace)
+	router.GET(options.BaseURL+"/api/v1/admin/spaces/:spaceId", wrapper.GetSpace)
+	router.PATCH(options.BaseURL+"/api/v1/admin/spaces/:spaceId", wrapper.UpdateSpace)
+	router.PUT(options.BaseURL+"/api/v1/admin/spaces/:spaceId/status", wrapper.ChangeSpaceStatus)
+	router.GET(options.BaseURL+"/api/v1/admin/organization-change-plans", wrapper.ListOrganizationChangePlans)
+	router.POST(options.BaseURL+"/api/v1/admin/organization-change-plans", wrapper.CreateOrganizationChangePlan)
+	router.GET(options.BaseURL+"/api/v1/admin/organization-change-plans/:planId", wrapper.GetOrganizationChangePlan)
+	router.POST(options.BaseURL+"/api/v1/admin/organization-change-plans/:planId/operations", wrapper.AddOrganizationChangeOperation)
+	router.POST(options.BaseURL+"/api/v1/admin/organization-change-plans/:planId/transition", wrapper.TransitionOrganizationChangePlan)
 }
 
 type AccountLockedResponseHeaders struct {
@@ -1124,6 +2741,1903 @@ type TooManyRequestsJSONResponse struct {
 	Body ErrorResponse
 
 	Headers TooManyRequestsResponseHeaders
+}
+
+type ListOrganizationChangePlansRequestObject struct {
+	Params ListOrganizationChangePlansParams
+}
+
+type ListOrganizationChangePlansResponseObject interface {
+	VisitListOrganizationChangePlansResponse(w http.ResponseWriter) error
+}
+
+type ListOrganizationChangePlans200JSONResponse OrganizationChangePlanListResponse
+
+func (response ListOrganizationChangePlans200JSONResponse) VisitListOrganizationChangePlansResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrganizationChangePlans400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListOrganizationChangePlans400JSONResponse) VisitListOrganizationChangePlansResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrganizationChangePlans401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListOrganizationChangePlans401JSONResponse) VisitListOrganizationChangePlansResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrganizationChangePlans403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListOrganizationChangePlans403JSONResponse) VisitListOrganizationChangePlansResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrganizationChangePlanRequestObject struct {
+	Params CreateOrganizationChangePlanParams
+	Body   *CreateOrganizationChangePlanJSONRequestBody
+}
+
+type CreateOrganizationChangePlanResponseObject interface {
+	VisitCreateOrganizationChangePlanResponse(w http.ResponseWriter) error
+}
+
+type CreateOrganizationChangePlan201JSONResponse OrganizationChangePlanResponse
+
+func (response CreateOrganizationChangePlan201JSONResponse) VisitCreateOrganizationChangePlanResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrganizationChangePlan400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response CreateOrganizationChangePlan400JSONResponse) VisitCreateOrganizationChangePlanResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrganizationChangePlan401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response CreateOrganizationChangePlan401JSONResponse) VisitCreateOrganizationChangePlanResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrganizationChangePlan403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response CreateOrganizationChangePlan403JSONResponse) VisitCreateOrganizationChangePlanResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrganizationChangePlan409JSONResponse struct{ ConflictJSONResponse }
+
+func (response CreateOrganizationChangePlan409JSONResponse) VisitCreateOrganizationChangePlanResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrganizationChangePlanRequestObject struct {
+	PlanId PlanIdPath `json:"planId"`
+}
+
+type GetOrganizationChangePlanResponseObject interface {
+	VisitGetOrganizationChangePlanResponse(w http.ResponseWriter) error
+}
+
+type GetOrganizationChangePlan200JSONResponse OrganizationChangePlanResponse
+
+func (response GetOrganizationChangePlan200JSONResponse) VisitGetOrganizationChangePlanResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrganizationChangePlan401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response GetOrganizationChangePlan401JSONResponse) VisitGetOrganizationChangePlanResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrganizationChangePlan403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetOrganizationChangePlan403JSONResponse) VisitGetOrganizationChangePlanResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrganizationChangePlan404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetOrganizationChangePlan404JSONResponse) VisitGetOrganizationChangePlanResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddOrganizationChangeOperationRequestObject struct {
+	PlanId PlanIdPath `json:"planId"`
+	Params AddOrganizationChangeOperationParams
+	Body   *AddOrganizationChangeOperationJSONRequestBody
+}
+
+type AddOrganizationChangeOperationResponseObject interface {
+	VisitAddOrganizationChangeOperationResponse(w http.ResponseWriter) error
+}
+
+type AddOrganizationChangeOperation201JSONResponse OrganizationChangePlanResponse
+
+func (response AddOrganizationChangeOperation201JSONResponse) VisitAddOrganizationChangeOperationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddOrganizationChangeOperation400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response AddOrganizationChangeOperation400JSONResponse) VisitAddOrganizationChangeOperationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddOrganizationChangeOperation401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response AddOrganizationChangeOperation401JSONResponse) VisitAddOrganizationChangeOperationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddOrganizationChangeOperation403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AddOrganizationChangeOperation403JSONResponse) VisitAddOrganizationChangeOperationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddOrganizationChangeOperation404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AddOrganizationChangeOperation404JSONResponse) VisitAddOrganizationChangeOperationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddOrganizationChangeOperation409JSONResponse struct{ ConflictJSONResponse }
+
+func (response AddOrganizationChangeOperation409JSONResponse) VisitAddOrganizationChangeOperationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransitionOrganizationChangePlanRequestObject struct {
+	PlanId PlanIdPath `json:"planId"`
+	Body   *TransitionOrganizationChangePlanJSONRequestBody
+}
+
+type TransitionOrganizationChangePlanResponseObject interface {
+	VisitTransitionOrganizationChangePlanResponse(w http.ResponseWriter) error
+}
+
+type TransitionOrganizationChangePlan200JSONResponse OrganizationChangePlanResponse
+
+func (response TransitionOrganizationChangePlan200JSONResponse) VisitTransitionOrganizationChangePlanResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransitionOrganizationChangePlan400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response TransitionOrganizationChangePlan400JSONResponse) VisitTransitionOrganizationChangePlanResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransitionOrganizationChangePlan401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response TransitionOrganizationChangePlan401JSONResponse) VisitTransitionOrganizationChangePlanResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransitionOrganizationChangePlan403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response TransitionOrganizationChangePlan403JSONResponse) VisitTransitionOrganizationChangePlanResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransitionOrganizationChangePlan404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response TransitionOrganizationChangePlan404JSONResponse) VisitTransitionOrganizationChangePlanResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransitionOrganizationChangePlan409JSONResponse struct{ ConflictJSONResponse }
+
+func (response TransitionOrganizationChangePlan409JSONResponse) VisitTransitionOrganizationChangePlanResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrganizationsRequestObject struct {
+	Params ListOrganizationsParams
+}
+
+type ListOrganizationsResponseObject interface {
+	VisitListOrganizationsResponse(w http.ResponseWriter) error
+}
+
+type ListOrganizations200JSONResponse OrganizationListResponse
+
+func (response ListOrganizations200JSONResponse) VisitListOrganizationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrganizations400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListOrganizations400JSONResponse) VisitListOrganizationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrganizations401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListOrganizations401JSONResponse) VisitListOrganizationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrganizations403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListOrganizations403JSONResponse) VisitListOrganizationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrganizationRequestObject struct {
+	Params CreateOrganizationParams
+	Body   *CreateOrganizationJSONRequestBody
+}
+
+type CreateOrganizationResponseObject interface {
+	VisitCreateOrganizationResponse(w http.ResponseWriter) error
+}
+
+type CreateOrganization201JSONResponse OrganizationResponse
+
+func (response CreateOrganization201JSONResponse) VisitCreateOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrganization400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response CreateOrganization400JSONResponse) VisitCreateOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrganization401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response CreateOrganization401JSONResponse) VisitCreateOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrganization403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response CreateOrganization403JSONResponse) VisitCreateOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrganization404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response CreateOrganization404JSONResponse) VisitCreateOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOrganization409JSONResponse struct{ ConflictJSONResponse }
+
+func (response CreateOrganization409JSONResponse) VisitCreateOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrganizationRequestObject struct {
+	OrganizationId OrganizationIdPath `json:"organizationId"`
+}
+
+type GetOrganizationResponseObject interface {
+	VisitGetOrganizationResponse(w http.ResponseWriter) error
+}
+
+type GetOrganization200JSONResponse OrganizationResponse
+
+func (response GetOrganization200JSONResponse) VisitGetOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrganization401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response GetOrganization401JSONResponse) VisitGetOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrganization403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetOrganization403JSONResponse) VisitGetOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOrganization404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetOrganization404JSONResponse) VisitGetOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrganizationRequestObject struct {
+	OrganizationId OrganizationIdPath `json:"organizationId"`
+	Body           *UpdateOrganizationJSONRequestBody
+}
+
+type UpdateOrganizationResponseObject interface {
+	VisitUpdateOrganizationResponse(w http.ResponseWriter) error
+}
+
+type UpdateOrganization200JSONResponse OrganizationResponse
+
+func (response UpdateOrganization200JSONResponse) VisitUpdateOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrganization400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response UpdateOrganization400JSONResponse) VisitUpdateOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrganization401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response UpdateOrganization401JSONResponse) VisitUpdateOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrganization403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UpdateOrganization403JSONResponse) VisitUpdateOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrganization404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UpdateOrganization404JSONResponse) VisitUpdateOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrganization409JSONResponse struct{ ConflictJSONResponse }
+
+func (response UpdateOrganization409JSONResponse) VisitUpdateOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrganizationMembersRequestObject struct {
+	OrganizationId OrganizationIdPath `json:"organizationId"`
+	Params         ListOrganizationMembersParams
+}
+
+type ListOrganizationMembersResponseObject interface {
+	VisitListOrganizationMembersResponse(w http.ResponseWriter) error
+}
+
+type ListOrganizationMembers200JSONResponse OrganizationMembershipListResponse
+
+func (response ListOrganizationMembers200JSONResponse) VisitListOrganizationMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrganizationMembers400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListOrganizationMembers400JSONResponse) VisitListOrganizationMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrganizationMembers401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListOrganizationMembers401JSONResponse) VisitListOrganizationMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrganizationMembers403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListOrganizationMembers403JSONResponse) VisitListOrganizationMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrganizationMembers404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response ListOrganizationMembers404JSONResponse) VisitListOrganizationMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddOrganizationMemberRequestObject struct {
+	OrganizationId OrganizationIdPath `json:"organizationId"`
+	Params         AddOrganizationMemberParams
+	Body           *AddOrganizationMemberJSONRequestBody
+}
+
+type AddOrganizationMemberResponseObject interface {
+	VisitAddOrganizationMemberResponse(w http.ResponseWriter) error
+}
+
+type AddOrganizationMember201JSONResponse OrganizationMembershipResponse
+
+func (response AddOrganizationMember201JSONResponse) VisitAddOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddOrganizationMember400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response AddOrganizationMember400JSONResponse) VisitAddOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddOrganizationMember401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response AddOrganizationMember401JSONResponse) VisitAddOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddOrganizationMember403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AddOrganizationMember403JSONResponse) VisitAddOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddOrganizationMember404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AddOrganizationMember404JSONResponse) VisitAddOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AddOrganizationMember409JSONResponse struct{ ConflictJSONResponse }
+
+func (response AddOrganizationMember409JSONResponse) VisitAddOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveOrganizationMemberRequestObject struct {
+	OrganizationId OrganizationIdPath `json:"organizationId"`
+	MembershipId   MembershipIdPath   `json:"membershipId"`
+	Body           *RemoveOrganizationMemberJSONRequestBody
+}
+
+type RemoveOrganizationMemberResponseObject interface {
+	VisitRemoveOrganizationMemberResponse(w http.ResponseWriter) error
+}
+
+type RemoveOrganizationMember204Response struct {
+}
+
+func (response RemoveOrganizationMember204Response) VisitRemoveOrganizationMemberResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RemoveOrganizationMember400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response RemoveOrganizationMember400JSONResponse) VisitRemoveOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveOrganizationMember401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response RemoveOrganizationMember401JSONResponse) VisitRemoveOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveOrganizationMember403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RemoveOrganizationMember403JSONResponse) VisitRemoveOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveOrganizationMember404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response RemoveOrganizationMember404JSONResponse) VisitRemoveOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveOrganizationMember409JSONResponse struct{ ConflictJSONResponse }
+
+func (response RemoveOrganizationMember409JSONResponse) VisitRemoveOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrganizationMemberRequestObject struct {
+	OrganizationId OrganizationIdPath `json:"organizationId"`
+	MembershipId   MembershipIdPath   `json:"membershipId"`
+	Body           *UpdateOrganizationMemberJSONRequestBody
+}
+
+type UpdateOrganizationMemberResponseObject interface {
+	VisitUpdateOrganizationMemberResponse(w http.ResponseWriter) error
+}
+
+type UpdateOrganizationMember200JSONResponse OrganizationMembershipResponse
+
+func (response UpdateOrganizationMember200JSONResponse) VisitUpdateOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrganizationMember400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response UpdateOrganizationMember400JSONResponse) VisitUpdateOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrganizationMember401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response UpdateOrganizationMember401JSONResponse) VisitUpdateOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrganizationMember403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UpdateOrganizationMember403JSONResponse) VisitUpdateOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrganizationMember404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UpdateOrganizationMember404JSONResponse) VisitUpdateOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateOrganizationMember409JSONResponse struct{ ConflictJSONResponse }
+
+func (response UpdateOrganizationMember409JSONResponse) VisitUpdateOrganizationMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveOrganizationRequestObject struct {
+	OrganizationId OrganizationIdPath `json:"organizationId"`
+	Body           *MoveOrganizationJSONRequestBody
+}
+
+type MoveOrganizationResponseObject interface {
+	VisitMoveOrganizationResponse(w http.ResponseWriter) error
+}
+
+type MoveOrganization200JSONResponse OrganizationResponse
+
+func (response MoveOrganization200JSONResponse) VisitMoveOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveOrganization400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response MoveOrganization400JSONResponse) VisitMoveOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveOrganization401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response MoveOrganization401JSONResponse) VisitMoveOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveOrganization403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response MoveOrganization403JSONResponse) VisitMoveOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveOrganization404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response MoveOrganization404JSONResponse) VisitMoveOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveOrganization409JSONResponse struct{ ConflictJSONResponse }
+
+func (response MoveOrganization409JSONResponse) VisitMoveOrganizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ChangeOrganizationStatusRequestObject struct {
+	OrganizationId OrganizationIdPath `json:"organizationId"`
+	Body           *ChangeOrganizationStatusJSONRequestBody
+}
+
+type ChangeOrganizationStatusResponseObject interface {
+	VisitChangeOrganizationStatusResponse(w http.ResponseWriter) error
+}
+
+type ChangeOrganizationStatus200JSONResponse OrganizationResponse
+
+func (response ChangeOrganizationStatus200JSONResponse) VisitChangeOrganizationStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ChangeOrganizationStatus400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ChangeOrganizationStatus400JSONResponse) VisitChangeOrganizationStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ChangeOrganizationStatus401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ChangeOrganizationStatus401JSONResponse) VisitChangeOrganizationStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ChangeOrganizationStatus403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ChangeOrganizationStatus403JSONResponse) VisitChangeOrganizationStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ChangeOrganizationStatus404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response ChangeOrganizationStatus404JSONResponse) VisitChangeOrganizationStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ChangeOrganizationStatus409JSONResponse struct{ ConflictJSONResponse }
+
+func (response ChangeOrganizationStatus409JSONResponse) VisitChangeOrganizationStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpacesRequestObject struct {
+	Params ListSpacesParams
+}
+
+type ListSpacesResponseObject interface {
+	VisitListSpacesResponse(w http.ResponseWriter) error
+}
+
+type ListSpaces200JSONResponse SpaceListResponse
+
+func (response ListSpaces200JSONResponse) VisitListSpacesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaces400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListSpaces400JSONResponse) VisitListSpacesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaces401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListSpaces401JSONResponse) VisitListSpacesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaces403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListSpaces403JSONResponse) VisitListSpacesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePublicSpaceRequestObject struct {
+	Params CreatePublicSpaceParams
+	Body   *CreatePublicSpaceJSONRequestBody
+}
+
+type CreatePublicSpaceResponseObject interface {
+	VisitCreatePublicSpaceResponse(w http.ResponseWriter) error
+}
+
+type CreatePublicSpace201JSONResponse SpaceResponse
+
+func (response CreatePublicSpace201JSONResponse) VisitCreatePublicSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePublicSpace400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response CreatePublicSpace400JSONResponse) VisitCreatePublicSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePublicSpace401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response CreatePublicSpace401JSONResponse) VisitCreatePublicSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePublicSpace403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response CreatePublicSpace403JSONResponse) VisitCreatePublicSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePublicSpace409JSONResponse struct{ ConflictJSONResponse }
+
+func (response CreatePublicSpace409JSONResponse) VisitCreatePublicSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceRequestObject struct {
+	SpaceId SpaceIdPath `json:"spaceId"`
+}
+
+type GetSpaceResponseObject interface {
+	VisitGetSpaceResponse(w http.ResponseWriter) error
+}
+
+type GetSpace200JSONResponse SpaceResponse
+
+func (response GetSpace200JSONResponse) VisitGetSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpace401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response GetSpace401JSONResponse) VisitGetSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpace403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetSpace403JSONResponse) VisitGetSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpace404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetSpace404JSONResponse) VisitGetSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpaceRequestObject struct {
+	SpaceId SpaceIdPath `json:"spaceId"`
+	Body    *UpdateSpaceJSONRequestBody
+}
+
+type UpdateSpaceResponseObject interface {
+	VisitUpdateSpaceResponse(w http.ResponseWriter) error
+}
+
+type UpdateSpace200JSONResponse SpaceResponse
+
+func (response UpdateSpace200JSONResponse) VisitUpdateSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpace400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response UpdateSpace400JSONResponse) VisitUpdateSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpace401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response UpdateSpace401JSONResponse) VisitUpdateSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpace403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UpdateSpace403JSONResponse) VisitUpdateSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpace404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UpdateSpace404JSONResponse) VisitUpdateSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpace409JSONResponse struct{ ConflictJSONResponse }
+
+func (response UpdateSpace409JSONResponse) VisitUpdateSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ChangeSpaceStatusRequestObject struct {
+	SpaceId SpaceIdPath `json:"spaceId"`
+	Body    *ChangeSpaceStatusJSONRequestBody
+}
+
+type ChangeSpaceStatusResponseObject interface {
+	VisitChangeSpaceStatusResponse(w http.ResponseWriter) error
+}
+
+type ChangeSpaceStatus200JSONResponse SpaceResponse
+
+func (response ChangeSpaceStatus200JSONResponse) VisitChangeSpaceStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ChangeSpaceStatus400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ChangeSpaceStatus400JSONResponse) VisitChangeSpaceStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ChangeSpaceStatus401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ChangeSpaceStatus401JSONResponse) VisitChangeSpaceStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ChangeSpaceStatus403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ChangeSpaceStatus403JSONResponse) VisitChangeSpaceStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ChangeSpaceStatus404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response ChangeSpaceStatus404JSONResponse) VisitChangeSpaceStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ChangeSpaceStatus409JSONResponse struct{ ConflictJSONResponse }
+
+func (response ChangeSpaceStatus409JSONResponse) VisitChangeSpaceStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type ListUsersRequestObject struct {
@@ -2023,6 +5537,115 @@ func (response ResetUserPassword409JSONResponse) VisitResetUserPasswordResponse(
 	return err
 }
 
+type ProvisionUserPersonalSpaceRequestObject struct {
+	UserId UserIdPath `json:"userId"`
+	Params ProvisionUserPersonalSpaceParams
+	Body   *ProvisionUserPersonalSpaceJSONRequestBody
+}
+
+type ProvisionUserPersonalSpaceResponseObject interface {
+	VisitProvisionUserPersonalSpaceResponse(w http.ResponseWriter) error
+}
+
+type ProvisionUserPersonalSpace201JSONResponse SpaceResponse
+
+func (response ProvisionUserPersonalSpace201JSONResponse) VisitProvisionUserPersonalSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ProvisionUserPersonalSpace400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ProvisionUserPersonalSpace400JSONResponse) VisitProvisionUserPersonalSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ProvisionUserPersonalSpace401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ProvisionUserPersonalSpace401JSONResponse) VisitProvisionUserPersonalSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ProvisionUserPersonalSpace403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ProvisionUserPersonalSpace403JSONResponse) VisitProvisionUserPersonalSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ProvisionUserPersonalSpace404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response ProvisionUserPersonalSpace404JSONResponse) VisitProvisionUserPersonalSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ProvisionUserPersonalSpace409JSONResponse struct{ ConflictJSONResponse }
+
+func (response ProvisionUserPersonalSpace409JSONResponse) VisitProvisionUserPersonalSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type LoginRequestObject struct {
 	Body *LoginJSONRequestBody
 }
@@ -2468,6 +6091,117 @@ func (response UpdateCurrentUser409JSONResponse) VisitUpdateCurrentUserResponse(
 	return err
 }
 
+type ListCurrentUserOrganizationsRequestObject struct {
+	Params ListCurrentUserOrganizationsParams
+}
+
+type ListCurrentUserOrganizationsResponseObject interface {
+	VisitListCurrentUserOrganizationsResponse(w http.ResponseWriter) error
+}
+
+type ListCurrentUserOrganizations200JSONResponse OrganizationMembershipListResponse
+
+func (response ListCurrentUserOrganizations200JSONResponse) VisitListCurrentUserOrganizationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCurrentUserOrganizations400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListCurrentUserOrganizations400JSONResponse) VisitListCurrentUserOrganizationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCurrentUserOrganizations401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListCurrentUserOrganizations401JSONResponse) VisitListCurrentUserOrganizationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCurrentUserPersonalSpaceRequestObject struct {
+}
+
+type GetCurrentUserPersonalSpaceResponseObject interface {
+	VisitGetCurrentUserPersonalSpaceResponse(w http.ResponseWriter) error
+}
+
+type GetCurrentUserPersonalSpace200JSONResponse SpaceResponse
+
+func (response GetCurrentUserPersonalSpace200JSONResponse) VisitGetCurrentUserPersonalSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCurrentUserPersonalSpace401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response GetCurrentUserPersonalSpace401JSONResponse) VisitGetCurrentUserPersonalSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCurrentUserPersonalSpace404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetCurrentUserPersonalSpace404JSONResponse) VisitGetCurrentUserPersonalSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListCurrentUserSessionsRequestObject struct {
 	Params ListCurrentUserSessionsParams
 }
@@ -2697,6 +6431,66 @@ func (response GetReadiness503JSONResponse) VisitGetReadinessResponse(w http.Res
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// ListOrganizationChangePlans 分页查询组织重组计划
+	// (GET /api/v1/admin/organization-change-plans)
+	ListOrganizationChangePlans(ctx context.Context, request ListOrganizationChangePlansRequestObject) (ListOrganizationChangePlansResponseObject, error)
+	// CreateOrganizationChangePlan 创建组织重组计划
+	// (POST /api/v1/admin/organization-change-plans)
+	CreateOrganizationChangePlan(ctx context.Context, request CreateOrganizationChangePlanRequestObject) (CreateOrganizationChangePlanResponseObject, error)
+	// GetOrganizationChangePlan 获取组织重组计划及操作
+	// (GET /api/v1/admin/organization-change-plans/{planId})
+	GetOrganizationChangePlan(ctx context.Context, request GetOrganizationChangePlanRequestObject) (GetOrganizationChangePlanResponseObject, error)
+	// AddOrganizationChangeOperation 向 DRAFT 计划添加操作
+	// (POST /api/v1/admin/organization-change-plans/{planId}/operations)
+	AddOrganizationChangeOperation(ctx context.Context, request AddOrganizationChangeOperationRequestObject) (AddOrganizationChangeOperationResponseObject, error)
+	// TransitionOrganizationChangePlan 校验、批准、执行或取消重组计划
+	// (POST /api/v1/admin/organization-change-plans/{planId}/transition)
+	TransitionOrganizationChangePlan(ctx context.Context, request TransitionOrganizationChangePlanRequestObject) (TransitionOrganizationChangePlanResponseObject, error)
+	// ListOrganizations 分页查询组织
+	// (GET /api/v1/admin/organizations)
+	ListOrganizations(ctx context.Context, request ListOrganizationsRequestObject) (ListOrganizationsResponseObject, error)
+	// CreateOrganization 创建组织及其组织空间
+	// (POST /api/v1/admin/organizations)
+	CreateOrganization(ctx context.Context, request CreateOrganizationRequestObject) (CreateOrganizationResponseObject, error)
+	// GetOrganization 获取组织详情
+	// (GET /api/v1/admin/organizations/{organizationId})
+	GetOrganization(ctx context.Context, request GetOrganizationRequestObject) (GetOrganizationResponseObject, error)
+	// UpdateOrganization 修改组织基本资料
+	// (PATCH /api/v1/admin/organizations/{organizationId})
+	UpdateOrganization(ctx context.Context, request UpdateOrganizationRequestObject) (UpdateOrganizationResponseObject, error)
+	// ListOrganizationMembers 分页查询组织成员关系
+	// (GET /api/v1/admin/organizations/{organizationId}/members)
+	ListOrganizationMembers(ctx context.Context, request ListOrganizationMembersRequestObject) (ListOrganizationMembersResponseObject, error)
+	// AddOrganizationMember 添加组织成员关系
+	// (POST /api/v1/admin/organizations/{organizationId}/members)
+	AddOrganizationMember(ctx context.Context, request AddOrganizationMemberRequestObject) (AddOrganizationMemberResponseObject, error)
+	// RemoveOrganizationMember 停用组织成员关系
+	// (DELETE /api/v1/admin/organizations/{organizationId}/members/{membershipId})
+	RemoveOrganizationMember(ctx context.Context, request RemoveOrganizationMemberRequestObject) (RemoveOrganizationMemberResponseObject, error)
+	// UpdateOrganizationMember 修改组织成员关系
+	// (PATCH /api/v1/admin/organizations/{organizationId}/members/{membershipId})
+	UpdateOrganizationMember(ctx context.Context, request UpdateOrganizationMemberRequestObject) (UpdateOrganizationMemberResponseObject, error)
+	// MoveOrganization 移动组织节点
+	// (POST /api/v1/admin/organizations/{organizationId}/move)
+	MoveOrganization(ctx context.Context, request MoveOrganizationRequestObject) (MoveOrganizationResponseObject, error)
+	// ChangeOrganizationStatus 改变组织状态
+	// (PUT /api/v1/admin/organizations/{organizationId}/status)
+	ChangeOrganizationStatus(ctx context.Context, request ChangeOrganizationStatusRequestObject) (ChangeOrganizationStatusResponseObject, error)
+	// ListSpaces 分页查询空间
+	// (GET /api/v1/admin/spaces)
+	ListSpaces(ctx context.Context, request ListSpacesRequestObject) (ListSpacesResponseObject, error)
+	// CreatePublicSpace 创建命名公共空间
+	// (POST /api/v1/admin/spaces)
+	CreatePublicSpace(ctx context.Context, request CreatePublicSpaceRequestObject) (CreatePublicSpaceResponseObject, error)
+	// GetSpace 获取空间详情
+	// (GET /api/v1/admin/spaces/{spaceId})
+	GetSpace(ctx context.Context, request GetSpaceRequestObject) (GetSpaceResponseObject, error)
+	// UpdateSpace 修改空间名称、配额或配置
+	// (PATCH /api/v1/admin/spaces/{spaceId})
+	UpdateSpace(ctx context.Context, request UpdateSpaceRequestObject) (UpdateSpaceResponseObject, error)
+	// ChangeSpaceStatus 改变空间状态
+	// (PUT /api/v1/admin/spaces/{spaceId}/status)
+	ChangeSpaceStatus(ctx context.Context, request ChangeSpaceStatusRequestObject) (ChangeSpaceStatusResponseObject, error)
 	// ListUsers 分页查询用户
 	// (GET /api/v1/admin/users)
 	ListUsers(ctx context.Context, request ListUsersRequestObject) (ListUsersResponseObject, error)
@@ -2724,6 +6518,9 @@ type StrictServerInterface interface {
 	// ResetUserPassword 管理员重置本地用户密码
 	// (PUT /api/v1/admin/users/{userId}/password)
 	ResetUserPassword(ctx context.Context, request ResetUserPasswordRequestObject) (ResetUserPasswordResponseObject, error)
+	// ProvisionUserPersonalSpace 为用户幂等创建个人空间
+	// (POST /api/v1/admin/users/{userId}/personal-space)
+	ProvisionUserPersonalSpace(ctx context.Context, request ProvisionUserPersonalSpaceRequestObject) (ProvisionUserPersonalSpaceResponseObject, error)
 	// Login 使用用户名和密码登录
 	// (POST /api/v1/auth/login)
 	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
@@ -2742,6 +6539,12 @@ type StrictServerInterface interface {
 	// UpdateCurrentUser 修改当前用户资料
 	// (PATCH /api/v1/users/me)
 	UpdateCurrentUser(ctx context.Context, request UpdateCurrentUserRequestObject) (UpdateCurrentUserResponseObject, error)
+	// ListCurrentUserOrganizations 分页获取当前用户的有效组织关系
+	// (GET /api/v1/users/me/organizations)
+	ListCurrentUserOrganizations(ctx context.Context, request ListCurrentUserOrganizationsRequestObject) (ListCurrentUserOrganizationsResponseObject, error)
+	// GetCurrentUserPersonalSpace 获取当前用户个人空间
+	// (GET /api/v1/users/me/personal-space)
+	GetCurrentUserPersonalSpace(ctx context.Context, request GetCurrentUserPersonalSpaceRequestObject) (GetCurrentUserPersonalSpaceResponseObject, error)
 	// ListCurrentUserSessions 分页查询当前用户会话
 	// (GET /api/v1/users/me/sessions)
 	ListCurrentUserSessions(ctx context.Context, request ListCurrentUserSessionsRequestObject) (ListCurrentUserSessionsResponseObject, error)
@@ -2811,6 +6614,622 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictGinServerOptions
+}
+
+// ListOrganizationChangePlans operation middleware
+func (sh *strictHandler) ListOrganizationChangePlans(ctx *gin.Context, params ListOrganizationChangePlansParams) {
+	var request ListOrganizationChangePlansRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOrganizationChangePlans(ctx, request.(ListOrganizationChangePlansRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOrganizationChangePlans")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListOrganizationChangePlansResponseObject); ok {
+		if err := validResponse.VisitListOrganizationChangePlansResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateOrganizationChangePlan operation middleware
+func (sh *strictHandler) CreateOrganizationChangePlan(ctx *gin.Context, params CreateOrganizationChangePlanParams) {
+	var request CreateOrganizationChangePlanRequestObject
+
+	request.Params = params
+
+	var body CreateOrganizationChangePlanJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateOrganizationChangePlan(ctx, request.(CreateOrganizationChangePlanRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateOrganizationChangePlan")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(CreateOrganizationChangePlanResponseObject); ok {
+		if err := validResponse.VisitCreateOrganizationChangePlanResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetOrganizationChangePlan operation middleware
+func (sh *strictHandler) GetOrganizationChangePlan(ctx *gin.Context, planId PlanIdPath) {
+	var request GetOrganizationChangePlanRequestObject
+
+	request.PlanId = planId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetOrganizationChangePlan(ctx, request.(GetOrganizationChangePlanRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetOrganizationChangePlan")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetOrganizationChangePlanResponseObject); ok {
+		if err := validResponse.VisitGetOrganizationChangePlanResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AddOrganizationChangeOperation operation middleware
+func (sh *strictHandler) AddOrganizationChangeOperation(ctx *gin.Context, planId PlanIdPath, params AddOrganizationChangeOperationParams) {
+	var request AddOrganizationChangeOperationRequestObject
+
+	request.PlanId = planId
+	request.Params = params
+
+	var body AddOrganizationChangeOperationJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.AddOrganizationChangeOperation(ctx, request.(AddOrganizationChangeOperationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AddOrganizationChangeOperation")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(AddOrganizationChangeOperationResponseObject); ok {
+		if err := validResponse.VisitAddOrganizationChangeOperationResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TransitionOrganizationChangePlan operation middleware
+func (sh *strictHandler) TransitionOrganizationChangePlan(ctx *gin.Context, planId PlanIdPath) {
+	var request TransitionOrganizationChangePlanRequestObject
+
+	request.PlanId = planId
+
+	var body TransitionOrganizationChangePlanJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.TransitionOrganizationChangePlan(ctx, request.(TransitionOrganizationChangePlanRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TransitionOrganizationChangePlan")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(TransitionOrganizationChangePlanResponseObject); ok {
+		if err := validResponse.VisitTransitionOrganizationChangePlanResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOrganizations operation middleware
+func (sh *strictHandler) ListOrganizations(ctx *gin.Context, params ListOrganizationsParams) {
+	var request ListOrganizationsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOrganizations(ctx, request.(ListOrganizationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOrganizations")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListOrganizationsResponseObject); ok {
+		if err := validResponse.VisitListOrganizationsResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateOrganization operation middleware
+func (sh *strictHandler) CreateOrganization(ctx *gin.Context, params CreateOrganizationParams) {
+	var request CreateOrganizationRequestObject
+
+	request.Params = params
+
+	var body CreateOrganizationJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateOrganization(ctx, request.(CreateOrganizationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateOrganization")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(CreateOrganizationResponseObject); ok {
+		if err := validResponse.VisitCreateOrganizationResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetOrganization operation middleware
+func (sh *strictHandler) GetOrganization(ctx *gin.Context, organizationId OrganizationIdPath) {
+	var request GetOrganizationRequestObject
+
+	request.OrganizationId = organizationId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetOrganization(ctx, request.(GetOrganizationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetOrganization")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetOrganizationResponseObject); ok {
+		if err := validResponse.VisitGetOrganizationResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateOrganization operation middleware
+func (sh *strictHandler) UpdateOrganization(ctx *gin.Context, organizationId OrganizationIdPath) {
+	var request UpdateOrganizationRequestObject
+
+	request.OrganizationId = organizationId
+
+	var body UpdateOrganizationJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateOrganization(ctx, request.(UpdateOrganizationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateOrganization")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(UpdateOrganizationResponseObject); ok {
+		if err := validResponse.VisitUpdateOrganizationResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOrganizationMembers operation middleware
+func (sh *strictHandler) ListOrganizationMembers(ctx *gin.Context, organizationId OrganizationIdPath, params ListOrganizationMembersParams) {
+	var request ListOrganizationMembersRequestObject
+
+	request.OrganizationId = organizationId
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOrganizationMembers(ctx, request.(ListOrganizationMembersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOrganizationMembers")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListOrganizationMembersResponseObject); ok {
+		if err := validResponse.VisitListOrganizationMembersResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AddOrganizationMember operation middleware
+func (sh *strictHandler) AddOrganizationMember(ctx *gin.Context, organizationId OrganizationIdPath, params AddOrganizationMemberParams) {
+	var request AddOrganizationMemberRequestObject
+
+	request.OrganizationId = organizationId
+	request.Params = params
+
+	var body AddOrganizationMemberJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.AddOrganizationMember(ctx, request.(AddOrganizationMemberRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AddOrganizationMember")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(AddOrganizationMemberResponseObject); ok {
+		if err := validResponse.VisitAddOrganizationMemberResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemoveOrganizationMember operation middleware
+func (sh *strictHandler) RemoveOrganizationMember(ctx *gin.Context, organizationId OrganizationIdPath, membershipId MembershipIdPath) {
+	var request RemoveOrganizationMemberRequestObject
+
+	request.OrganizationId = organizationId
+	request.MembershipId = membershipId
+
+	var body RemoveOrganizationMemberJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RemoveOrganizationMember(ctx, request.(RemoveOrganizationMemberRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemoveOrganizationMember")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(RemoveOrganizationMemberResponseObject); ok {
+		if err := validResponse.VisitRemoveOrganizationMemberResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateOrganizationMember operation middleware
+func (sh *strictHandler) UpdateOrganizationMember(ctx *gin.Context, organizationId OrganizationIdPath, membershipId MembershipIdPath) {
+	var request UpdateOrganizationMemberRequestObject
+
+	request.OrganizationId = organizationId
+	request.MembershipId = membershipId
+
+	var body UpdateOrganizationMemberJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateOrganizationMember(ctx, request.(UpdateOrganizationMemberRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateOrganizationMember")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(UpdateOrganizationMemberResponseObject); ok {
+		if err := validResponse.VisitUpdateOrganizationMemberResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// MoveOrganization operation middleware
+func (sh *strictHandler) MoveOrganization(ctx *gin.Context, organizationId OrganizationIdPath) {
+	var request MoveOrganizationRequestObject
+
+	request.OrganizationId = organizationId
+
+	var body MoveOrganizationJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.MoveOrganization(ctx, request.(MoveOrganizationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "MoveOrganization")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(MoveOrganizationResponseObject); ok {
+		if err := validResponse.VisitMoveOrganizationResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ChangeOrganizationStatus operation middleware
+func (sh *strictHandler) ChangeOrganizationStatus(ctx *gin.Context, organizationId OrganizationIdPath) {
+	var request ChangeOrganizationStatusRequestObject
+
+	request.OrganizationId = organizationId
+
+	var body ChangeOrganizationStatusJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ChangeOrganizationStatus(ctx, request.(ChangeOrganizationStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ChangeOrganizationStatus")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ChangeOrganizationStatusResponseObject); ok {
+		if err := validResponse.VisitChangeOrganizationStatusResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListSpaces operation middleware
+func (sh *strictHandler) ListSpaces(ctx *gin.Context, params ListSpacesParams) {
+	var request ListSpacesRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaces(ctx, request.(ListSpacesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaces")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListSpacesResponseObject); ok {
+		if err := validResponse.VisitListSpacesResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreatePublicSpace operation middleware
+func (sh *strictHandler) CreatePublicSpace(ctx *gin.Context, params CreatePublicSpaceParams) {
+	var request CreatePublicSpaceRequestObject
+
+	request.Params = params
+
+	var body CreatePublicSpaceJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CreatePublicSpace(ctx, request.(CreatePublicSpaceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreatePublicSpace")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(CreatePublicSpaceResponseObject); ok {
+		if err := validResponse.VisitCreatePublicSpaceResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetSpace operation middleware
+func (sh *strictHandler) GetSpace(ctx *gin.Context, spaceId SpaceIdPath) {
+	var request GetSpaceRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSpace(ctx, request.(GetSpaceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSpace")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetSpaceResponseObject); ok {
+		if err := validResponse.VisitGetSpaceResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateSpace operation middleware
+func (sh *strictHandler) UpdateSpace(ctx *gin.Context, spaceId SpaceIdPath) {
+	var request UpdateSpaceRequestObject
+
+	request.SpaceId = spaceId
+
+	var body UpdateSpaceJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateSpace(ctx, request.(UpdateSpaceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateSpace")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(UpdateSpaceResponseObject); ok {
+		if err := validResponse.VisitUpdateSpaceResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ChangeSpaceStatus operation middleware
+func (sh *strictHandler) ChangeSpaceStatus(ctx *gin.Context, spaceId SpaceIdPath) {
+	var request ChangeSpaceStatusRequestObject
+
+	request.SpaceId = spaceId
+
+	var body ChangeSpaceStatusJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ChangeSpaceStatus(ctx, request.(ChangeSpaceStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ChangeSpaceStatus")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ChangeSpaceStatusResponseObject); ok {
+		if err := validResponse.VisitChangeSpaceStatusResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // ListUsers operation middleware
@@ -3096,6 +7515,40 @@ func (sh *strictHandler) ResetUserPassword(ctx *gin.Context, userId UserIdPath) 
 	}
 }
 
+// ProvisionUserPersonalSpace operation middleware
+func (sh *strictHandler) ProvisionUserPersonalSpace(ctx *gin.Context, userId UserIdPath, params ProvisionUserPersonalSpaceParams) {
+	var request ProvisionUserPersonalSpaceRequestObject
+
+	request.UserId = userId
+	request.Params = params
+
+	var body ProvisionUserPersonalSpaceJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ProvisionUserPersonalSpace(ctx, request.(ProvisionUserPersonalSpaceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ProvisionUserPersonalSpace")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ProvisionUserPersonalSpaceResponseObject); ok {
+		if err := validResponse.VisitProvisionUserPersonalSpaceResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // Login operation middleware
 func (sh *strictHandler) Login(ctx *gin.Context) {
 	var request LoginRequestObject
@@ -3247,6 +7700,56 @@ func (sh *strictHandler) UpdateCurrentUser(ctx *gin.Context) {
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(UpdateCurrentUserResponseObject); ok {
 		if err := validResponse.VisitUpdateCurrentUserResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListCurrentUserOrganizations operation middleware
+func (sh *strictHandler) ListCurrentUserOrganizations(ctx *gin.Context, params ListCurrentUserOrganizationsParams) {
+	var request ListCurrentUserOrganizationsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListCurrentUserOrganizations(ctx, request.(ListCurrentUserOrganizationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListCurrentUserOrganizations")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListCurrentUserOrganizationsResponseObject); ok {
+		if err := validResponse.VisitListCurrentUserOrganizationsResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetCurrentUserPersonalSpace operation middleware
+func (sh *strictHandler) GetCurrentUserPersonalSpace(ctx *gin.Context) {
+	var request GetCurrentUserPersonalSpaceRequestObject
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetCurrentUserPersonalSpace(ctx, request.(GetCurrentUserPersonalSpaceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetCurrentUserPersonalSpace")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetCurrentUserPersonalSpaceResponseObject); ok {
+		if err := validResponse.VisitGetCurrentUserPersonalSpaceResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

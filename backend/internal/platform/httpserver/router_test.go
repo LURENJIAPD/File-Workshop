@@ -146,7 +146,7 @@ func testRouter(t *testing.T, postgresErr, redisErr error) *gin.Engine {
 		t.Fatalf("health.NewService() error = %v", err)
 	}
 	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
-	return NewRouter(NewAPIHandler(NewHealthHandler(service, logger), nil, nil), logger, []string{"http://127.0.0.1:5173"})
+	return NewRouter(NewAPIHandler(NewHealthHandler(service, logger), nil, nil, nil), logger, []string{"http://127.0.0.1:5173"})
 }
 
 func decodeJSON(t *testing.T, recorder *httptest.ResponseRecorder, target any) {

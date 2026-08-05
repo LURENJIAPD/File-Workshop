@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.2
+> 文档版本：V0.3
 > 文档状态：按模块持续编制  
 > 最近更新：2026-08-05  
-> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -20,7 +20,8 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 | 公共 | 健康检查 | 已完成 | 2 | 2026-08-05 |
 | 01 | 身份认证 | 已完成 | 4 | 2026-08-05 |
 | 02 | 用户管理 | 已完成 | 13 | 2026-08-05 |
-| 03～16 | 后续系统模块 | 未收录 | 0 | — |
+| 03 | 组织与空间 | 已完成当前模块边界 | 23 | 2026-08-05 |
+| 04～16 | 后续系统模块 | 未收录 | 0 | — |
 
 ## 3. 全局接口约定
 
@@ -551,7 +552,114 @@ Operation ID：`resetUserPassword`
 - `backend/scripts/verify.ps1`
 - `backend/scripts/verify-integration.ps1`
 
-## 7. 文档维护与冻结规则
+## 7. 模块 03：组织与空间
+
+### 7.1 模块边界和通用规则
+
+本模块维护组织树、组织成员关系、个人/组织/公共空间、容量配额和组织变更计划。除“本人组织”和“本人个人空间”外，管理接口仅允许 `SYSTEM_ADMIN`。本模块不计算文件访问权限；权限、委派和资源最终授权由模块 04 负责。
+
+所有列表使用 `page/pageSize`，默认 `1/50`，`pageSize` 最大 200，并返回 `items/page/pageSize/total/requestId`。所有修改和状态转换使用当前 `rowVersion`；版本过期返回 `409/ROW_VERSION_CONFLICT`。创建组织、添加成员、建立个人空间、创建公共空间、创建变更计划和添加计划操作要求 `Idempotency-Key`。
+
+组织状态为 `ACTIVE/DISABLED/ARCHIVED/DELETED`；成员类型为 `PRIMARY/MEMBER`，成员状态为 `ACTIVE/INACTIVE`；空间类型为 `PERSONAL/ORGANIZATION/PUBLIC`，空间状态为 `ACTIVE/FROZEN/ARCHIVED/DELETED`。同一用户最多存在一个活动 `PRIMARY` 关系，组织关系还受 `effectiveFrom/effectiveUntil` 有效期约束。
+
+### 7.2 本人组织和个人空间
+
+| 接口 | Operation ID | 成功响应 | 说明 |
+|---|---|---:|---|
+| `GET /api/v1/users/me/organizations?page=1&pageSize=50` | `listCurrentUserOrganizations` | `200/OrganizationMembershipListResponse` | 只返回当前时间有效且状态为 `ACTIVE` 的本人关系 |
+| `GET /api/v1/users/me/personal-space` | `getCurrentUserPersonalSpace` | `200/SpaceResponse` | 返回本人唯一个人空间；尚未建立时返回 `404/SPACE_NOT_FOUND` |
+
+数据库设计没有定义个人空间默认配额，当前不自行编造默认值。个人空间通过管理员受控接口显式提供名称、配额和配置；后续由模块 16 接入 `USER_CREATED` 消费和可配置默认策略。
+
+### 7.3 组织管理
+
+| 接口 | Operation ID | 成功响应 | 关键约束 |
+|---|---|---:|---|
+| `GET /api/v1/admin/organizations?page=1&pageSize=50` | `listOrganizations` | `200/OrganizationListResponse` | 可按 `parentOrganizationId/status` 筛选，按 `sortOrder/normalizedName/organizationId` 稳定排序 |
+| `POST /api/v1/admin/organizations` | `createOrganization` | `201/OrganizationResponse` | 同事务创建组织、闭包关系、安全版本和唯一组织空间 |
+| `GET /api/v1/admin/organizations/{organizationId}` | `getOrganization` | `200/OrganizationResponse` | 不存在返回 `404/ORGANIZATION_NOT_FOUND` |
+| `PATCH /api/v1/admin/organizations/{organizationId}` | `updateOrganization` | `200/OrganizationResponse` | 可修改 `name/code/typeLabel/sortOrder`，必须携带 `rowVersion` |
+| `POST /api/v1/admin/organizations/{organizationId}/move` | `moveOrganization` | `200/OrganizationResponse` | `newParentOrganizationId` 省略表示移至根；事务内重建闭包并拒绝循环 |
+| `PUT /api/v1/admin/organizations/{organizationId}/status` | `changeOrganizationStatus` | `200/OrganizationResponse` | 请求包含 `status/rowVersion/reason`；删除前检查子组织、成员、空间、委派、迁移和保留事实 |
+
+创建组织请求示例：
+
+```json
+{
+  "parentOrganizationId": "019fd200-0000-7000-8000-000000000001",
+  "name": "装配一车间",
+  "code": "ASSEMBLY-01",
+  "typeLabel": "车间",
+  "sortOrder": 10,
+  "spaceQuotaBytes": 107374182400
+}
+```
+
+组织响应字段严格对应数据库设计中的组织事实：`organizationId/parentOrganizationId/name/normalizedName/code/normalizedCode/typeLabel/sortOrder/pathCache/depth/treeVersion/status/createdByUserId/createdAt/updatedAt/deletedAt/rowVersion`。组织空间配额由创建请求的 `spaceQuotaBytes` 写入 `spaces.quota_bytes`，不是组织表新增字段。
+
+### 7.4 组织成员关系
+
+| 接口 | Operation ID | 成功响应 | 关键约束 |
+|---|---|---:|---|
+| `GET /api/v1/admin/organizations/{organizationId}/members?page=1&pageSize=50` | `listOrganizationMembers` | `200/OrganizationMembershipListResponse` | 可按 `status` 筛选 |
+| `POST /api/v1/admin/organizations/{organizationId}/members` | `addOrganizationMember` | `201/OrganizationMembershipResponse` | 用户和组织必须活动；要求 `Idempotency-Key`；活动主职全局唯一 |
+| `PATCH /api/v1/admin/organizations/{organizationId}/members/{membershipId}` | `updateOrganizationMember` | `200/OrganizationMembershipResponse` | 可修改类型、职务、状态和结束时间，使用乐观锁 |
+| `DELETE /api/v1/admin/organizations/{organizationId}/members/{membershipId}` | `removeOrganizationMember` | `204` | 逻辑停用关系并设置有效期，不物理删除历史事实 |
+
+成员响应包含 `membershipId/userId/organizationId/membershipType/jobTitle/status/effectiveFrom/effectiveUntil/createdByUserId/createdAt/updatedAt/rowVersion`。成员变更同步递增组织和用户的成员安全版本，并产生组织成员 Outbox 事件。
+
+### 7.5 空间管理和配额
+
+| 接口 | Operation ID | 成功响应 | 关键约束 |
+|---|---|---:|---|
+| `POST /api/v1/admin/users/{userId}/personal-space` | `provisionUserPersonalSpace` | `201/SpaceResponse` | 活动用户最多一个个人空间；请求显式提供 `name/quotaBytes/config` |
+| `GET /api/v1/admin/spaces?page=1&pageSize=50` | `listSpaces` | `200/SpaceListResponse` | 可按 `spaceType/status/organizationId/ownerUserId` 筛选 |
+| `POST /api/v1/admin/spaces` | `createPublicSpace` | `201/SpaceResponse` | 创建命名公共空间，要求 `Idempotency-Key` |
+| `GET /api/v1/admin/spaces/{spaceId}` | `getSpace` | `200/SpaceResponse` | 不存在返回 `404/SPACE_NOT_FOUND` |
+| `PATCH /api/v1/admin/spaces/{spaceId}` | `updateSpace` | `200/SpaceResponse` | 可修改名称、配额和版本化 JSON 配置；配额不得低于已用量与预留量之和 |
+| `PUT /api/v1/admin/spaces/{spaceId}/status` | `changeSpaceStatus` | `200/SpaceResponse` | 请求包含 `status/rowVersion/reason`；个人空间禁止直接删除 |
+
+空间响应包含 `spaceId/spaceType/name/normalizedName/ownerUserId/organizationId/rootFolderId/quotaBytes/usedBytes/reservedBytes/aclVersion/securityEpoch/configSchemaVersion/config/status/createdByUserId/createdAt/updatedAt/deletedAt/rowVersion`。配额预留、消费和释放是模块内部应用服务能力，不开放可绕过上传流程的公共 REST API；数据库条件更新保证 `usedBytes + reservedBytes <= quotaBytes`，并发预留不会超卖。
+
+### 7.6 组织变更计划
+
+| 接口 | Operation ID | 成功响应 | 关键约束 |
+|---|---|---:|---|
+| `GET /api/v1/admin/organization-change-plans?page=1&pageSize=50` | `listOrganizationChangePlans` | `200/OrganizationChangePlanListResponse` | 可按计划状态筛选 |
+| `POST /api/v1/admin/organization-change-plans` | `createOrganizationChangePlan` | `201/OrganizationChangePlanResponse` | 创建 `DRAFT` 计划，要求当前 `expectedTreeVersion` 和 `Idempotency-Key` |
+| `GET /api/v1/admin/organization-change-plans/{planId}` | `getOrganizationChangePlan` | `200/OrganizationChangePlanResponse` | 同时返回按 `sequenceNumber` 排序的操作 |
+| `POST /api/v1/admin/organization-change-plans/{planId}/operations` | `addOrganizationChangeOperation` | `201/OrganizationChangePlanResponse` | 仅 `DRAFT` 可添加；要求 `Idempotency-Key`，同键重放不重复插入 |
+| `POST /api/v1/admin/organization-change-plans/{planId}/transition` | `transitionOrganizationChangePlan` | `200/OrganizationChangePlanResponse` | `VALIDATE/APPROVE/EXECUTE/CANCEL`，必须携带计划 `rowVersion` |
+
+计划类型为 `MOVE/MERGE/SPLIT/BULK_RESTRUCTURE`，状态为 `DRAFT/VALIDATED/APPROVED/EXECUTING/COMPLETED/CANCELLED/FAILED`。当前可同步执行不涉及文件内容的 `MOVE_NODE`；`MERGE_NODE/CREATE_NODE/MOVE_MEMBER/MOVE_SPACE_CONTENT` 的数据结构和校验入口已经建立，涉及文件事实的执行由模块 05 与模块 16 接入，当前执行请求返回 `409/ORGANIZATION_PLAN_OPERATION_DEFERRED`，不会伪装完成。
+
+### 7.7 错误码和接口测试依据
+
+除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN/AUTH_ORIGIN_REJECTED` 外，本模块使用：
+
+| HTTP | 错误码 | 含义 |
+|---:|---|---|
+| 404 | `ORGANIZATION_NOT_FOUND`、`ORGANIZATION_MEMBERSHIP_NOT_FOUND`、`SPACE_NOT_FOUND`、`ORGANIZATION_CHANGE_PLAN_NOT_FOUND` | 指定事实不存在 |
+| 409 | `ROW_VERSION_CONFLICT` | `rowVersion` 已过期 |
+| 409 | `IDEMPOTENCY_CONFLICT` | 同一幂等键对应不同请求体 |
+| 409 | `ORGANIZATION_CONFLICT` | 唯一约束、引用约束或其他组织/空间事实冲突 |
+| 409 | `ORGANIZATION_TREE_CYCLE` | 移动会形成组织循环 |
+| 409 | `RESOURCE_DELETE_BLOCKED` | 仍有子组织、成员、空间或受保护事实 |
+| 409 | `SPACE_QUOTA_EXCEEDED` | 配额不足或目标配额低于已占用量 |
+| 409 | `RESOURCE_STATE_CONFLICT` | 当前状态不允许操作 |
+| 409 | `ORGANIZATION_PLAN_OPERATION_DEFERRED` | 操作依赖尚未完成的文件或 Worker 执行器 |
+
+正式接口测试至少覆盖：分页边界和稳定排序；普通用户访问管理接口被拒绝；创建幂等重放与冲突；组织闭包完整性、并发移动、防环和乐观锁；活动主职唯一性、成员有效期和逻辑停用；个人/组织/公共空间唯一边界；配额并发预留不超卖；空间状态和删除阻断；变更计划校验、审批、执行、取消与延期操作；事务 Outbox 和安全版本同步更新。
+
+现有自动化证据：
+
+- `backend/internal/modules/organizations/domain/validation_test.go`
+- `backend/tests/integration/organizations_http_test.go`
+- `backend/tests/migration/initial_schema_test.go`
+- `backend/scripts/verify.ps1`
+- `backend/scripts/verify-integration.ps1`
+
+## 8. 文档维护与冻结规则
 
 1. 新模块先更新 `backend/api/openapi.yaml`，再生成代码和实现。
 2. 模块开发完成时，在本文档追加对应模块章节和接口测试要点，并更新第 2 章状态。

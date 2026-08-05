@@ -10,6 +10,113 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Organization struct {
+	OrganizationID       pgtype.UUID
+	ParentOrganizationID pgtype.UUID
+	Name                 string
+	NormalizedName       string
+	Code                 pgtype.Text
+	NormalizedCode       pgtype.Text
+	TypeLabel            pgtype.Text
+	SortOrder            int32
+	PathCache            pgtype.Text
+	Depth                int32
+	TreeVersion          int64
+	Status               string
+	CreatedByUserID      pgtype.UUID
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
+	DeletedAt            pgtype.Timestamptz
+	RowVersion           int64
+}
+
+type OrganizationChangeOperation struct {
+	OrganizationChangeOperationID pgtype.UUID
+	OrganizationChangePlanID      pgtype.UUID
+	SequenceNumber                int32
+	OperationType                 string
+	SourceOrganizationID          pgtype.UUID
+	TargetOrganizationID          pgtype.UUID
+	OperationSchemaVersion        int32
+	OperationJson                 []byte
+	Status                        string
+	CreatedAt                     pgtype.Timestamptz
+	UpdatedAt                     pgtype.Timestamptz
+	CompletedAt                   pgtype.Timestamptz
+	FailureCode                   pgtype.Text
+	RowVersion                    int64
+}
+
+type OrganizationChangePlan struct {
+	OrganizationChangePlanID pgtype.UUID
+	PlanType                 string
+	Name                     string
+	Status                   string
+	ExpectedTreeVersion      int64
+	CreatedByUserID          pgtype.UUID
+	ApprovedByUserID         pgtype.UUID
+	CreatedAt                pgtype.Timestamptz
+	UpdatedAt                pgtype.Timestamptz
+	ValidatedAt              pgtype.Timestamptz
+	ApprovedAt               pgtype.Timestamptz
+	StartedAt                pgtype.Timestamptz
+	CompletedAt              pgtype.Timestamptz
+	FailureCode              pgtype.Text
+	RowVersion               int64
+}
+
+type QuotaReservation struct {
+	QuotaReservationID pgtype.UUID
+	SpaceID            pgtype.UUID
+	UserID             pgtype.UUID
+	ReservedBytes      int64
+	Status             string
+	ExpiresAt          pgtype.Timestamptz
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
+	ConsumedAt         pgtype.Timestamptz
+	ReleasedAt         pgtype.Timestamptz
+	RowVersion         int64
+}
+
+type Space struct {
+	SpaceID             pgtype.UUID
+	SpaceType           string
+	Name                string
+	NormalizedName      string
+	OwnerUserID         pgtype.UUID
+	OrganizationID      pgtype.UUID
+	RootFolderID        pgtype.UUID
+	QuotaBytes          int64
+	UsedBytes           int64
+	ReservedBytes       int64
+	AclVersion          int64
+	SecurityEpoch       int64
+	ConfigSchemaVersion int32
+	ConfigJson          []byte
+	Status              string
+	CreatedByUserID     pgtype.UUID
+	CreatedAt           pgtype.Timestamptz
+	UpdatedAt           pgtype.Timestamptz
+	DeletedAt           pgtype.Timestamptz
+	RowVersion          int64
+}
+
+type UserOrganization struct {
+	UserOrganizationID pgtype.UUID
+	UserID             pgtype.UUID
+	OrganizationID     pgtype.UUID
+	MembershipType     string
+	JobTitle           pgtype.Text
+	Status             string
+	EffectiveFrom      pgtype.Timestamptz
+	EffectiveUntil     pgtype.Timestamptz
+	CreatedByUserID    pgtype.UUID
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
+	RowVersion         int64
+}
+
 type UserSession struct {
 	UserSessionID pgtype.UUID
 	UserID        pgtype.UUID

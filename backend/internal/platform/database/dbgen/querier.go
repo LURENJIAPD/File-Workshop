@@ -11,33 +11,80 @@ import (
 )
 
 type Querier interface {
+	CompleteOrganizationIdempotencyRecord(ctx context.Context, arg *CompleteOrganizationIdempotencyRecordParams) error
 	CompleteUserIdempotencyRecord(ctx context.Context, arg *CompleteUserIdempotencyRecordParams) error
+	ConsumeSpaceQuotaReservation(ctx context.Context, arg *ConsumeSpaceQuotaReservationParams) (int64, error)
 	CountManagedUserSessions(ctx context.Context, userID pgtype.UUID) (int64, error)
 	CountManagedUsers(ctx context.Context, arg *CountManagedUsersParams) (int64, error)
+	CountMemberships(ctx context.Context, arg *CountMembershipsParams) (int64, error)
+	CountOrganizationChangePlans(ctx context.Context, status pgtype.Text) (int64, error)
+	CountOrganizationRowVersion(ctx context.Context, arg *CountOrganizationRowVersionParams) (int64, error)
+	CountOrganizations(ctx context.Context, arg *CountOrganizationsParams) (int64, error)
+	CountSpaces(ctx context.Context, arg *CountSpacesParams) (int64, error)
 	CreateSessionRefreshToken(ctx context.Context, arg *CreateSessionRefreshTokenParams) (*CreateSessionRefreshTokenRow, error)
 	CreateUserSession(ctx context.Context, arg *CreateUserSessionParams) (*CreateUserSessionRow, error)
+	DeactivateMembership(ctx context.Context, arg *DeactivateMembershipParams) (*UserOrganization, error)
+	DeleteOrganizationExternalClosureLinks(ctx context.Context, ancestorOrganizationID pgtype.UUID) error
 	GetCurrentSessionIdentity(ctx context.Context, userSessionID pgtype.UUID) (*GetCurrentSessionIdentityRow, error)
 	GetDatabaseHealth(ctx context.Context) (*GetDatabaseHealthRow, error)
 	GetManagedUserByID(ctx context.Context, userID pgtype.UUID) (*GetManagedUserByIDRow, error)
 	GetManagedUserForUpdate(ctx context.Context, userID pgtype.UUID) (*GetManagedUserForUpdateRow, error)
+	GetMembership(ctx context.Context, userOrganizationID pgtype.UUID) (*UserOrganization, error)
+	GetMembershipForUpdate(ctx context.Context, arg *GetMembershipForUpdateParams) (*UserOrganization, error)
+	GetOrganization(ctx context.Context, organizationID pgtype.UUID) (*Organization, error)
+	GetOrganizationChangePlan(ctx context.Context, organizationChangePlanID pgtype.UUID) (*OrganizationChangePlan, error)
+	GetOrganizationChangePlanForUpdate(ctx context.Context, organizationChangePlanID pgtype.UUID) (*OrganizationChangePlan, error)
+	GetOrganizationForUpdate(ctx context.Context, organizationID pgtype.UUID) (*Organization, error)
+	GetOrganizationIdempotencyRecordForUpdate(ctx context.Context, arg *GetOrganizationIdempotencyRecordForUpdateParams) (*GetOrganizationIdempotencyRecordForUpdateRow, error)
+	GetOrganizationSpace(ctx context.Context, organizationID pgtype.UUID) (*Space, error)
 	GetOwnedUserSession(ctx context.Context, arg *GetOwnedUserSessionParams) (pgtype.UUID, error)
 	GetPasswordLoginIdentity(ctx context.Context, arg *GetPasswordLoginIdentityParams) (*GetPasswordLoginIdentityRow, error)
+	GetPersonalSpaceByUser(ctx context.Context, ownerUserID pgtype.UUID) (*Space, error)
+	GetQuotaReservationForUpdate(ctx context.Context, quotaReservationID pgtype.UUID) (*QuotaReservation, error)
 	GetRecentLoginFailureState(ctx context.Context, arg *GetRecentLoginFailureStateParams) (*GetRecentLoginFailureStateRow, error)
 	GetRefreshTokenForUpdate(ctx context.Context, tokenHash []byte) (*GetRefreshTokenForUpdateRow, error)
 	GetSessionIDByRefreshTokenHash(ctx context.Context, tokenHash []byte) (pgtype.UUID, error)
+	GetSpace(ctx context.Context, spaceID pgtype.UUID) (*Space, error)
+	GetSpaceForUpdate(ctx context.Context, spaceID pgtype.UUID) (*Space, error)
 	GetUserIdempotencyRecordForUpdate(ctx context.Context, arg *GetUserIdempotencyRecordForUpdateParams) (*GetUserIdempotencyRecordForUpdateRow, error)
 	IncrementGlobalAuthorizationVersion(ctx context.Context, arg *IncrementGlobalAuthorizationVersionParams) error
+	IncrementOrganizationMembershipVersion(ctx context.Context, arg *IncrementOrganizationMembershipVersionParams) error
+	IncrementOrganizationSubtreeSecurityEpochs(ctx context.Context, arg *IncrementOrganizationSubtreeSecurityEpochsParams) error
+	IncrementUserOrganizationMembershipVersion(ctx context.Context, arg *IncrementUserOrganizationMembershipVersionParams) error
 	InsertLoginAttempt(ctx context.Context, arg *InsertLoginAttemptParams) error
 	InsertManagedPasswordCredential(ctx context.Context, arg *InsertManagedPasswordCredentialParams) error
 	InsertManagedUser(ctx context.Context, arg *InsertManagedUserParams) (*InsertManagedUserRow, error)
+	InsertMembership(ctx context.Context, arg *InsertMembershipParams) (*UserOrganization, error)
+	InsertMovedOrganizationClosureLinks(ctx context.Context, arg *InsertMovedOrganizationClosureLinksParams) error
+	InsertOrganization(ctx context.Context, arg *InsertOrganizationParams) (*Organization, error)
+	InsertOrganizationChangeOperation(ctx context.Context, arg *InsertOrganizationChangeOperationParams) (*OrganizationChangeOperation, error)
+	InsertOrganizationChangePlan(ctx context.Context, arg *InsertOrganizationChangePlanParams) (*OrganizationChangePlan, error)
+	InsertOrganizationClosure(ctx context.Context, arg *InsertOrganizationClosureParams) error
+	InsertOrganizationOutboxEvent(ctx context.Context, arg *InsertOrganizationOutboxEventParams) error
+	InsertOrganizationSecurityVersions(ctx context.Context, arg *InsertOrganizationSecurityVersionsParams) error
 	InsertPrincipalSecurityVersions(ctx context.Context, arg *InsertPrincipalSecurityVersionsParams) error
+	InsertQuotaReservation(ctx context.Context, arg *InsertQuotaReservationParams) (*QuotaReservation, error)
+	InsertSpace(ctx context.Context, arg *InsertSpaceParams) (*Space, error)
 	InsertUserOutboxEvent(ctx context.Context, arg *InsertUserOutboxEventParams) error
 	ListManagedUserSessions(ctx context.Context, arg *ListManagedUserSessionsParams) ([]*UserSession, error)
 	ListManagedUsers(ctx context.Context, arg *ListManagedUsersParams) ([]*ListManagedUsersRow, error)
+	ListMemberships(ctx context.Context, arg *ListMembershipsParams) ([]*UserOrganization, error)
+	ListOrganizationChangeOperations(ctx context.Context, organizationChangePlanID pgtype.UUID) ([]*OrganizationChangeOperation, error)
+	ListOrganizationChangePlans(ctx context.Context, arg *ListOrganizationChangePlansParams) ([]*OrganizationChangePlan, error)
+	ListOrganizations(ctx context.Context, arg *ListOrganizationsParams) ([]*Organization, error)
+	ListSpaces(ctx context.Context, arg *ListSpacesParams) ([]*Space, error)
 	LockActiveSystemAdministrators(ctx context.Context) ([]pgtype.UUID, error)
+	LockOrganizationTreeMutation(ctx context.Context) error
 	LockSystemAdminMutation(ctx context.Context) error
+	MarkOrganizationChangeOperation(ctx context.Context, arg *MarkOrganizationChangeOperationParams) (*OrganizationChangeOperation, error)
+	MarkQuotaReservationConsumed(ctx context.Context, arg *MarkQuotaReservationConsumedParams) (*QuotaReservation, error)
+	MarkQuotaReservationReleased(ctx context.Context, arg *MarkQuotaReservationReleasedParams) (*QuotaReservation, error)
 	MarkRefreshTokenReused(ctx context.Context, arg *MarkRefreshTokenReusedParams) error
 	MarkRefreshTokenUsed(ctx context.Context, arg *MarkRefreshTokenUsedParams) (int64, error)
+	OrganizationDeletionBlocked(ctx context.Context, arg *OrganizationDeletionBlockedParams) (bool, error)
+	OrganizationWouldCreateCycle(ctx context.Context, arg *OrganizationWouldCreateCycleParams) (bool, error)
+	ReleaseSpaceQuotaReservation(ctx context.Context, arg *ReleaseSpaceQuotaReservationParams) (int64, error)
+	ReserveSpaceQuota(ctx context.Context, arg *ReserveSpaceQuotaParams) (*Space, error)
 	RevokeActiveRefreshTokensForSession(ctx context.Context, arg *RevokeActiveRefreshTokensForSessionParams) error
 	RevokeManagedUserCredentials(ctx context.Context, arg *RevokeManagedUserCredentialsParams) error
 	RevokeManagedUserRefreshTokens(ctx context.Context, arg *RevokeManagedUserRefreshTokensParams) error
@@ -46,13 +93,25 @@ type Querier interface {
 	RevokeOwnedUserSessionTokens(ctx context.Context, arg *RevokeOwnedUserSessionTokensParams) error
 	RevokeUserSession(ctx context.Context, arg *RevokeUserSessionParams) error
 	SetManagedUserStatus(ctx context.Context, arg *SetManagedUserStatusParams) (*SetManagedUserStatusRow, error)
+	SetOrganizationChangePlanStatus(ctx context.Context, arg *SetOrganizationChangePlanStatusParams) (*OrganizationChangePlan, error)
+	SetOrganizationStatus(ctx context.Context, arg *SetOrganizationStatusParams) (*Organization, error)
+	SetSpaceStatus(ctx context.Context, arg *SetSpaceStatusParams) (*Space, error)
+	SpaceDeletionBlocked(ctx context.Context, spaceID pgtype.UUID) (bool, error)
 	TouchCredentialAfterLogin(ctx context.Context, arg *TouchCredentialAfterLoginParams) error
+	TouchDraftOrganizationChangePlan(ctx context.Context, arg *TouchDraftOrganizationChangePlanParams) (*OrganizationChangePlan, error)
 	TouchManagedUserForPasswordReset(ctx context.Context, arg *TouchManagedUserForPasswordResetParams) (int64, error)
 	TouchUserAfterLogin(ctx context.Context, arg *TouchUserAfterLoginParams) error
 	TouchUserSession(ctx context.Context, arg *TouchUserSessionParams) error
+	TryCreateOrganizationIdempotencyRecord(ctx context.Context, arg *TryCreateOrganizationIdempotencyRecordParams) (int64, error)
 	TryCreateUserIdempotencyRecord(ctx context.Context, arg *TryCreateUserIdempotencyRecordParams) (int64, error)
 	UpdateManagedPasswordCredential(ctx context.Context, arg *UpdateManagedPasswordCredentialParams) (int64, error)
 	UpdateManagedUser(ctx context.Context, arg *UpdateManagedUserParams) (*UpdateManagedUserRow, error)
+	UpdateMembership(ctx context.Context, arg *UpdateMembershipParams) (*UserOrganization, error)
+	UpdateMovedOrganizationSubtree(ctx context.Context, arg *UpdateMovedOrganizationSubtreeParams) error
+	UpdateOrganization(ctx context.Context, arg *UpdateOrganizationParams) (*Organization, error)
+	UpdateSpace(ctx context.Context, arg *UpdateSpaceParams) (*Space, error)
+	UserCanJoinOrganization(ctx context.Context, arg *UserCanJoinOrganizationParams) (pgtype.Bool, error)
+	UserExistsAndIsActive(ctx context.Context, userID pgtype.UUID) (bool, error)
 }
 
 var _ Querier = (*Queries)(nil)

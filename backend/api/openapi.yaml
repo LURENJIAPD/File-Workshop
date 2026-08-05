@@ -15,6 +15,12 @@ tags:
     description: 当前用户资料和本人会话管理。
   - name: UserAdministration
     description: SYSTEM_ADMIN 用户生命周期管理；所有写操作执行资源级授权和并发校验。
+  - name: Organizations
+    description: 当前用户可见的组织关系和个人空间；成员关系本身不授予文件权限。
+  - name: OrganizationAdministration
+    description: SYSTEM_ADMIN 维护组织树、成员关系和受控重组计划。
+  - name: SpaceAdministration
+    description: SYSTEM_ADMIN 维护个人、组织和公共空间的容量、配置与状态。
 
 paths:
   /health/live:
@@ -548,6 +554,643 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
 
+  /api/v1/users/me/organizations:
+    get:
+      operationId: listCurrentUserOrganizations
+      tags: [Organizations]
+      summary: 分页获取当前用户的有效组织关系
+      description: 仅返回本人有效成员关系；组织成员关系不代表文件访问权限。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+      responses:
+        "200":
+          description: 当前用户组织关系列表。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationMembershipListResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+
+  /api/v1/users/me/personal-space:
+    get:
+      operationId: getCurrentUserPersonalSpace
+      tags: [Organizations]
+      summary: 获取当前用户个人空间
+      description: 只返回空间事实；后续文件访问仍由模块 04 权限入口复核。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      responses:
+        "200":
+          description: 当前用户个人空间。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpaceResponse"
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/admin/users/{userId}/personal-space:
+    post:
+      operationId: provisionUserPersonalSpace
+      tags: [SpaceAdministration]
+      summary: 为用户幂等创建个人空间
+      description: 用于补偿 USER_CREATED 事件或管理员显式初始化；同一用户最多一个未删除个人空间。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/UserIdPath"
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProvisionPersonalSpaceRequest"
+      responses:
+        "201":
+          description: 个人空间已创建；相同幂等请求重放时返回同一空间。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpaceResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin/organizations:
+    get:
+      operationId: listOrganizations
+      tags: [OrganizationAdministration]
+      summary: 分页查询组织
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+        - name: parentOrganizationId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/OrganizationStatus"
+      responses:
+        "200":
+          description: 稳定排序的组织列表。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationListResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createOrganization
+      tags: [OrganizationAdministration]
+      summary: 创建组织及其组织空间
+      description: 在同一事务写入邻接关系、闭包表、安全版本、组织空间、幂等结果和 Outbox。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrganizationRequest"
+      responses:
+        "201":
+          description: 组织及稳定组织空间已创建。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin/organizations/{organizationId}:
+    get:
+      operationId: getOrganization
+      tags: [OrganizationAdministration]
+      summary: 获取组织详情
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdPath"
+      responses:
+        "200":
+          description: 组织详情。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationResponse"
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      operationId: updateOrganization
+      tags: [OrganizationAdministration]
+      summary: 修改组织基本资料
+      description: 不通过本接口改变父节点或状态；使用 rowVersion 防止覆盖并发更新。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrganizationRequest"
+      responses:
+        "200":
+          description: 组织资料已更新。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin/organizations/{organizationId}/move:
+    post:
+      operationId: moveOrganization
+      tags: [OrganizationAdministration]
+      summary: 移动组织节点
+      description: 省略 newParentOrganizationId 表示移动为根节点；事务内验证无环并重建子树闭包关系。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MoveOrganizationRequest"
+      responses:
+        "200":
+          description: 组织已移动，空间 ID 保持不变。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin/organizations/{organizationId}/status:
+    put:
+      operationId: changeOrganizationStatus
+      tags: [OrganizationAdministration]
+      summary: 改变组织状态
+      description: 支持 ACTIVE、DISABLED、ARCHIVED、DELETED；删除前执行子组织、成员、空间、委派及任务约束检查。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeOrganizationStatusRequest"
+      responses:
+        "200":
+          description: 组织状态已改变。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin/organizations/{organizationId}/members:
+    get:
+      operationId: listOrganizationMembers
+      tags: [OrganizationAdministration]
+      summary: 分页查询组织成员关系
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdPath"
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/OrganizationMembershipStatus"
+      responses:
+        "200":
+          description: 组织成员关系列表。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationMembershipListResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      operationId: addOrganizationMember
+      tags: [OrganizationAdministration]
+      summary: 添加组织成员关系
+      description: PRIMARY 每个用户最多一条；职务只用于显示，不产生权限。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdPath"
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddOrganizationMemberRequest"
+      responses:
+        "201":
+          description: 成员关系已创建。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationMembershipResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin/organizations/{organizationId}/members/{membershipId}:
+    patch:
+      operationId: updateOrganizationMember
+      tags: [OrganizationAdministration]
+      summary: 修改组织成员关系
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdPath"
+        - $ref: "#/components/parameters/MembershipIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrganizationMemberRequest"
+      responses:
+        "200":
+          description: 成员关系已更新。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationMembershipResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      operationId: removeOrganizationMember
+      tags: [OrganizationAdministration]
+      summary: 停用组织成员关系
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdPath"
+        - $ref: "#/components/parameters/MembershipIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RemoveOrganizationMemberRequest"
+      responses:
+        "204": { description: 成员关系已停用。 }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin/spaces:
+    get:
+      operationId: listSpaces
+      tags: [SpaceAdministration]
+      summary: 分页查询空间
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+        - name: spaceType
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/SpaceType"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/SpaceStatus"
+        - name: organizationId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: ownerUserId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 空间列表。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpaceListResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createPublicSpace
+      tags: [SpaceAdministration]
+      summary: 创建命名公共空间
+      description: PUBLIC 表示企业实例公共资源边界，不等于任何用户均可写。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePublicSpaceRequest"
+      responses:
+        "201":
+          description: 公共空间已创建。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpaceResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin/spaces/{spaceId}:
+    get:
+      operationId: getSpace
+      tags: [SpaceAdministration]
+      summary: 获取空间详情
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdPath"
+      responses:
+        "200":
+          description: 空间详情。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpaceResponse"
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      operationId: updateSpace
+      tags: [SpaceAdministration]
+      summary: 修改空间名称、配额或配置
+      description: 配额不得低于 usedBytes 与 reservedBytes 之和；配置必须是 JSON 对象。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSpaceRequest"
+      responses:
+        "200":
+          description: 空间已更新。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpaceResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin/spaces/{spaceId}/status:
+    put:
+      operationId: changeSpaceStatus
+      tags: [SpaceAdministration]
+      summary: 改变空间状态
+      description: 支持 ACTIVE、FROZEN、ARCHIVED、DELETED；存在未释放容量或资源引用时拒绝删除。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeSpaceStatusRequest"
+      responses:
+        "200":
+          description: 空间状态已改变。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpaceResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin/organization-change-plans:
+    get:
+      operationId: listOrganizationChangePlans
+      tags: [OrganizationAdministration]
+      summary: 分页查询组织重组计划
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/OrganizationChangePlanStatus"
+      responses:
+        "200":
+          description: 重组计划列表。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationChangePlanListResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createOrganizationChangePlan
+      tags: [OrganizationAdministration]
+      summary: 创建组织重组计划
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrganizationChangePlanRequest"
+      responses:
+        "201":
+          description: DRAFT 计划已创建。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationChangePlanResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin/organization-change-plans/{planId}:
+    get:
+      operationId: getOrganizationChangePlan
+      tags: [OrganizationAdministration]
+      summary: 获取组织重组计划及操作
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PlanIdPath"
+      responses:
+        "200":
+          description: 计划及按 sequenceNumber 排序的操作。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationChangePlanResponse"
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/admin/organization-change-plans/{planId}/operations:
+    post:
+      operationId: addOrganizationChangeOperation
+      tags: [OrganizationAdministration]
+      summary: 向 DRAFT 计划添加操作
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PlanIdPath"
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddOrganizationChangeOperationRequest"
+      responses:
+        "201":
+          description: 操作已添加。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationChangePlanResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin/organization-change-plans/{planId}/transition:
+    post:
+      operationId: transitionOrganizationChangePlan
+      tags: [OrganizationAdministration]
+      summary: 校验、批准、执行或取消重组计划
+      description: MOVE 计划可同步执行 MOVE_NODE；涉及文件内容迁移的操作在文件模块具备后由 Worker 执行。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PlanIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransitionOrganizationChangePlanRequest"
+      responses:
+        "200":
+          description: 计划状态已转换。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationChangePlanResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -604,6 +1247,34 @@ components:
         format: uuid
     SessionIdPath:
       name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    OrganizationIdPath:
+      name: organizationId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    MembershipIdPath:
+      name: membershipId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    SpaceIdPath:
+      name: spaceId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PlanIdPath:
+      name: planId
       in: path
       required: true
       schema:
@@ -716,6 +1387,722 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
 
   schemas:
+    OrganizationStatus:
+      type: string
+      enum: [ACTIVE, DISABLED, ARCHIVED, DELETED]
+
+    Organization:
+      type: object
+      additionalProperties: false
+      required: [organizationId, name, normalizedName, sortOrder, depth, treeVersion, status, createdByUserId, createdAt, updatedAt, rowVersion]
+      properties:
+        organizationId:
+          type: string
+          format: uuid
+        parentOrganizationId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        normalizedName:
+          type: string
+          minLength: 1
+          maxLength: 256
+        code:
+          type: string
+          maxLength: 128
+        normalizedCode:
+          type: string
+          maxLength: 128
+        typeLabel:
+          type: string
+          maxLength: 64
+        sortOrder:
+          type: integer
+        pathCache:
+          type: string
+        depth:
+          type: integer
+          minimum: 0
+        treeVersion:
+          type: integer
+          format: int64
+          minimum: 1
+        status:
+          $ref: "#/components/schemas/OrganizationStatus"
+        createdByUserId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+
+    OrganizationResponse:
+      type: object
+      additionalProperties: false
+      required: [organization, requestId]
+      properties:
+        organization:
+          $ref: "#/components/schemas/Organization"
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    OrganizationListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Organization"
+        page:
+          $ref: "#/components/schemas/Page"
+        pageSize:
+          $ref: "#/components/schemas/PageSize"
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    CreateOrganizationRequest:
+      type: object
+      additionalProperties: false
+      required: [name, spaceQuotaBytes]
+      properties:
+        parentOrganizationId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        code:
+          type: string
+          maxLength: 128
+        typeLabel:
+          type: string
+          maxLength: 64
+        sortOrder:
+          type: integer
+          default: 0
+        spaceQuotaBytes:
+          type: integer
+          format: int64
+          minimum: 0
+
+    UpdateOrganizationRequest:
+      type: object
+      additionalProperties: false
+      required: [rowVersion]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        code:
+          type: string
+          maxLength: 128
+          description: 空字符串表示清除组织编码。
+        typeLabel:
+          type: string
+          maxLength: 64
+          description: 空字符串表示清除类型标签。
+        sortOrder:
+          type: integer
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+
+    MoveOrganizationRequest:
+      type: object
+      additionalProperties: false
+      required: [rowVersion]
+      properties:
+        newParentOrganizationId:
+          type: string
+          format: uuid
+          description: 省略表示移动为根组织。
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+        reason:
+          type: string
+          maxLength: 512
+
+    ChangeOrganizationStatusRequest:
+      type: object
+      additionalProperties: false
+      required: [status, rowVersion, reason]
+      properties:
+        status:
+          $ref: "#/components/schemas/OrganizationStatus"
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 512
+
+    OrganizationMembershipType:
+      type: string
+      enum: [PRIMARY, MEMBER]
+
+    OrganizationMembershipStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE]
+
+    OrganizationMembership:
+      type: object
+      additionalProperties: false
+      required: [membershipId, userId, organizationId, membershipType, status, effectiveFrom, createdByUserId, createdAt, updatedAt, rowVersion]
+      properties:
+        membershipId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        membershipType:
+          $ref: "#/components/schemas/OrganizationMembershipType"
+        jobTitle:
+          type: string
+          maxLength: 128
+        status:
+          $ref: "#/components/schemas/OrganizationMembershipStatus"
+        effectiveFrom:
+          type: string
+          format: date-time
+        effectiveUntil:
+          type: string
+          format: date-time
+        createdByUserId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+
+    OrganizationMembershipResponse:
+      type: object
+      additionalProperties: false
+      required: [membership, requestId]
+      properties:
+        membership:
+          $ref: "#/components/schemas/OrganizationMembership"
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    OrganizationMembershipListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrganizationMembership"
+        page:
+          $ref: "#/components/schemas/Page"
+        pageSize:
+          $ref: "#/components/schemas/PageSize"
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    AddOrganizationMemberRequest:
+      type: object
+      additionalProperties: false
+      required: [userId, membershipType]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        membershipType:
+          $ref: "#/components/schemas/OrganizationMembershipType"
+        jobTitle:
+          type: string
+          maxLength: 128
+        effectiveFrom:
+          type: string
+          format: date-time
+        effectiveUntil:
+          type: string
+          format: date-time
+
+    UpdateOrganizationMemberRequest:
+      type: object
+      additionalProperties: false
+      required: [rowVersion]
+      properties:
+        membershipType:
+          $ref: "#/components/schemas/OrganizationMembershipType"
+        jobTitle:
+          type: string
+          maxLength: 128
+          description: 空字符串表示清除职务显示值。
+        status:
+          $ref: "#/components/schemas/OrganizationMembershipStatus"
+        effectiveUntil:
+          type: string
+          format: date-time
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+
+    RemoveOrganizationMemberRequest:
+      type: object
+      additionalProperties: false
+      required: [rowVersion, reason]
+      properties:
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 512
+
+    SpaceType:
+      type: string
+      enum: [PERSONAL, ORGANIZATION, PUBLIC]
+
+    SpaceStatus:
+      type: string
+      enum: [ACTIVE, FROZEN, ARCHIVED, DELETED]
+
+    Space:
+      type: object
+      additionalProperties: false
+      required: [spaceId, spaceType, name, normalizedName, quotaBytes, usedBytes, reservedBytes, aclVersion, securityEpoch, configSchemaVersion, config, status, createdByUserId, createdAt, updatedAt, rowVersion]
+      properties:
+        spaceId:
+          type: string
+          format: uuid
+        spaceType:
+          $ref: "#/components/schemas/SpaceType"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        normalizedName:
+          type: string
+          minLength: 1
+          maxLength: 256
+        ownerUserId:
+          type: string
+          format: uuid
+        organizationId:
+          type: string
+          format: uuid
+        rootFolderId:
+          type: string
+          format: uuid
+        quotaBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        usedBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        reservedBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        aclVersion:
+          type: integer
+          format: int64
+          minimum: 1
+        securityEpoch:
+          type: integer
+          format: int64
+          minimum: 1
+        configSchemaVersion:
+          type: integer
+          minimum: 1
+        config:
+          type: object
+          additionalProperties: true
+        status:
+          $ref: "#/components/schemas/SpaceStatus"
+        createdByUserId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+
+    SpaceResponse:
+      type: object
+      additionalProperties: false
+      required: [space, requestId]
+      properties:
+        space:
+          $ref: "#/components/schemas/Space"
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    SpaceListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Space"
+        page:
+          $ref: "#/components/schemas/Page"
+        pageSize:
+          $ref: "#/components/schemas/PageSize"
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    ProvisionPersonalSpaceRequest:
+      type: object
+      additionalProperties: false
+      required: [name, quotaBytes]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        quotaBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        config:
+          type: object
+          additionalProperties: true
+
+    CreatePublicSpaceRequest:
+      type: object
+      additionalProperties: false
+      required: [name, quotaBytes]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        quotaBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        config:
+          type: object
+          additionalProperties: true
+
+    UpdateSpaceRequest:
+      type: object
+      additionalProperties: false
+      required: [rowVersion]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        quotaBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        configSchemaVersion:
+          type: integer
+          minimum: 1
+        config:
+          type: object
+          additionalProperties: true
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+
+    ChangeSpaceStatusRequest:
+      type: object
+      additionalProperties: false
+      required: [status, rowVersion, reason]
+      properties:
+        status:
+          $ref: "#/components/schemas/SpaceStatus"
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 512
+
+    OrganizationChangePlanType:
+      type: string
+      enum: [MOVE, MERGE, SPLIT, BULK_RESTRUCTURE]
+
+    OrganizationChangePlanStatus:
+      type: string
+      enum: [DRAFT, VALIDATED, APPROVED, EXECUTING, COMPLETED, CANCELLED, FAILED]
+
+    OrganizationChangeOperationType:
+      type: string
+      enum: [MOVE_NODE, MERGE_NODE, CREATE_NODE, MOVE_MEMBER, MOVE_SPACE_CONTENT]
+
+    OrganizationChangeOperationStatus:
+      type: string
+      enum: [PENDING, SUCCESS, FAILED, SKIPPED]
+
+    OrganizationChangeOperation:
+      type: object
+      additionalProperties: false
+      required: [operationId, planId, sequenceNumber, operationType, operationSchemaVersion, operation, status, createdAt, updatedAt, rowVersion]
+      properties:
+        operationId:
+          type: string
+          format: uuid
+        planId:
+          type: string
+          format: uuid
+        sequenceNumber:
+          type: integer
+          minimum: 1
+        operationType:
+          $ref: "#/components/schemas/OrganizationChangeOperationType"
+        sourceOrganizationId:
+          type: string
+          format: uuid
+        targetOrganizationId:
+          type: string
+          format: uuid
+        operationSchemaVersion:
+          type: integer
+          minimum: 1
+        operation:
+          type: object
+          additionalProperties: true
+        status:
+          $ref: "#/components/schemas/OrganizationChangeOperationStatus"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        failureCode:
+          type: string
+          maxLength: 64
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+
+    OrganizationChangePlan:
+      type: object
+      additionalProperties: false
+      required: [planId, planType, name, status, expectedTreeVersion, createdByUserId, createdAt, updatedAt, rowVersion, operations]
+      properties:
+        planId:
+          type: string
+          format: uuid
+        planType:
+          $ref: "#/components/schemas/OrganizationChangePlanType"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        status:
+          $ref: "#/components/schemas/OrganizationChangePlanStatus"
+        expectedTreeVersion:
+          type: integer
+          format: int64
+          minimum: 1
+        createdByUserId:
+          type: string
+          format: uuid
+        approvedByUserId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        validatedAt:
+          type: string
+          format: date-time
+        approvedAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        failureCode:
+          type: string
+          maxLength: 64
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+        operations:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrganizationChangeOperation"
+
+    OrganizationChangePlanResponse:
+      type: object
+      additionalProperties: false
+      required: [plan, requestId]
+      properties:
+        plan:
+          $ref: "#/components/schemas/OrganizationChangePlan"
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    OrganizationChangePlanListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrganizationChangePlan"
+        page:
+          $ref: "#/components/schemas/Page"
+        pageSize:
+          $ref: "#/components/schemas/PageSize"
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    CreateOrganizationChangePlanRequest:
+      type: object
+      additionalProperties: false
+      required: [planType, name, expectedTreeVersion]
+      properties:
+        planType:
+          $ref: "#/components/schemas/OrganizationChangePlanType"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+        expectedTreeVersion:
+          type: integer
+          format: int64
+          minimum: 1
+
+    AddOrganizationChangeOperationRequest:
+      type: object
+      additionalProperties: false
+      required: [sequenceNumber, operationType, operationSchemaVersion, operation]
+      properties:
+        sequenceNumber:
+          type: integer
+          minimum: 1
+        operationType:
+          $ref: "#/components/schemas/OrganizationChangeOperationType"
+        sourceOrganizationId:
+          type: string
+          format: uuid
+        targetOrganizationId:
+          type: string
+          format: uuid
+        operationSchemaVersion:
+          type: integer
+          minimum: 1
+        operation:
+          type: object
+          additionalProperties: true
+
+    OrganizationChangePlanAction:
+      type: string
+      enum: [VALIDATE, APPROVE, EXECUTE, CANCEL]
+
+    TransitionOrganizationChangePlanRequest:
+      type: object
+      additionalProperties: false
+      required: [action, rowVersion]
+      properties:
+        action:
+          $ref: "#/components/schemas/OrganizationChangePlanAction"
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+        reason:
+          type: string
+          maxLength: 512
+
     LoginRequest:
       type: object
       additionalProperties: false

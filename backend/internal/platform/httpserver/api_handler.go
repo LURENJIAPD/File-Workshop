@@ -35,14 +35,41 @@ type UsersAPI interface {
 	ResetUserPassword(context.Context, api.ResetUserPasswordRequestObject) (api.ResetUserPasswordResponseObject, error)
 }
 
-type APIHandler struct {
-	health   HealthAPI
-	identity IdentityAPI
-	users    UsersAPI
+type OrganizationsAPI interface {
+	ListOrganizationChangePlans(context.Context, api.ListOrganizationChangePlansRequestObject) (api.ListOrganizationChangePlansResponseObject, error)
+	CreateOrganizationChangePlan(context.Context, api.CreateOrganizationChangePlanRequestObject) (api.CreateOrganizationChangePlanResponseObject, error)
+	GetOrganizationChangePlan(context.Context, api.GetOrganizationChangePlanRequestObject) (api.GetOrganizationChangePlanResponseObject, error)
+	AddOrganizationChangeOperation(context.Context, api.AddOrganizationChangeOperationRequestObject) (api.AddOrganizationChangeOperationResponseObject, error)
+	TransitionOrganizationChangePlan(context.Context, api.TransitionOrganizationChangePlanRequestObject) (api.TransitionOrganizationChangePlanResponseObject, error)
+	ListOrganizations(context.Context, api.ListOrganizationsRequestObject) (api.ListOrganizationsResponseObject, error)
+	CreateOrganization(context.Context, api.CreateOrganizationRequestObject) (api.CreateOrganizationResponseObject, error)
+	GetOrganization(context.Context, api.GetOrganizationRequestObject) (api.GetOrganizationResponseObject, error)
+	UpdateOrganization(context.Context, api.UpdateOrganizationRequestObject) (api.UpdateOrganizationResponseObject, error)
+	ListOrganizationMembers(context.Context, api.ListOrganizationMembersRequestObject) (api.ListOrganizationMembersResponseObject, error)
+	AddOrganizationMember(context.Context, api.AddOrganizationMemberRequestObject) (api.AddOrganizationMemberResponseObject, error)
+	RemoveOrganizationMember(context.Context, api.RemoveOrganizationMemberRequestObject) (api.RemoveOrganizationMemberResponseObject, error)
+	UpdateOrganizationMember(context.Context, api.UpdateOrganizationMemberRequestObject) (api.UpdateOrganizationMemberResponseObject, error)
+	MoveOrganization(context.Context, api.MoveOrganizationRequestObject) (api.MoveOrganizationResponseObject, error)
+	ChangeOrganizationStatus(context.Context, api.ChangeOrganizationStatusRequestObject) (api.ChangeOrganizationStatusResponseObject, error)
+	ListSpaces(context.Context, api.ListSpacesRequestObject) (api.ListSpacesResponseObject, error)
+	CreatePublicSpace(context.Context, api.CreatePublicSpaceRequestObject) (api.CreatePublicSpaceResponseObject, error)
+	GetSpace(context.Context, api.GetSpaceRequestObject) (api.GetSpaceResponseObject, error)
+	UpdateSpace(context.Context, api.UpdateSpaceRequestObject) (api.UpdateSpaceResponseObject, error)
+	ChangeSpaceStatus(context.Context, api.ChangeSpaceStatusRequestObject) (api.ChangeSpaceStatusResponseObject, error)
+	ProvisionUserPersonalSpace(context.Context, api.ProvisionUserPersonalSpaceRequestObject) (api.ProvisionUserPersonalSpaceResponseObject, error)
+	ListCurrentUserOrganizations(context.Context, api.ListCurrentUserOrganizationsRequestObject) (api.ListCurrentUserOrganizationsResponseObject, error)
+	GetCurrentUserPersonalSpace(context.Context, api.GetCurrentUserPersonalSpaceRequestObject) (api.GetCurrentUserPersonalSpaceResponseObject, error)
 }
 
-func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI) *APIHandler {
-	return &APIHandler{health: health, identity: identity, users: users}
+type APIHandler struct {
+	health        HealthAPI
+	identity      IdentityAPI
+	users         UsersAPI
+	organizations OrganizationsAPI
+}
+
+func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organizations OrganizationsAPI) *APIHandler {
+	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations}
 }
 
 func (h *APIHandler) GetLiveness(ctx context.Context, request api.GetLivenessRequestObject) (api.GetLivenessResponseObject, error) {
@@ -131,4 +158,96 @@ func (h *APIHandler) LockUser(ctx context.Context, request api.LockUserRequestOb
 
 func (h *APIHandler) ResetUserPassword(ctx context.Context, request api.ResetUserPasswordRequestObject) (api.ResetUserPasswordResponseObject, error) {
 	return h.users.ResetUserPassword(ctx, request)
+}
+
+func (h *APIHandler) ListOrganizationChangePlans(ctx context.Context, request api.ListOrganizationChangePlansRequestObject) (api.ListOrganizationChangePlansResponseObject, error) {
+	return h.organizations.ListOrganizationChangePlans(ctx, request)
+}
+
+func (h *APIHandler) CreateOrganizationChangePlan(ctx context.Context, request api.CreateOrganizationChangePlanRequestObject) (api.CreateOrganizationChangePlanResponseObject, error) {
+	return h.organizations.CreateOrganizationChangePlan(ctx, request)
+}
+
+func (h *APIHandler) GetOrganizationChangePlan(ctx context.Context, request api.GetOrganizationChangePlanRequestObject) (api.GetOrganizationChangePlanResponseObject, error) {
+	return h.organizations.GetOrganizationChangePlan(ctx, request)
+}
+
+func (h *APIHandler) AddOrganizationChangeOperation(ctx context.Context, request api.AddOrganizationChangeOperationRequestObject) (api.AddOrganizationChangeOperationResponseObject, error) {
+	return h.organizations.AddOrganizationChangeOperation(ctx, request)
+}
+
+func (h *APIHandler) TransitionOrganizationChangePlan(ctx context.Context, request api.TransitionOrganizationChangePlanRequestObject) (api.TransitionOrganizationChangePlanResponseObject, error) {
+	return h.organizations.TransitionOrganizationChangePlan(ctx, request)
+}
+
+func (h *APIHandler) ListOrganizations(ctx context.Context, request api.ListOrganizationsRequestObject) (api.ListOrganizationsResponseObject, error) {
+	return h.organizations.ListOrganizations(ctx, request)
+}
+
+func (h *APIHandler) CreateOrganization(ctx context.Context, request api.CreateOrganizationRequestObject) (api.CreateOrganizationResponseObject, error) {
+	return h.organizations.CreateOrganization(ctx, request)
+}
+
+func (h *APIHandler) GetOrganization(ctx context.Context, request api.GetOrganizationRequestObject) (api.GetOrganizationResponseObject, error) {
+	return h.organizations.GetOrganization(ctx, request)
+}
+
+func (h *APIHandler) UpdateOrganization(ctx context.Context, request api.UpdateOrganizationRequestObject) (api.UpdateOrganizationResponseObject, error) {
+	return h.organizations.UpdateOrganization(ctx, request)
+}
+
+func (h *APIHandler) ListOrganizationMembers(ctx context.Context, request api.ListOrganizationMembersRequestObject) (api.ListOrganizationMembersResponseObject, error) {
+	return h.organizations.ListOrganizationMembers(ctx, request)
+}
+
+func (h *APIHandler) AddOrganizationMember(ctx context.Context, request api.AddOrganizationMemberRequestObject) (api.AddOrganizationMemberResponseObject, error) {
+	return h.organizations.AddOrganizationMember(ctx, request)
+}
+
+func (h *APIHandler) RemoveOrganizationMember(ctx context.Context, request api.RemoveOrganizationMemberRequestObject) (api.RemoveOrganizationMemberResponseObject, error) {
+	return h.organizations.RemoveOrganizationMember(ctx, request)
+}
+
+func (h *APIHandler) UpdateOrganizationMember(ctx context.Context, request api.UpdateOrganizationMemberRequestObject) (api.UpdateOrganizationMemberResponseObject, error) {
+	return h.organizations.UpdateOrganizationMember(ctx, request)
+}
+
+func (h *APIHandler) MoveOrganization(ctx context.Context, request api.MoveOrganizationRequestObject) (api.MoveOrganizationResponseObject, error) {
+	return h.organizations.MoveOrganization(ctx, request)
+}
+
+func (h *APIHandler) ChangeOrganizationStatus(ctx context.Context, request api.ChangeOrganizationStatusRequestObject) (api.ChangeOrganizationStatusResponseObject, error) {
+	return h.organizations.ChangeOrganizationStatus(ctx, request)
+}
+
+func (h *APIHandler) ListSpaces(ctx context.Context, request api.ListSpacesRequestObject) (api.ListSpacesResponseObject, error) {
+	return h.organizations.ListSpaces(ctx, request)
+}
+
+func (h *APIHandler) CreatePublicSpace(ctx context.Context, request api.CreatePublicSpaceRequestObject) (api.CreatePublicSpaceResponseObject, error) {
+	return h.organizations.CreatePublicSpace(ctx, request)
+}
+
+func (h *APIHandler) GetSpace(ctx context.Context, request api.GetSpaceRequestObject) (api.GetSpaceResponseObject, error) {
+	return h.organizations.GetSpace(ctx, request)
+}
+
+func (h *APIHandler) UpdateSpace(ctx context.Context, request api.UpdateSpaceRequestObject) (api.UpdateSpaceResponseObject, error) {
+	return h.organizations.UpdateSpace(ctx, request)
+}
+
+func (h *APIHandler) ChangeSpaceStatus(ctx context.Context, request api.ChangeSpaceStatusRequestObject) (api.ChangeSpaceStatusResponseObject, error) {
+	return h.organizations.ChangeSpaceStatus(ctx, request)
+}
+
+func (h *APIHandler) ProvisionUserPersonalSpace(ctx context.Context, request api.ProvisionUserPersonalSpaceRequestObject) (api.ProvisionUserPersonalSpaceResponseObject, error) {
+	return h.organizations.ProvisionUserPersonalSpace(ctx, request)
+}
+
+func (h *APIHandler) ListCurrentUserOrganizations(ctx context.Context, request api.ListCurrentUserOrganizationsRequestObject) (api.ListCurrentUserOrganizationsResponseObject, error) {
+	return h.organizations.ListCurrentUserOrganizations(ctx, request)
+}
+
+func (h *APIHandler) GetCurrentUserPersonalSpace(ctx context.Context, request api.GetCurrentUserPersonalSpaceRequestObject) (api.GetCurrentUserPersonalSpaceResponseObject, error) {
+	return h.organizations.GetCurrentUserPersonalSpace(ctx, request)
 }
