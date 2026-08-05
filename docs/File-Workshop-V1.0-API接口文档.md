@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.3
+> 文档版本：V0.4
 > 文档状态：按模块持续编制  
 > 最近更新：2026-08-05  
-> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -21,7 +21,8 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 | 01 | 身份认证 | 已完成 | 4 | 2026-08-05 |
 | 02 | 用户管理 | 已完成 | 13 | 2026-08-05 |
 | 03 | 组织与空间 | 已完成当前模块边界 | 23 | 2026-08-05 |
-| 04～16 | 后续系统模块 | 未收录 | 0 | — |
+| 04 | 权限与管理委派 | 已完成当前模块边界 | 14 | 2026-08-05 |
+| 05～16 | 后续系统模块 | 未收录 | 0 | — |
 
 ## 3. 全局接口约定
 
@@ -659,7 +660,74 @@ Operation ID：`resetUserPassword`
 - `backend/scripts/verify.ps1`
 - `backend/scripts/verify-integration.ps1`
 
-## 8. 文档维护与冻结规则
+## 8. 模块 04：权限与管理委派
+
+### 8.1 模块边界和判定顺序
+
+模块 04 是全系统唯一资源授权判定入口。系统角色、管理委派和普通文件 ACL 分开建模；组织成员关系不自动产生文件权限。V1.0 只支持显式 `ALLOW`，无匹配授权时默认拒绝，不提供 `DENY` 接口。
+
+最终判定顺序为：个人空间所有者 → `SYSTEM_ADMIN` → 组织管理委派 → 用户及其当前有效组织主体的直接/继承 ACL → 默认拒绝。个人空间所有者拥有该空间完整文件操作权限；组织管理委派只作用于组织空间，不允许据此访问员工个人空间。`SYSTEM_ADMIN` 对个人空间或预览、下载、恢复、永久清理等敏感动作必须同时提供 `privilegedReason` 并设置 `privilegedAccessConfirmed=true`，响应同时标记 `privilegedAccessRequired`。
+
+资源类型为 `SPACE/FOLDER/DOCUMENT`，动作集合严格使用 `LIST/READ_METADATA/PREVIEW/DOWNLOAD/UPLOAD/CREATE_FOLDER/WRITE_CONTENT/RENAME/MOVE/DELETE/RESTORE/PURGE/SHARE/LOCK/MANAGE_VERSION/MANAGE_PERMISSION`。Document Version 不单独建立写权限，后续版本接口复用 Document 判定。
+
+### 8.2 管理委派接口
+
+| 接口 | Operation ID | 成功响应 | 关键约束 |
+|---|---|---:|---|
+| `GET /api/v1/admin-delegations?page=1&pageSize=50` | `listAdminDelegations` | `200/AdminDelegationListResponse` | 普通用户只看本人收到或创建的委派；系统管理员可查看全部；可按 `organizationId/status` 筛选 |
+| `POST /api/v1/admin-delegations` | `createAdminDelegation` | `201/AdminDelegationResponse` | 根委派只允许 `SYSTEM_ADMIN`；继续委派必须引用本人当前有效、允许继续委派且含 `DELEGATE_ADMIN` 的父委派；要求 `Idempotency-Key` |
+| `GET /api/v1/admin-delegations/{delegationId}` | `getAdminDelegation` | `200/AdminDelegationResponse` | 非系统管理员只能读取本人收到或创建的委派，不可见时返回 404 |
+| `POST /api/v1/admin-delegations/{delegationId}/revoke` | `revokeAdminDelegation` | `200/AdminDelegationResponse` | 请求包含 `reason/rowVersion`；撤销父委派时后代立即置为 `INVALIDATED` 并递增相关用户和组织安全版本 |
+| `GET /api/v1/organizations/{organizationId}/administrators?page=1&pageSize=50` | `listOrganizationAdministrators` | `200/AdminDelegationListResponse` | 返回直接或从祖先组织继承且整条父链均有效的管理员；普通用户须具有 `DELEGATE_ADMIN` |
+| `POST /api/v1/admin-delegations/evaluate` | `evaluateAdminDelegation` | `200/AdminDelegationEvaluationResponse` | 判断当前用户对组织的单项管理能力；未授权返回 `allowed=false/source=NONE` |
+
+管理范围为 `SELF/SUBTREE`，能力为 `MANAGE_SPACE_CONTENT/MANAGE_SPACE_PERMISSION/MANAGE_SPACE_MEMBERS/MANAGE_SPACE_RECYCLE_BIN/FORCE_UNLOCK/VIEW_SPACE_AUDIT/DELEGATE_ADMIN`。子委派的组织范围、有效期、能力集合和继续委派能力不得超过父委派；数据库延迟约束与应用服务同时校验。委派不能授予 `SYSTEM_ADMIN`，也不能向上或横向扩权。
+
+### 8.3 普通 ACL 接口
+
+| 接口 | Operation ID | 成功响应 | 关键约束 |
+|---|---|---:|---|
+| `GET /api/v1/permissions/resources/{resourceType}/{resourceId}?page=1&pageSize=50` | `listResourcePermissionGrants` | `200/PermissionGrantListResponse` | 只返回目标资源上的直接 ACL；调用者必须具有 `MANAGE_PERMISSION` |
+| `POST /api/v1/permissions/grants` | `createPermissionGrant` | `201/PermissionGrantResponse` | 主体只能是 `USER/ORGANIZATION`；资源只能是 `SPACE/FOLDER/DOCUMENT`；要求至少一个动作和 `Idempotency-Key` |
+| `PATCH /api/v1/permissions/grants/{grantId}` | `updatePermissionGrant` | `200/PermissionGrantResponse` | 可修改动作、继承、结束时间和原因，必须携带当前 `rowVersion`；Document 授权禁止向后代继承 |
+| `POST /api/v1/permissions/grants/{grantId}/revoke` | `revokePermissionGrant` | `200/PermissionGrantResponse` | 请求包含 `reason/rowVersion`，逻辑撤销并记录撤销人和时间 |
+| `POST /api/v1/permissions/evaluate` | `evaluatePermission` | `200/PermissionEvaluationResponse` | 判断当前登录用户的一项资源动作；不存在或无权统一返回 `allowed=false`，不泄露资源细节 |
+| `POST /api/v1/permissions/batch-evaluate` | `batchEvaluatePermissions` | `200/BatchPermissionEvaluationResponse` | 一次 1～100 项，保持请求顺序；用于列表最终授权过滤，不使用无界请求 |
+| `POST /api/v1/permissions/resources/{resourceType}/{resourceId}/break-inheritance` | `breakPermissionInheritance` | `200/PermissionInheritanceResponse` | 仅支持 Folder/Document；要求 `MANAGE_PERMISSION` 和当前 `rowVersion`；设置为 `BREAK` |
+| `POST /api/v1/permissions/resources/{resourceType}/{resourceId}/restore-inheritance` | `restorePermissionInheritance` | `200/PermissionInheritanceResponse` | 仅支持 Folder/Document；恢复为 `INHERIT` |
+
+Space 授权只有在 `inheritToDescendants=true` 时才能作用于后代；Folder 授权同理。目标资源或中间 Folder 的 `BREAK` 会阻断更高祖先 ACL，但不会阻断目标资源直接 ACL、个人空间所有者、系统管理员或有效管理委派。直接和继承授权取并集。
+
+### 8.4 响应、缓存和事务副作用
+
+权限判定结果包含 `resourceType/resourceId/action/allowed/source/matchedGrantIds/privilegedAccessRequired`。`source` 取值为 `PERSONAL_OWNER/SYSTEM_ADMIN/ADMIN_DELEGATION/DIRECT_GRANT/INHERITED_GRANT/NONE`。
+
+委派和 ACL 写入在同一 PostgreSQL 事务中完成业务事实、资源 ACL/空间安全纪元、用户或组织安全版本、幂等记录和 Outbox。Redis 只保存 30 秒版本化判定缓存；Key 包含主体成员、委派、直接授权、共享、全局授权版本以及空间 ACL/安全纪元和相关组织安全版本。任何权限变更都会进入新版本 Key；Redis 读取、写入或连接失败时直接回源 PostgreSQL，不把缓存作为授权事实源，也不因缓存故障放行。
+
+### 8.5 错误码和接口测试依据
+
+除公共错误外，本模块使用：
+
+| HTTP | 错误码 | 含义 |
+|---:|---|---|
+| 404 | `RESOURCE_NOT_FOUND` | 委派、授权或资源不存在，或对调用者不可见 |
+| 409 | `ROW_VERSION_CONFLICT` | 并发更新使用了过期版本 |
+| 409 | `IDEMPOTENCY_CONFLICT` | 同一幂等键对应不同请求 |
+| 409 | `ADMIN_DELEGATION_SCOPE_EXCEEDED` | 子委派范围、能力、有效期或父链不合法 |
+| 409 | `AUTHORIZATION_CONFLICT` | 委派或 ACL 当前状态不允许操作 |
+
+正式接口测试至少覆盖：默认拒绝；个人空间所有者；系统管理员原因和二次确认；普通用户越权；根委派、`SELF/SUBTREE`、能力子集、有效期、递归委派和父撤销立即失效；用户/组织主体授权；直接与继承并集；目标及中间节点断开继承；授权更新和撤销；分页边界；乐观锁；幂等冲突；Redis 缓存命中、版本变化立即失效和 Redis 故障回源。
+
+现有自动化证据：
+
+- `backend/internal/modules/permissions/domain/validation_test.go`
+- `backend/internal/modules/permissions/application/evaluation_test.go`
+- `backend/tests/integration/permissions_http_test.go`
+- `backend/tests/migration/initial_schema_test.go`
+- `backend/scripts/verify.ps1`
+- `backend/scripts/verify-integration.ps1`
+
+## 9. 文档维护与冻结规则
 
 1. 新模块先更新 `backend/api/openapi.yaml`，再生成代码和实现。
 2. 模块开发完成时，在本文档追加对应模块章节和接口测试要点，并更新第 2 章状态。

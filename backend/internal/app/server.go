@@ -16,6 +16,10 @@ import (
 	organizationsapplication "file-workshop/backend/internal/modules/organizations/application"
 	organizationsrepository "file-workshop/backend/internal/modules/organizations/repository"
 	organizationstransport "file-workshop/backend/internal/modules/organizations/transport"
+	permissionsapplication "file-workshop/backend/internal/modules/permissions/application"
+	permissionscache "file-workshop/backend/internal/modules/permissions/cache"
+	permissionsrepository "file-workshop/backend/internal/modules/permissions/repository"
+	permissionstransport "file-workshop/backend/internal/modules/permissions/transport"
 	usersapplication "file-workshop/backend/internal/modules/users/application"
 	usersrepository "file-workshop/backend/internal/modules/users/repository"
 	userstransport "file-workshop/backend/internal/modules/users/transport"
@@ -94,7 +98,10 @@ func RunServer(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 	organizationsRepository := organizationsrepository.NewPostgreSQL(postgresPool)
 	organizationsService := organizationsapplication.NewService(organizationsRepository, organizationsRepository, time.Now)
 	organizationsHandler := organizationstransport.NewHandler(organizationsService, identityService, cfg.Auth)
-	router := httpserver.NewRouter(httpserver.NewAPIHandler(healthHandler, identityHandler, usersHandler, organizationsHandler), logger, cfg.Auth.AllowedOrigins)
+	permissionsRepository := permissionsrepository.NewPostgreSQL(postgresPool)
+	permissionsService := permissionsapplication.NewService(permissionsRepository, permissionsRepository, permissionscache.NewRedisDecisionCache(redisClient), time.Now)
+	permissionsHandler := permissionstransport.NewHandler(permissionsService, identityService, cfg.Auth)
+	router := httpserver.NewRouter(httpserver.NewAPIHandler(healthHandler, identityHandler, usersHandler, organizationsHandler, permissionsHandler), logger, cfg.Auth.AllowedOrigins)
 	server := httpserver.NewServer(cfg.HTTP, router)
 
 	serverErrors := make(chan error, 1)

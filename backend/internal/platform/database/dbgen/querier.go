@@ -11,22 +11,35 @@ import (
 )
 
 type Querier interface {
+	AdminDelegationIsEffective(ctx context.Context, arg *AdminDelegationIsEffectiveParams) (bool, error)
+	ChangeDocumentInheritance(ctx context.Context, arg *ChangeDocumentInheritanceParams) (*ChangeDocumentInheritanceRow, error)
+	ChangeFolderInheritance(ctx context.Context, arg *ChangeFolderInheritanceParams) (*ChangeFolderInheritanceRow, error)
 	CompleteOrganizationIdempotencyRecord(ctx context.Context, arg *CompleteOrganizationIdempotencyRecordParams) error
+	CompletePermissionIdempotency(ctx context.Context, arg *CompletePermissionIdempotencyParams) error
 	CompleteUserIdempotencyRecord(ctx context.Context, arg *CompleteUserIdempotencyRecordParams) error
 	ConsumeSpaceQuotaReservation(ctx context.Context, arg *ConsumeSpaceQuotaReservationParams) (int64, error)
+	CountDirectPermissionGrants(ctx context.Context, arg *CountDirectPermissionGrantsParams) (int64, error)
 	CountManagedUserSessions(ctx context.Context, userID pgtype.UUID) (int64, error)
 	CountManagedUsers(ctx context.Context, arg *CountManagedUsersParams) (int64, error)
 	CountMemberships(ctx context.Context, arg *CountMembershipsParams) (int64, error)
+	CountOrganizationAdministrators(ctx context.Context, arg *CountOrganizationAdministratorsParams) (int64, error)
 	CountOrganizationChangePlans(ctx context.Context, status pgtype.Text) (int64, error)
 	CountOrganizationRowVersion(ctx context.Context, arg *CountOrganizationRowVersionParams) (int64, error)
 	CountOrganizations(ctx context.Context, arg *CountOrganizationsParams) (int64, error)
 	CountSpaces(ctx context.Context, arg *CountSpacesParams) (int64, error)
+	CountVisibleAdminDelegations(ctx context.Context, arg *CountVisibleAdminDelegationsParams) (int64, error)
 	CreateSessionRefreshToken(ctx context.Context, arg *CreateSessionRefreshTokenParams) (*CreateSessionRefreshTokenRow, error)
 	CreateUserSession(ctx context.Context, arg *CreateUserSessionParams) (*CreateUserSessionRow, error)
 	DeactivateMembership(ctx context.Context, arg *DeactivateMembershipParams) (*UserOrganization, error)
 	DeleteOrganizationExternalClosureLinks(ctx context.Context, ancestorOrganizationID pgtype.UUID) error
+	DeletePermissionGrantActions(ctx context.Context, permissionGrantID pgtype.UUID) error
+	FindEffectiveAdminDelegation(ctx context.Context, arg *FindEffectiveAdminDelegationParams) (*FindEffectiveAdminDelegationRow, error)
+	GetAdminDelegationWithCapabilities(ctx context.Context, adminDelegationID pgtype.UUID) (*GetAdminDelegationWithCapabilitiesRow, error)
+	GetAdminDelegationWithCapabilitiesForUpdate(ctx context.Context, adminDelegationID pgtype.UUID) (*GetAdminDelegationWithCapabilitiesForUpdateRow, error)
 	GetCurrentSessionIdentity(ctx context.Context, userSessionID pgtype.UUID) (*GetCurrentSessionIdentityRow, error)
 	GetDatabaseHealth(ctx context.Context) (*GetDatabaseHealthRow, error)
+	GetDocumentAuthorizationResource(ctx context.Context, documentID pgtype.UUID) (*GetDocumentAuthorizationResourceRow, error)
+	GetFolderAuthorizationResource(ctx context.Context, folderID pgtype.UUID) (*GetFolderAuthorizationResourceRow, error)
 	GetManagedUserByID(ctx context.Context, userID pgtype.UUID) (*GetManagedUserByIDRow, error)
 	GetManagedUserForUpdate(ctx context.Context, userID pgtype.UUID) (*GetManagedUserForUpdateRow, error)
 	GetMembership(ctx context.Context, userOrganizationID pgtype.UUID) (*UserOrganization, error)
@@ -39,18 +52,32 @@ type Querier interface {
 	GetOrganizationSpace(ctx context.Context, organizationID pgtype.UUID) (*Space, error)
 	GetOwnedUserSession(ctx context.Context, arg *GetOwnedUserSessionParams) (pgtype.UUID, error)
 	GetPasswordLoginIdentity(ctx context.Context, arg *GetPasswordLoginIdentityParams) (*GetPasswordLoginIdentityRow, error)
+	GetPermissionAuthorizationVersion(ctx context.Context, arg *GetPermissionAuthorizationVersionParams) (string, error)
+	GetPermissionGrantWithActions(ctx context.Context, permissionGrantID pgtype.UUID) (*GetPermissionGrantWithActionsRow, error)
+	GetPermissionGrantWithActionsForUpdate(ctx context.Context, permissionGrantID pgtype.UUID) (*GetPermissionGrantWithActionsForUpdateRow, error)
+	GetPermissionIdempotency(ctx context.Context, arg *GetPermissionIdempotencyParams) (*GetPermissionIdempotencyRow, error)
 	GetPersonalSpaceByUser(ctx context.Context, ownerUserID pgtype.UUID) (*Space, error)
 	GetQuotaReservationForUpdate(ctx context.Context, quotaReservationID pgtype.UUID) (*QuotaReservation, error)
 	GetRecentLoginFailureState(ctx context.Context, arg *GetRecentLoginFailureStateParams) (*GetRecentLoginFailureStateRow, error)
 	GetRefreshTokenForUpdate(ctx context.Context, tokenHash []byte) (*GetRefreshTokenForUpdateRow, error)
 	GetSessionIDByRefreshTokenHash(ctx context.Context, tokenHash []byte) (pgtype.UUID, error)
 	GetSpace(ctx context.Context, spaceID pgtype.UUID) (*Space, error)
+	GetSpaceAuthorizationResource(ctx context.Context, spaceID pgtype.UUID) (*GetSpaceAuthorizationResourceRow, error)
 	GetSpaceForUpdate(ctx context.Context, spaceID pgtype.UUID) (*Space, error)
 	GetUserIdempotencyRecordForUpdate(ctx context.Context, arg *GetUserIdempotencyRecordForUpdateParams) (*GetUserIdempotencyRecordForUpdateRow, error)
+	IncrementDocumentACLVersion(ctx context.Context, arg *IncrementDocumentACLVersionParams) error
+	IncrementFolderACLVersion(ctx context.Context, arg *IncrementFolderACLVersionParams) error
 	IncrementGlobalAuthorizationVersion(ctx context.Context, arg *IncrementGlobalAuthorizationVersionParams) error
+	IncrementOrganizationDelegationVersion(ctx context.Context, arg *IncrementOrganizationDelegationVersionParams) error
+	IncrementOrganizationGrantVersion(ctx context.Context, arg *IncrementOrganizationGrantVersionParams) error
 	IncrementOrganizationMembershipVersion(ctx context.Context, arg *IncrementOrganizationMembershipVersionParams) error
 	IncrementOrganizationSubtreeSecurityEpochs(ctx context.Context, arg *IncrementOrganizationSubtreeSecurityEpochsParams) error
+	IncrementPrincipalDelegationVersion(ctx context.Context, arg *IncrementPrincipalDelegationVersionParams) error
+	IncrementPrincipalGrantVersion(ctx context.Context, arg *IncrementPrincipalGrantVersionParams) error
+	IncrementSpaceACLVersion(ctx context.Context, arg *IncrementSpaceACLVersionParams) error
 	IncrementUserOrganizationMembershipVersion(ctx context.Context, arg *IncrementUserOrganizationMembershipVersionParams) error
+	InsertAdminDelegation(ctx context.Context, arg *InsertAdminDelegationParams) (*AdminDelegation, error)
+	InsertAdminDelegationCapability(ctx context.Context, arg *InsertAdminDelegationCapabilityParams) error
 	InsertLoginAttempt(ctx context.Context, arg *InsertLoginAttemptParams) error
 	InsertManagedPasswordCredential(ctx context.Context, arg *InsertManagedPasswordCredentialParams) error
 	InsertManagedUser(ctx context.Context, arg *InsertManagedUserParams) (*InsertManagedUserRow, error)
@@ -62,17 +89,27 @@ type Querier interface {
 	InsertOrganizationClosure(ctx context.Context, arg *InsertOrganizationClosureParams) error
 	InsertOrganizationOutboxEvent(ctx context.Context, arg *InsertOrganizationOutboxEventParams) error
 	InsertOrganizationSecurityVersions(ctx context.Context, arg *InsertOrganizationSecurityVersionsParams) error
+	InsertPermissionGrant(ctx context.Context, arg *InsertPermissionGrantParams) (*PermissionGrant, error)
+	InsertPermissionGrantAction(ctx context.Context, arg *InsertPermissionGrantActionParams) error
+	InsertPermissionOutboxEvent(ctx context.Context, arg *InsertPermissionOutboxEventParams) error
 	InsertPrincipalSecurityVersions(ctx context.Context, arg *InsertPrincipalSecurityVersionsParams) error
 	InsertQuotaReservation(ctx context.Context, arg *InsertQuotaReservationParams) (*QuotaReservation, error)
 	InsertSpace(ctx context.Context, arg *InsertSpaceParams) (*Space, error)
 	InsertUserOutboxEvent(ctx context.Context, arg *InsertUserOutboxEventParams) error
+	InvalidateDescendantAdminDelegations(ctx context.Context, arg *InvalidateDescendantAdminDelegationsParams) ([]pgtype.UUID, error)
+	ListActivePermissionUserOrganizations(ctx context.Context, arg *ListActivePermissionUserOrganizationsParams) ([]pgtype.UUID, error)
+	ListCandidatePermissionGrants(ctx context.Context, arg *ListCandidatePermissionGrantsParams) ([]*ListCandidatePermissionGrantsRow, error)
+	ListDirectPermissionGrants(ctx context.Context, arg *ListDirectPermissionGrantsParams) ([]*ListDirectPermissionGrantsRow, error)
+	ListFolderAuthorizationAncestors(ctx context.Context, resourceID pgtype.UUID) ([]*ListFolderAuthorizationAncestorsRow, error)
 	ListManagedUserSessions(ctx context.Context, arg *ListManagedUserSessionsParams) ([]*UserSession, error)
 	ListManagedUsers(ctx context.Context, arg *ListManagedUsersParams) ([]*ListManagedUsersRow, error)
 	ListMemberships(ctx context.Context, arg *ListMembershipsParams) ([]*UserOrganization, error)
+	ListOrganizationAdministrators(ctx context.Context, arg *ListOrganizationAdministratorsParams) ([]*ListOrganizationAdministratorsRow, error)
 	ListOrganizationChangeOperations(ctx context.Context, organizationChangePlanID pgtype.UUID) ([]*OrganizationChangeOperation, error)
 	ListOrganizationChangePlans(ctx context.Context, arg *ListOrganizationChangePlansParams) ([]*OrganizationChangePlan, error)
 	ListOrganizations(ctx context.Context, arg *ListOrganizationsParams) ([]*Organization, error)
 	ListSpaces(ctx context.Context, arg *ListSpacesParams) ([]*Space, error)
+	ListVisibleAdminDelegations(ctx context.Context, arg *ListVisibleAdminDelegationsParams) ([]*ListVisibleAdminDelegationsRow, error)
 	LockActiveSystemAdministrators(ctx context.Context) ([]pgtype.UUID, error)
 	LockOrganizationTreeMutation(ctx context.Context) error
 	LockSystemAdminMutation(ctx context.Context) error
@@ -83,14 +120,17 @@ type Querier interface {
 	MarkRefreshTokenUsed(ctx context.Context, arg *MarkRefreshTokenUsedParams) (int64, error)
 	OrganizationDeletionBlocked(ctx context.Context, arg *OrganizationDeletionBlockedParams) (bool, error)
 	OrganizationWouldCreateCycle(ctx context.Context, arg *OrganizationWouldCreateCycleParams) (bool, error)
+	PermissionOrganizationExists(ctx context.Context, organizationID pgtype.UUID) (bool, error)
 	ReleaseSpaceQuotaReservation(ctx context.Context, arg *ReleaseSpaceQuotaReservationParams) (int64, error)
 	ReserveSpaceQuota(ctx context.Context, arg *ReserveSpaceQuotaParams) (*Space, error)
 	RevokeActiveRefreshTokensForSession(ctx context.Context, arg *RevokeActiveRefreshTokensForSessionParams) error
+	RevokeAdminDelegation(ctx context.Context, arg *RevokeAdminDelegationParams) (*AdminDelegation, error)
 	RevokeManagedUserCredentials(ctx context.Context, arg *RevokeManagedUserCredentialsParams) error
 	RevokeManagedUserRefreshTokens(ctx context.Context, arg *RevokeManagedUserRefreshTokensParams) error
 	RevokeManagedUserSessions(ctx context.Context, arg *RevokeManagedUserSessionsParams) error
 	RevokeOwnedUserSession(ctx context.Context, arg *RevokeOwnedUserSessionParams) (int64, error)
 	RevokeOwnedUserSessionTokens(ctx context.Context, arg *RevokeOwnedUserSessionTokensParams) error
+	RevokePermissionGrant(ctx context.Context, arg *RevokePermissionGrantParams) (*PermissionGrant, error)
 	RevokeUserSession(ctx context.Context, arg *RevokeUserSessionParams) error
 	SetManagedUserStatus(ctx context.Context, arg *SetManagedUserStatusParams) (*SetManagedUserStatusRow, error)
 	SetOrganizationChangePlanStatus(ctx context.Context, arg *SetOrganizationChangePlanStatusParams) (*OrganizationChangePlan, error)
@@ -103,12 +143,14 @@ type Querier interface {
 	TouchUserAfterLogin(ctx context.Context, arg *TouchUserAfterLoginParams) error
 	TouchUserSession(ctx context.Context, arg *TouchUserSessionParams) error
 	TryCreateOrganizationIdempotencyRecord(ctx context.Context, arg *TryCreateOrganizationIdempotencyRecordParams) (int64, error)
+	TryCreatePermissionIdempotency(ctx context.Context, arg *TryCreatePermissionIdempotencyParams) (int64, error)
 	TryCreateUserIdempotencyRecord(ctx context.Context, arg *TryCreateUserIdempotencyRecordParams) (int64, error)
 	UpdateManagedPasswordCredential(ctx context.Context, arg *UpdateManagedPasswordCredentialParams) (int64, error)
 	UpdateManagedUser(ctx context.Context, arg *UpdateManagedUserParams) (*UpdateManagedUserRow, error)
 	UpdateMembership(ctx context.Context, arg *UpdateMembershipParams) (*UserOrganization, error)
 	UpdateMovedOrganizationSubtree(ctx context.Context, arg *UpdateMovedOrganizationSubtreeParams) error
 	UpdateOrganization(ctx context.Context, arg *UpdateOrganizationParams) (*Organization, error)
+	UpdatePermissionGrant(ctx context.Context, arg *UpdatePermissionGrantParams) (*PermissionGrant, error)
 	UpdateSpace(ctx context.Context, arg *UpdateSpaceParams) (*Space, error)
 	UserCanJoinOrganization(ctx context.Context, arg *UserCanJoinOrganizationParams) (pgtype.Bool, error)
 	UserExistsAndIsActive(ctx context.Context, userID pgtype.UUID) (bool, error)

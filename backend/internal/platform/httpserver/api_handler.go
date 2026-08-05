@@ -61,15 +61,80 @@ type OrganizationsAPI interface {
 	GetCurrentUserPersonalSpace(context.Context, api.GetCurrentUserPersonalSpaceRequestObject) (api.GetCurrentUserPersonalSpaceResponseObject, error)
 }
 
+type PermissionsAPI interface {
+	ListAdminDelegations(context.Context, api.ListAdminDelegationsRequestObject) (api.ListAdminDelegationsResponseObject, error)
+	CreateAdminDelegation(context.Context, api.CreateAdminDelegationRequestObject) (api.CreateAdminDelegationResponseObject, error)
+	GetAdminDelegation(context.Context, api.GetAdminDelegationRequestObject) (api.GetAdminDelegationResponseObject, error)
+	RevokeAdminDelegation(context.Context, api.RevokeAdminDelegationRequestObject) (api.RevokeAdminDelegationResponseObject, error)
+	ListOrganizationAdministrators(context.Context, api.ListOrganizationAdministratorsRequestObject) (api.ListOrganizationAdministratorsResponseObject, error)
+	EvaluateAdminDelegation(context.Context, api.EvaluateAdminDelegationRequestObject) (api.EvaluateAdminDelegationResponseObject, error)
+	ListResourcePermissionGrants(context.Context, api.ListResourcePermissionGrantsRequestObject) (api.ListResourcePermissionGrantsResponseObject, error)
+	CreatePermissionGrant(context.Context, api.CreatePermissionGrantRequestObject) (api.CreatePermissionGrantResponseObject, error)
+	UpdatePermissionGrant(context.Context, api.UpdatePermissionGrantRequestObject) (api.UpdatePermissionGrantResponseObject, error)
+	RevokePermissionGrant(context.Context, api.RevokePermissionGrantRequestObject) (api.RevokePermissionGrantResponseObject, error)
+	EvaluatePermission(context.Context, api.EvaluatePermissionRequestObject) (api.EvaluatePermissionResponseObject, error)
+	BatchEvaluatePermissions(context.Context, api.BatchEvaluatePermissionsRequestObject) (api.BatchEvaluatePermissionsResponseObject, error)
+	BreakPermissionInheritance(context.Context, api.BreakPermissionInheritanceRequestObject) (api.BreakPermissionInheritanceResponseObject, error)
+	RestorePermissionInheritance(context.Context, api.RestorePermissionInheritanceRequestObject) (api.RestorePermissionInheritanceResponseObject, error)
+}
+
 type APIHandler struct {
 	health        HealthAPI
 	identity      IdentityAPI
 	users         UsersAPI
 	organizations OrganizationsAPI
+	permissions   PermissionsAPI
 }
 
-func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organizations OrganizationsAPI) *APIHandler {
-	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations}
+func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organizations OrganizationsAPI, permissionHandlers ...PermissionsAPI) *APIHandler {
+	var permissions PermissionsAPI
+	if len(permissionHandlers) > 0 {
+		permissions = permissionHandlers[0]
+	}
+	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions}
+}
+
+func (h *APIHandler) ListAdminDelegations(ctx context.Context, request api.ListAdminDelegationsRequestObject) (api.ListAdminDelegationsResponseObject, error) {
+	return h.permissions.ListAdminDelegations(ctx, request)
+}
+func (h *APIHandler) CreateAdminDelegation(ctx context.Context, request api.CreateAdminDelegationRequestObject) (api.CreateAdminDelegationResponseObject, error) {
+	return h.permissions.CreateAdminDelegation(ctx, request)
+}
+func (h *APIHandler) GetAdminDelegation(ctx context.Context, request api.GetAdminDelegationRequestObject) (api.GetAdminDelegationResponseObject, error) {
+	return h.permissions.GetAdminDelegation(ctx, request)
+}
+func (h *APIHandler) RevokeAdminDelegation(ctx context.Context, request api.RevokeAdminDelegationRequestObject) (api.RevokeAdminDelegationResponseObject, error) {
+	return h.permissions.RevokeAdminDelegation(ctx, request)
+}
+func (h *APIHandler) ListOrganizationAdministrators(ctx context.Context, request api.ListOrganizationAdministratorsRequestObject) (api.ListOrganizationAdministratorsResponseObject, error) {
+	return h.permissions.ListOrganizationAdministrators(ctx, request)
+}
+func (h *APIHandler) EvaluateAdminDelegation(ctx context.Context, request api.EvaluateAdminDelegationRequestObject) (api.EvaluateAdminDelegationResponseObject, error) {
+	return h.permissions.EvaluateAdminDelegation(ctx, request)
+}
+func (h *APIHandler) ListResourcePermissionGrants(ctx context.Context, request api.ListResourcePermissionGrantsRequestObject) (api.ListResourcePermissionGrantsResponseObject, error) {
+	return h.permissions.ListResourcePermissionGrants(ctx, request)
+}
+func (h *APIHandler) CreatePermissionGrant(ctx context.Context, request api.CreatePermissionGrantRequestObject) (api.CreatePermissionGrantResponseObject, error) {
+	return h.permissions.CreatePermissionGrant(ctx, request)
+}
+func (h *APIHandler) UpdatePermissionGrant(ctx context.Context, request api.UpdatePermissionGrantRequestObject) (api.UpdatePermissionGrantResponseObject, error) {
+	return h.permissions.UpdatePermissionGrant(ctx, request)
+}
+func (h *APIHandler) RevokePermissionGrant(ctx context.Context, request api.RevokePermissionGrantRequestObject) (api.RevokePermissionGrantResponseObject, error) {
+	return h.permissions.RevokePermissionGrant(ctx, request)
+}
+func (h *APIHandler) EvaluatePermission(ctx context.Context, request api.EvaluatePermissionRequestObject) (api.EvaluatePermissionResponseObject, error) {
+	return h.permissions.EvaluatePermission(ctx, request)
+}
+func (h *APIHandler) BatchEvaluatePermissions(ctx context.Context, request api.BatchEvaluatePermissionsRequestObject) (api.BatchEvaluatePermissionsResponseObject, error) {
+	return h.permissions.BatchEvaluatePermissions(ctx, request)
+}
+func (h *APIHandler) BreakPermissionInheritance(ctx context.Context, request api.BreakPermissionInheritanceRequestObject) (api.BreakPermissionInheritanceResponseObject, error) {
+	return h.permissions.BreakPermissionInheritance(ctx, request)
+}
+func (h *APIHandler) RestorePermissionInheritance(ctx context.Context, request api.RestorePermissionInheritanceRequestObject) (api.RestorePermissionInheritanceResponseObject, error) {
+	return h.permissions.RestorePermissionInheritance(ctx, request)
 }
 
 func (h *APIHandler) GetLiveness(ctx context.Context, request api.GetLivenessRequestObject) (api.GetLivenessResponseObject, error) {

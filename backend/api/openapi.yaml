@@ -21,6 +21,10 @@ tags:
     description: SYSTEM_ADMIN 维护组织树、成员关系和受控重组计划。
   - name: SpaceAdministration
     description: SYSTEM_ADMIN 维护个人、组织和公共空间的容量、配置与状态。
+  - name: AdministrationDelegation
+    description: 组织及其子树的管理能力委派；管理委派与普通文件 ACL 严格分离。
+  - name: Permissions
+    description: 全系统唯一资源授权判定入口；采用显式允许、继承和默认拒绝，不支持显式 DENY。
 
 paths:
   /health/live:
@@ -1191,6 +1195,274 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
 
+  /api/v1/admin-delegations:
+    get:
+      operationId: listAdminDelegations
+      tags: [AdministrationDelegation]
+      summary: 查询当前用户可见的管理委派
+      security: [{ bearerAuth: [] }, { sessionCookie: [] }]
+      parameters:
+        - { $ref: "#/components/parameters/PageQuery" }
+        - { $ref: "#/components/parameters/PageSizeQuery" }
+        - name: organizationId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/AdminDelegationStatus" }
+      responses:
+        "200":
+          description: 当前用户收到或创建的委派；系统管理员可查询全部委派。
+          content: { application/json: { schema: { $ref: "#/components/schemas/AdminDelegationListResponse" } } }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+    post:
+      operationId: createAdminDelegation
+      tags: [AdministrationDelegation]
+      summary: 创建管理委派
+      description: 根委派只允许 SYSTEM_ADMIN 创建；继续委派必须引用当前用户持有且含 DELEGATE_ADMIN 的父委派。
+      security: [{ bearerAuth: [] }, { sessionCookie: [] }]
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyHeader" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/CreateAdminDelegationRequest" } } }
+      responses:
+        "201":
+          description: 委派已创建。
+          content: { application/json: { schema: { $ref: "#/components/schemas/AdminDelegationResponse" } } }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin-delegations/{delegationId}:
+    parameters: [{ $ref: "#/components/parameters/DelegationIdPath" }]
+    get:
+      operationId: getAdminDelegation
+      tags: [AdministrationDelegation]
+      summary: 获取管理委派详情
+      security: [{ bearerAuth: [] }, { sessionCookie: [] }]
+      responses:
+        "200":
+          description: 可见的管理委派详情。
+          content: { application/json: { schema: { $ref: "#/components/schemas/AdminDelegationResponse" } } }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/admin-delegations/{delegationId}/revoke:
+    parameters: [{ $ref: "#/components/parameters/DelegationIdPath" }]
+    post:
+      operationId: revokeAdminDelegation
+      tags: [AdministrationDelegation]
+      summary: 撤销管理委派
+      description: 撤销后所有后代委派立即失效。
+      security: [{ bearerAuth: [] }, { sessionCookie: [] }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/RevokeAdminDelegationRequest" } } }
+      responses:
+        "200":
+          description: 委派已撤销。
+          content: { application/json: { schema: { $ref: "#/components/schemas/AdminDelegationResponse" } } }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/organizations/{organizationId}/administrators:
+    parameters: [{ $ref: "#/components/parameters/OrganizationIdPath" }]
+    get:
+      operationId: listOrganizationAdministrators
+      tags: [AdministrationDelegation]
+      summary: 查询组织的有效管理员
+      security: [{ bearerAuth: [] }, { sessionCookie: [] }]
+      parameters:
+        - { $ref: "#/components/parameters/PageQuery" }
+        - { $ref: "#/components/parameters/PageSizeQuery" }
+      responses:
+        "200":
+          description: 直接或从祖先组织继承的有效管理委派。
+          content: { application/json: { schema: { $ref: "#/components/schemas/AdminDelegationListResponse" } } }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/admin-delegations/evaluate:
+    post:
+      operationId: evaluateAdminDelegation
+      tags: [AdministrationDelegation]
+      summary: 判断当前用户是否具有组织管理能力
+      security: [{ bearerAuth: [] }, { sessionCookie: [] }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/AdminDelegationEvaluationRequest" } } }
+      responses:
+        "200":
+          description: 委派能力判定结果；无授权时返回 allowed=false。
+          content: { application/json: { schema: { $ref: "#/components/schemas/AdminDelegationEvaluationResponse" } } }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+
+  /api/v1/permissions/resources/{resourceType}/{resourceId}:
+    parameters:
+      - { $ref: "#/components/parameters/PermissionResourceTypePath" }
+      - { $ref: "#/components/parameters/PermissionResourceIdPath" }
+    get:
+      operationId: listResourcePermissionGrants
+      tags: [Permissions]
+      summary: 查询资源的直接 ACL
+      security: [{ bearerAuth: [] }, { sessionCookie: [] }]
+      parameters:
+        - { $ref: "#/components/parameters/PageQuery" }
+        - { $ref: "#/components/parameters/PageSizeQuery" }
+      responses:
+        "200":
+          description: 资源上的直接授权记录，不展开继承授权。
+          content: { application/json: { schema: { $ref: "#/components/schemas/PermissionGrantListResponse" } } }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/permissions/grants:
+    post:
+      operationId: createPermissionGrant
+      tags: [Permissions]
+      summary: 创建资源 ALLOW 授权
+      security: [{ bearerAuth: [] }, { sessionCookie: [] }]
+      parameters: [{ $ref: "#/components/parameters/IdempotencyKeyHeader" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/CreatePermissionGrantRequest" } } }
+      responses:
+        "201":
+          description: 授权已创建。
+          content: { application/json: { schema: { $ref: "#/components/schemas/PermissionGrantResponse" } } }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/permissions/grants/{grantId}:
+    parameters: [{ $ref: "#/components/parameters/GrantIdPath" }]
+    patch:
+      operationId: updatePermissionGrant
+      tags: [Permissions]
+      summary: 修改资源授权
+      security: [{ bearerAuth: [] }, { sessionCookie: [] }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/UpdatePermissionGrantRequest" } } }
+      responses:
+        "200":
+          description: 授权已修改。
+          content: { application/json: { schema: { $ref: "#/components/schemas/PermissionGrantResponse" } } }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/permissions/grants/{grantId}/revoke:
+    parameters: [{ $ref: "#/components/parameters/GrantIdPath" }]
+    post:
+      operationId: revokePermissionGrant
+      tags: [Permissions]
+      summary: 撤销资源授权
+      security: [{ bearerAuth: [] }, { sessionCookie: [] }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/RevokePermissionGrantRequest" } } }
+      responses:
+        "200":
+          description: 授权已撤销。
+          content: { application/json: { schema: { $ref: "#/components/schemas/PermissionGrantResponse" } } }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/permissions/evaluate:
+    post:
+      operationId: evaluatePermission
+      tags: [Permissions]
+      summary: 判断当前用户的资源动作权限
+      security: [{ bearerAuth: [] }, { sessionCookie: [] }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/PermissionEvaluationRequest" } } }
+      responses:
+        "200":
+          description: 最终授权结果；默认拒绝以 allowed=false 表示，不泄露资源细节。
+          content: { application/json: { schema: { $ref: "#/components/schemas/PermissionEvaluationResponse" } } }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+
+  /api/v1/permissions/batch-evaluate:
+    post:
+      operationId: batchEvaluatePermissions
+      tags: [Permissions]
+      summary: 批量判断当前用户的资源动作权限
+      security: [{ bearerAuth: [] }, { sessionCookie: [] }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/BatchPermissionEvaluationRequest" } } }
+      responses:
+        "200":
+          description: 保持请求顺序返回的最终授权结果。
+          content: { application/json: { schema: { $ref: "#/components/schemas/BatchPermissionEvaluationResponse" } } }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+
+  /api/v1/permissions/resources/{resourceType}/{resourceId}/break-inheritance:
+    parameters:
+      - { $ref: "#/components/parameters/PermissionResourceTypePath" }
+      - { $ref: "#/components/parameters/PermissionResourceIdPath" }
+    post:
+      operationId: breakPermissionInheritance
+      tags: [Permissions]
+      summary: 断开文件夹或文档的 ACL 继承
+      security: [{ bearerAuth: [] }, { sessionCookie: [] }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/ChangePermissionInheritanceRequest" } } }
+      responses:
+        "200":
+          description: 继承模式已设为 BREAK。
+          content: { application/json: { schema: { $ref: "#/components/schemas/PermissionInheritanceResponse" } } }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/permissions/resources/{resourceType}/{resourceId}/restore-inheritance:
+    parameters:
+      - { $ref: "#/components/parameters/PermissionResourceTypePath" }
+      - { $ref: "#/components/parameters/PermissionResourceIdPath" }
+    post:
+      operationId: restorePermissionInheritance
+      tags: [Permissions]
+      summary: 恢复文件夹或文档的 ACL 继承
+      security: [{ bearerAuth: [] }, { sessionCookie: [] }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/ChangePermissionInheritanceRequest" } } }
+      responses:
+        "200":
+          description: 继承模式已设为 INHERIT。
+          content: { application/json: { schema: { $ref: "#/components/schemas/PermissionInheritanceResponse" } } }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1280,6 +1552,26 @@ components:
       schema:
         type: string
         format: uuid
+    DelegationIdPath:
+      name: delegationId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    GrantIdPath:
+      name: grantId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    PermissionResourceTypePath:
+      name: resourceType
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/PermissionResourceType" }
+    PermissionResourceIdPath:
+      name: resourceId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
 
   headers:
     RequestId:
@@ -1387,6 +1679,295 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
 
   schemas:
+    AdminDelegationScope:
+      type: string
+      enum: [SELF, SUBTREE]
+
+    AdminDelegationStatus:
+      type: string
+      enum: [ACTIVE, REVOKED, EXPIRED, INVALIDATED]
+
+    AdminCapability:
+      type: string
+      enum: [MANAGE_SPACE_CONTENT, MANAGE_SPACE_PERMISSION, MANAGE_SPACE_MEMBERS, MANAGE_SPACE_RECYCLE_BIN, FORCE_UNLOCK, VIEW_SPACE_AUDIT, DELEGATE_ADMIN]
+
+    AdminDelegation:
+      type: object
+      additionalProperties: false
+      required: [delegationId, userId, organizationId, scope, canDelegate, capabilities, grantedByUserId, validFrom, status, createdAt, updatedAt, rowVersion]
+      properties:
+        delegationId: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        organizationId: { type: string, format: uuid }
+        scope: { $ref: "#/components/schemas/AdminDelegationScope" }
+        canDelegate: { type: boolean }
+        parentDelegationId: { type: string, format: uuid }
+        capabilities:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/AdminCapability" }
+        grantedByUserId: { type: string, format: uuid }
+        validFrom: { type: string, format: date-time }
+        validUntil: { type: string, format: date-time }
+        status: { $ref: "#/components/schemas/AdminDelegationStatus" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        revokedAt: { type: string, format: date-time }
+        revokeReason: { type: string, maxLength: 1000 }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    CreateAdminDelegationRequest:
+      type: object
+      additionalProperties: false
+      required: [userId, organizationId, scope, canDelegate, capabilities, validFrom]
+      properties:
+        userId: { type: string, format: uuid }
+        organizationId: { type: string, format: uuid }
+        scope: { $ref: "#/components/schemas/AdminDelegationScope" }
+        canDelegate: { type: boolean }
+        parentDelegationId: { type: string, format: uuid }
+        capabilities:
+          type: array
+          minItems: 1
+          maxItems: 7
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/AdminCapability" }
+        validFrom: { type: string, format: date-time }
+        validUntil: { type: string, format: date-time }
+
+    RevokeAdminDelegationRequest:
+      type: object
+      additionalProperties: false
+      required: [reason, rowVersion]
+      properties:
+        reason: { type: string, minLength: 1, maxLength: 1000 }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    AdminDelegationResponse:
+      type: object
+      additionalProperties: false
+      required: [delegation, requestId]
+      properties:
+        delegation: { $ref: "#/components/schemas/AdminDelegation" }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    AdminDelegationListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/AdminDelegation" } }
+        page: { $ref: "#/components/schemas/Page" }
+        pageSize: { $ref: "#/components/schemas/PageSize" }
+        total: { type: integer, format: int64, minimum: 0 }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    AdminDelegationEvaluationRequest:
+      type: object
+      additionalProperties: false
+      required: [organizationId, capability]
+      properties:
+        organizationId: { type: string, format: uuid }
+        capability: { $ref: "#/components/schemas/AdminCapability" }
+
+    AdminDelegationEvaluationResponse:
+      type: object
+      additionalProperties: false
+      required: [allowed, source, requestId]
+      properties:
+        allowed: { type: boolean }
+        source: { type: string, enum: [SYSTEM_ADMIN, ADMIN_DELEGATION, NONE] }
+        delegationId: { type: string, format: uuid }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    PermissionResourceType:
+      type: string
+      enum: [SPACE, FOLDER, DOCUMENT]
+
+    PermissionAction:
+      type: string
+      enum: [LIST, READ_METADATA, PREVIEW, DOWNLOAD, UPLOAD, CREATE_FOLDER, WRITE_CONTENT, RENAME, MOVE, DELETE, RESTORE, PURGE, SHARE, LOCK, MANAGE_VERSION, MANAGE_PERMISSION]
+
+    PermissionSubjectType:
+      type: string
+      enum: [USER, ORGANIZATION]
+
+    PermissionGrantStatus:
+      type: string
+      enum: [ACTIVE, REVOKED, EXPIRED]
+
+    PermissionGrantSource:
+      type: string
+      enum: [MANUAL, TEMPLATE, MIGRATION, SYSTEM]
+
+    PermissionGrant:
+      type: object
+      additionalProperties: false
+      required: [grantId, subjectType, subjectId, resourceType, resourceId, actions, inheritToDescendants, grantSource, validFrom, status, grantedByUserId, createdAt, updatedAt, rowVersion]
+      properties:
+        grantId: { type: string, format: uuid }
+        subjectType: { $ref: "#/components/schemas/PermissionSubjectType" }
+        subjectId: { type: string, format: uuid }
+        resourceType: { $ref: "#/components/schemas/PermissionResourceType" }
+        resourceId: { type: string, format: uuid }
+        actions:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/PermissionAction" }
+        inheritToDescendants: { type: boolean }
+        grantSource: { $ref: "#/components/schemas/PermissionGrantSource" }
+        validFrom: { type: string, format: date-time }
+        validUntil: { type: string, format: date-time }
+        status: { $ref: "#/components/schemas/PermissionGrantStatus" }
+        grantedByUserId: { type: string, format: uuid }
+        grantReason: { type: string, maxLength: 1000 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        revokedAt: { type: string, format: date-time }
+        revokedByUserId: { type: string, format: uuid }
+        revokeReason: { type: string, maxLength: 1000 }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    CreatePermissionGrantRequest:
+      type: object
+      additionalProperties: false
+      required: [subjectType, subjectId, resourceType, resourceId, actions, inheritToDescendants, grantSource, validFrom]
+      properties:
+        subjectType: { $ref: "#/components/schemas/PermissionSubjectType" }
+        subjectId: { type: string, format: uuid }
+        resourceType: { $ref: "#/components/schemas/PermissionResourceType" }
+        resourceId: { type: string, format: uuid }
+        actions:
+          type: array
+          minItems: 1
+          maxItems: 17
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/PermissionAction" }
+        inheritToDescendants: { type: boolean }
+        grantSource: { $ref: "#/components/schemas/PermissionGrantSource" }
+        validFrom: { type: string, format: date-time }
+        validUntil: { type: string, format: date-time }
+        grantReason: { type: string, maxLength: 1000 }
+
+    UpdatePermissionGrantRequest:
+      type: object
+      additionalProperties: false
+      required: [actions, inheritToDescendants, rowVersion]
+      properties:
+        actions:
+          type: array
+          minItems: 1
+          maxItems: 17
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/PermissionAction" }
+        inheritToDescendants: { type: boolean }
+        validUntil: { type: string, format: date-time }
+        grantReason: { type: string, maxLength: 1000 }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    RevokePermissionGrantRequest:
+      type: object
+      additionalProperties: false
+      required: [reason, rowVersion]
+      properties:
+        reason: { type: string, minLength: 1, maxLength: 1000 }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    PermissionGrantResponse:
+      type: object
+      additionalProperties: false
+      required: [grant, requestId]
+      properties:
+        grant: { $ref: "#/components/schemas/PermissionGrant" }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    PermissionGrantListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/PermissionGrant" } }
+        page: { $ref: "#/components/schemas/Page" }
+        pageSize: { $ref: "#/components/schemas/PageSize" }
+        total: { type: integer, format: int64, minimum: 0 }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    PermissionEvaluationRequest:
+      type: object
+      additionalProperties: false
+      required: [resourceType, resourceId, action]
+      properties:
+        resourceType: { $ref: "#/components/schemas/PermissionResourceType" }
+        resourceId: { type: string, format: uuid }
+        action: { $ref: "#/components/schemas/PermissionAction" }
+        privilegedReason: { type: string, minLength: 1, maxLength: 1000 }
+        privilegedAccessConfirmed:
+          type: boolean
+          default: false
+          description: SYSTEM_ADMIN 特权访问的二次确认；普通授权路径忽略该字段。
+
+    PermissionEvaluationResult:
+      type: object
+      additionalProperties: false
+      required: [resourceType, resourceId, action, allowed, source, privilegedAccessRequired]
+      properties:
+        resourceType: { $ref: "#/components/schemas/PermissionResourceType" }
+        resourceId: { type: string, format: uuid }
+        action: { $ref: "#/components/schemas/PermissionAction" }
+        allowed: { type: boolean }
+        source: { type: string, enum: [PERSONAL_OWNER, SYSTEM_ADMIN, ADMIN_DELEGATION, DIRECT_GRANT, INHERITED_GRANT, NONE] }
+        matchedGrantIds: { type: array, uniqueItems: true, items: { type: string, format: uuid } }
+        privilegedAccessRequired: { type: boolean }
+
+    PermissionEvaluationResponse:
+      type: object
+      additionalProperties: false
+      required: [result, requestId]
+      properties:
+        result: { $ref: "#/components/schemas/PermissionEvaluationResult" }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    BatchPermissionEvaluationRequest:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: "#/components/schemas/PermissionEvaluationRequest" }
+
+    BatchPermissionEvaluationResponse:
+      type: object
+      additionalProperties: false
+      required: [items, requestId]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/PermissionEvaluationResult" } }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    ChangePermissionInheritanceRequest:
+      type: object
+      additionalProperties: false
+      required: [rowVersion]
+      properties:
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+        reason: { type: string, maxLength: 1000 }
+
+    PermissionInheritanceResponse:
+      type: object
+      additionalProperties: false
+      required: [resourceType, resourceId, inheritanceMode, aclVersion, rowVersion, requestId]
+      properties:
+        resourceType: { $ref: "#/components/schemas/PermissionResourceType" }
+        resourceId: { type: string, format: uuid }
+        inheritanceMode: { type: string, enum: [INHERIT, BREAK] }
+        aclVersion: { type: integer, format: int64, minimum: 1 }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
     OrganizationStatus:
       type: string
       enum: [ACTIVE, DISABLED, ARCHIVED, DELETED]

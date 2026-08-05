@@ -4,6 +4,11 @@
 
 `00001_initial_schema.sql` 是从已确认的 `database/File-Workshop-V1.0-PostgreSQL.sql` 机械转换而来的首版 Goose Migration。数据库表名、字段名、类型和约束仍以 `docs/File-Workshop-V1.0-数据库设计说明.md` 为唯一权威来源。
 
+追加 Migration：
+
+- `00002_user_management_indexes.sql`：模块 02 用户查询索引；
+- `00003_fix_namespace_subtype_trigger.sql`：修复命名空间子类型共用触发器跨表引用不存在字段的问题，模块 04 集成测试和后续文件目录模块依赖该修复。
+
 固定工具版本保存在 `backend/go.mod` 的 `tool` 块中：
 
 ```powershell
@@ -34,6 +39,8 @@ go tool goose -dir migrations status
 2. 对现有 Schema 做完整结构比对后，受控登记首版基线版本。
 
 未经用户明确同意，不自动删除或重建当前 Schema，也不直接修改 Goose 版本表。
+
+模块 04 的真实依赖测试会从 `00003_fix_namespace_subtype_trigger.sql` 读取并重复执行幂等的 Up 函数替换，以兼容当前由 Navicat 手工导入且没有 Goose 版本表的开发 Schema；不会执行 Down、重建 Schema 或登记 Goose 版本。其他已有手工导入环境应只执行该文件的 `-- +goose Up` 段，不能把 Up 和 Down 一起作为普通 SQL 全部执行。
 
 ## 集成验证
 

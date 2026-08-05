@@ -16,6 +16,102 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for AdminCapability.
+const (
+	DELEGATEADMIN         AdminCapability = "DELEGATE_ADMIN"
+	FORCEUNLOCK           AdminCapability = "FORCE_UNLOCK"
+	MANAGESPACECONTENT    AdminCapability = "MANAGE_SPACE_CONTENT"
+	MANAGESPACEMEMBERS    AdminCapability = "MANAGE_SPACE_MEMBERS"
+	MANAGESPACEPERMISSION AdminCapability = "MANAGE_SPACE_PERMISSION"
+	MANAGESPACERECYCLEBIN AdminCapability = "MANAGE_SPACE_RECYCLE_BIN"
+	VIEWSPACEAUDIT        AdminCapability = "VIEW_SPACE_AUDIT"
+)
+
+// Valid indicates whether the value is a known member of the AdminCapability enum.
+func (e AdminCapability) Valid() bool {
+	switch e {
+	case DELEGATEADMIN:
+		return true
+	case FORCEUNLOCK:
+		return true
+	case MANAGESPACECONTENT:
+		return true
+	case MANAGESPACEMEMBERS:
+		return true
+	case MANAGESPACEPERMISSION:
+		return true
+	case MANAGESPACERECYCLEBIN:
+		return true
+	case VIEWSPACEAUDIT:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminDelegationEvaluationResponseSource.
+const (
+	AdminDelegationEvaluationResponseSourceADMINDELEGATION AdminDelegationEvaluationResponseSource = "ADMIN_DELEGATION"
+	AdminDelegationEvaluationResponseSourceNONE            AdminDelegationEvaluationResponseSource = "NONE"
+	AdminDelegationEvaluationResponseSourceSYSTEMADMIN     AdminDelegationEvaluationResponseSource = "SYSTEM_ADMIN"
+)
+
+// Valid indicates whether the value is a known member of the AdminDelegationEvaluationResponseSource enum.
+func (e AdminDelegationEvaluationResponseSource) Valid() bool {
+	switch e {
+	case AdminDelegationEvaluationResponseSourceADMINDELEGATION:
+		return true
+	case AdminDelegationEvaluationResponseSourceNONE:
+		return true
+	case AdminDelegationEvaluationResponseSourceSYSTEMADMIN:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminDelegationScope.
+const (
+	SELF    AdminDelegationScope = "SELF"
+	SUBTREE AdminDelegationScope = "SUBTREE"
+)
+
+// Valid indicates whether the value is a known member of the AdminDelegationScope enum.
+func (e AdminDelegationScope) Valid() bool {
+	switch e {
+	case SELF:
+		return true
+	case SUBTREE:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AdminDelegationStatus.
+const (
+	AdminDelegationStatusACTIVE      AdminDelegationStatus = "ACTIVE"
+	AdminDelegationStatusEXPIRED     AdminDelegationStatus = "EXPIRED"
+	AdminDelegationStatusINVALIDATED AdminDelegationStatus = "INVALIDATED"
+	AdminDelegationStatusREVOKED     AdminDelegationStatus = "REVOKED"
+)
+
+// Valid indicates whether the value is a known member of the AdminDelegationStatus enum.
+func (e AdminDelegationStatus) Valid() bool {
+	switch e {
+	case AdminDelegationStatusACTIVE:
+		return true
+	case AdminDelegationStatusEXPIRED:
+		return true
+	case AdminDelegationStatusINVALIDATED:
+		return true
+	case AdminDelegationStatusREVOKED:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AuthTokenResponseTokenType.
 const (
 	Bearer AuthTokenResponseTokenType = "Bearer"
@@ -201,22 +297,22 @@ func (e OrganizationChangePlanStatus) Valid() bool {
 
 // Defines values for OrganizationChangePlanType.
 const (
-	BULKRESTRUCTURE OrganizationChangePlanType = "BULK_RESTRUCTURE"
-	MERGE           OrganizationChangePlanType = "MERGE"
-	MOVE            OrganizationChangePlanType = "MOVE"
-	SPLIT           OrganizationChangePlanType = "SPLIT"
+	OrganizationChangePlanTypeBULKRESTRUCTURE OrganizationChangePlanType = "BULK_RESTRUCTURE"
+	OrganizationChangePlanTypeMERGE           OrganizationChangePlanType = "MERGE"
+	OrganizationChangePlanTypeMOVE            OrganizationChangePlanType = "MOVE"
+	OrganizationChangePlanTypeSPLIT           OrganizationChangePlanType = "SPLIT"
 )
 
 // Valid indicates whether the value is a known member of the OrganizationChangePlanType enum.
 func (e OrganizationChangePlanType) Valid() bool {
 	switch e {
-	case BULKRESTRUCTURE:
+	case OrganizationChangePlanTypeBULKRESTRUCTURE:
 		return true
-	case MERGE:
+	case OrganizationChangePlanTypeMERGE:
 		return true
-	case MOVE:
+	case OrganizationChangePlanTypeMOVE:
 		return true
-	case SPLIT:
+	case OrganizationChangePlanTypeSPLIT:
 		return true
 	default:
 		return false
@@ -283,6 +379,198 @@ func (e OrganizationStatus) Valid() bool {
 	}
 }
 
+// Defines values for PermissionAction.
+const (
+	PermissionActionCREATEFOLDER     PermissionAction = "CREATE_FOLDER"
+	PermissionActionDELETE           PermissionAction = "DELETE"
+	PermissionActionDOWNLOAD         PermissionAction = "DOWNLOAD"
+	PermissionActionLIST             PermissionAction = "LIST"
+	PermissionActionLOCK             PermissionAction = "LOCK"
+	PermissionActionMANAGEPERMISSION PermissionAction = "MANAGE_PERMISSION"
+	PermissionActionMANAGEVERSION    PermissionAction = "MANAGE_VERSION"
+	PermissionActionMOVE             PermissionAction = "MOVE"
+	PermissionActionPREVIEW          PermissionAction = "PREVIEW"
+	PermissionActionPURGE            PermissionAction = "PURGE"
+	PermissionActionREADMETADATA     PermissionAction = "READ_METADATA"
+	PermissionActionRENAME           PermissionAction = "RENAME"
+	PermissionActionRESTORE          PermissionAction = "RESTORE"
+	PermissionActionSHARE            PermissionAction = "SHARE"
+	PermissionActionUPLOAD           PermissionAction = "UPLOAD"
+	PermissionActionWRITECONTENT     PermissionAction = "WRITE_CONTENT"
+)
+
+// Valid indicates whether the value is a known member of the PermissionAction enum.
+func (e PermissionAction) Valid() bool {
+	switch e {
+	case PermissionActionCREATEFOLDER:
+		return true
+	case PermissionActionDELETE:
+		return true
+	case PermissionActionDOWNLOAD:
+		return true
+	case PermissionActionLIST:
+		return true
+	case PermissionActionLOCK:
+		return true
+	case PermissionActionMANAGEPERMISSION:
+		return true
+	case PermissionActionMANAGEVERSION:
+		return true
+	case PermissionActionMOVE:
+		return true
+	case PermissionActionPREVIEW:
+		return true
+	case PermissionActionPURGE:
+		return true
+	case PermissionActionREADMETADATA:
+		return true
+	case PermissionActionRENAME:
+		return true
+	case PermissionActionRESTORE:
+		return true
+	case PermissionActionSHARE:
+		return true
+	case PermissionActionUPLOAD:
+		return true
+	case PermissionActionWRITECONTENT:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PermissionEvaluationResultSource.
+const (
+	PermissionEvaluationResultSourceADMINDELEGATION PermissionEvaluationResultSource = "ADMIN_DELEGATION"
+	PermissionEvaluationResultSourceDIRECTGRANT     PermissionEvaluationResultSource = "DIRECT_GRANT"
+	PermissionEvaluationResultSourceINHERITEDGRANT  PermissionEvaluationResultSource = "INHERITED_GRANT"
+	PermissionEvaluationResultSourceNONE            PermissionEvaluationResultSource = "NONE"
+	PermissionEvaluationResultSourcePERSONALOWNER   PermissionEvaluationResultSource = "PERSONAL_OWNER"
+	PermissionEvaluationResultSourceSYSTEMADMIN     PermissionEvaluationResultSource = "SYSTEM_ADMIN"
+)
+
+// Valid indicates whether the value is a known member of the PermissionEvaluationResultSource enum.
+func (e PermissionEvaluationResultSource) Valid() bool {
+	switch e {
+	case PermissionEvaluationResultSourceADMINDELEGATION:
+		return true
+	case PermissionEvaluationResultSourceDIRECTGRANT:
+		return true
+	case PermissionEvaluationResultSourceINHERITEDGRANT:
+		return true
+	case PermissionEvaluationResultSourceNONE:
+		return true
+	case PermissionEvaluationResultSourcePERSONALOWNER:
+		return true
+	case PermissionEvaluationResultSourceSYSTEMADMIN:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PermissionGrantSource.
+const (
+	MANUAL    PermissionGrantSource = "MANUAL"
+	MIGRATION PermissionGrantSource = "MIGRATION"
+	SYSTEM    PermissionGrantSource = "SYSTEM"
+	TEMPLATE  PermissionGrantSource = "TEMPLATE"
+)
+
+// Valid indicates whether the value is a known member of the PermissionGrantSource enum.
+func (e PermissionGrantSource) Valid() bool {
+	switch e {
+	case MANUAL:
+		return true
+	case MIGRATION:
+		return true
+	case SYSTEM:
+		return true
+	case TEMPLATE:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PermissionGrantStatus.
+const (
+	PermissionGrantStatusACTIVE  PermissionGrantStatus = "ACTIVE"
+	PermissionGrantStatusEXPIRED PermissionGrantStatus = "EXPIRED"
+	PermissionGrantStatusREVOKED PermissionGrantStatus = "REVOKED"
+)
+
+// Valid indicates whether the value is a known member of the PermissionGrantStatus enum.
+func (e PermissionGrantStatus) Valid() bool {
+	switch e {
+	case PermissionGrantStatusACTIVE:
+		return true
+	case PermissionGrantStatusEXPIRED:
+		return true
+	case PermissionGrantStatusREVOKED:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PermissionInheritanceResponseInheritanceMode.
+const (
+	BREAK   PermissionInheritanceResponseInheritanceMode = "BREAK"
+	INHERIT PermissionInheritanceResponseInheritanceMode = "INHERIT"
+)
+
+// Valid indicates whether the value is a known member of the PermissionInheritanceResponseInheritanceMode enum.
+func (e PermissionInheritanceResponseInheritanceMode) Valid() bool {
+	switch e {
+	case BREAK:
+		return true
+	case INHERIT:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PermissionResourceType.
+const (
+	DOCUMENT PermissionResourceType = "DOCUMENT"
+	FOLDER   PermissionResourceType = "FOLDER"
+	SPACE    PermissionResourceType = "SPACE"
+)
+
+// Valid indicates whether the value is a known member of the PermissionResourceType enum.
+func (e PermissionResourceType) Valid() bool {
+	switch e {
+	case DOCUMENT:
+		return true
+	case FOLDER:
+		return true
+	case SPACE:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PermissionSubjectType.
+const (
+	PermissionSubjectTypeORGANIZATION PermissionSubjectType = "ORGANIZATION"
+	PermissionSubjectTypeUSER         PermissionSubjectType = "USER"
+)
+
+// Valid indicates whether the value is a known member of the PermissionSubjectType enum.
+func (e PermissionSubjectType) Valid() bool {
+	switch e {
+	case PermissionSubjectTypeORGANIZATION:
+		return true
+	case PermissionSubjectTypeUSER:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SessionSummaryStatus.
 const (
 	SessionSummaryStatusACTIVE  SessionSummaryStatus = "ACTIVE"
@@ -330,19 +618,19 @@ func (e SpaceStatus) Valid() bool {
 
 // Defines values for SpaceType.
 const (
-	ORGANIZATION SpaceType = "ORGANIZATION"
-	PERSONAL     SpaceType = "PERSONAL"
-	PUBLIC       SpaceType = "PUBLIC"
+	SpaceTypeORGANIZATION SpaceType = "ORGANIZATION"
+	SpaceTypePERSONAL     SpaceType = "PERSONAL"
+	SpaceTypePUBLIC       SpaceType = "PUBLIC"
 )
 
 // Valid indicates whether the value is a known member of the SpaceType enum.
 func (e SpaceType) Valid() bool {
 	switch e {
-	case ORGANIZATION:
+	case SpaceTypeORGANIZATION:
 		return true
-	case PERSONAL:
+	case SpaceTypePERSONAL:
 		return true
-	case PUBLIC:
+	case SpaceTypePUBLIC:
 		return true
 	default:
 		return false
@@ -431,6 +719,67 @@ type AddOrganizationMemberRequest struct {
 	UserId         openapi_types.UUID         `json:"userId"`
 }
 
+// AdminCapability defines model for AdminCapability.
+type AdminCapability string
+
+// AdminDelegation defines model for AdminDelegation.
+type AdminDelegation struct {
+	CanDelegate        bool                  `json:"canDelegate"`
+	Capabilities       []AdminCapability     `json:"capabilities"`
+	CreatedAt          time.Time             `json:"createdAt"`
+	DelegationId       openapi_types.UUID    `json:"delegationId"`
+	GrantedByUserId    openapi_types.UUID    `json:"grantedByUserId"`
+	OrganizationId     openapi_types.UUID    `json:"organizationId"`
+	ParentDelegationId *openapi_types.UUID   `json:"parentDelegationId,omitempty"`
+	RevokeReason       *string               `json:"revokeReason,omitempty"`
+	RevokedAt          *time.Time            `json:"revokedAt,omitempty"`
+	RowVersion         int64                 `json:"rowVersion"`
+	Scope              AdminDelegationScope  `json:"scope"`
+	Status             AdminDelegationStatus `json:"status"`
+	UpdatedAt          time.Time             `json:"updatedAt"`
+	UserId             openapi_types.UUID    `json:"userId"`
+	ValidFrom          time.Time             `json:"validFrom"`
+	ValidUntil         *time.Time            `json:"validUntil,omitempty"`
+}
+
+// AdminDelegationEvaluationRequest defines model for AdminDelegationEvaluationRequest.
+type AdminDelegationEvaluationRequest struct {
+	Capability     AdminCapability    `json:"capability"`
+	OrganizationId openapi_types.UUID `json:"organizationId"`
+}
+
+// AdminDelegationEvaluationResponse defines model for AdminDelegationEvaluationResponse.
+type AdminDelegationEvaluationResponse struct {
+	Allowed      bool                                    `json:"allowed"`
+	DelegationId *openapi_types.UUID                     `json:"delegationId,omitempty"`
+	RequestId    string                                  `json:"requestId"`
+	Source       AdminDelegationEvaluationResponseSource `json:"source"`
+}
+
+// AdminDelegationEvaluationResponseSource defines model for AdminDelegationEvaluationResponse.Source.
+type AdminDelegationEvaluationResponseSource string
+
+// AdminDelegationListResponse defines model for AdminDelegationListResponse.
+type AdminDelegationListResponse struct {
+	Items     []AdminDelegation `json:"items"`
+	Page      Page              `json:"page"`
+	PageSize  PageSize          `json:"pageSize"`
+	RequestId string            `json:"requestId"`
+	Total     int64             `json:"total"`
+}
+
+// AdminDelegationResponse defines model for AdminDelegationResponse.
+type AdminDelegationResponse struct {
+	Delegation AdminDelegation `json:"delegation"`
+	RequestId  string          `json:"requestId"`
+}
+
+// AdminDelegationScope defines model for AdminDelegationScope.
+type AdminDelegationScope string
+
+// AdminDelegationStatus defines model for AdminDelegationStatus.
+type AdminDelegationStatus string
+
 // AuthTokenResponse defines model for AuthTokenResponse.
 type AuthTokenResponse struct {
 	AccessToken string `json:"accessToken"`
@@ -459,11 +808,28 @@ type AuthenticatedUser struct {
 // AuthenticatedUserSystemRole defines model for AuthenticatedUser.SystemRole.
 type AuthenticatedUserSystemRole string
 
+// BatchPermissionEvaluationRequest defines model for BatchPermissionEvaluationRequest.
+type BatchPermissionEvaluationRequest struct {
+	Items []PermissionEvaluationRequest `json:"items"`
+}
+
+// BatchPermissionEvaluationResponse defines model for BatchPermissionEvaluationResponse.
+type BatchPermissionEvaluationResponse struct {
+	Items     []PermissionEvaluationResult `json:"items"`
+	RequestId string                       `json:"requestId"`
+}
+
 // ChangeOrganizationStatusRequest defines model for ChangeOrganizationStatusRequest.
 type ChangeOrganizationStatusRequest struct {
 	Reason     string             `json:"reason"`
 	RowVersion int64              `json:"rowVersion"`
 	Status     OrganizationStatus `json:"status"`
+}
+
+// ChangePermissionInheritanceRequest defines model for ChangePermissionInheritanceRequest.
+type ChangePermissionInheritanceRequest struct {
+	Reason     *string `json:"reason,omitempty"`
+	RowVersion int64   `json:"rowVersion"`
 }
 
 // ChangeSpaceStatusRequest defines model for ChangeSpaceStatusRequest.
@@ -483,6 +849,18 @@ type ComponentHealth struct {
 // ComponentStatus defines model for ComponentStatus.
 type ComponentStatus string
 
+// CreateAdminDelegationRequest defines model for CreateAdminDelegationRequest.
+type CreateAdminDelegationRequest struct {
+	CanDelegate        bool                 `json:"canDelegate"`
+	Capabilities       []AdminCapability    `json:"capabilities"`
+	OrganizationId     openapi_types.UUID   `json:"organizationId"`
+	ParentDelegationId *openapi_types.UUID  `json:"parentDelegationId,omitempty"`
+	Scope              AdminDelegationScope `json:"scope"`
+	UserId             openapi_types.UUID   `json:"userId"`
+	ValidFrom          time.Time            `json:"validFrom"`
+	ValidUntil         *time.Time           `json:"validUntil,omitempty"`
+}
+
 // CreateOrganizationChangePlanRequest defines model for CreateOrganizationChangePlanRequest.
 type CreateOrganizationChangePlanRequest struct {
 	ExpectedTreeVersion int64                      `json:"expectedTreeVersion"`
@@ -498,6 +876,20 @@ type CreateOrganizationRequest struct {
 	SortOrder            *int                `json:"sortOrder,omitempty"`
 	SpaceQuotaBytes      int64               `json:"spaceQuotaBytes"`
 	TypeLabel            *string             `json:"typeLabel,omitempty"`
+}
+
+// CreatePermissionGrantRequest defines model for CreatePermissionGrantRequest.
+type CreatePermissionGrantRequest struct {
+	Actions              []PermissionAction     `json:"actions"`
+	GrantReason          *string                `json:"grantReason,omitempty"`
+	GrantSource          PermissionGrantSource  `json:"grantSource"`
+	InheritToDescendants bool                   `json:"inheritToDescendants"`
+	ResourceId           openapi_types.UUID     `json:"resourceId"`
+	ResourceType         PermissionResourceType `json:"resourceType"`
+	SubjectId            openapi_types.UUID     `json:"subjectId"`
+	SubjectType          PermissionSubjectType  `json:"subjectType"`
+	ValidFrom            time.Time              `json:"validFrom"`
+	ValidUntil           *time.Time             `json:"validUntil,omitempty"`
 }
 
 // CreatePublicSpaceRequest defines model for CreatePublicSpaceRequest.
@@ -719,6 +1111,103 @@ type PaginationMeta struct {
 	Total    *int64   `json:"total,omitempty"`
 }
 
+// PermissionAction defines model for PermissionAction.
+type PermissionAction string
+
+// PermissionEvaluationRequest defines model for PermissionEvaluationRequest.
+type PermissionEvaluationRequest struct {
+	Action PermissionAction `json:"action"`
+
+	// PrivilegedAccessConfirmed SYSTEM_ADMIN 特权访问的二次确认；普通授权路径忽略该字段。
+	PrivilegedAccessConfirmed *bool                  `json:"privilegedAccessConfirmed,omitempty"`
+	PrivilegedReason          *string                `json:"privilegedReason,omitempty"`
+	ResourceId                openapi_types.UUID     `json:"resourceId"`
+	ResourceType              PermissionResourceType `json:"resourceType"`
+}
+
+// PermissionEvaluationResponse defines model for PermissionEvaluationResponse.
+type PermissionEvaluationResponse struct {
+	RequestId string                     `json:"requestId"`
+	Result    PermissionEvaluationResult `json:"result"`
+}
+
+// PermissionEvaluationResult defines model for PermissionEvaluationResult.
+type PermissionEvaluationResult struct {
+	Action                   PermissionAction                 `json:"action"`
+	Allowed                  bool                             `json:"allowed"`
+	MatchedGrantIds          *[]openapi_types.UUID            `json:"matchedGrantIds,omitempty"`
+	PrivilegedAccessRequired bool                             `json:"privilegedAccessRequired"`
+	ResourceId               openapi_types.UUID               `json:"resourceId"`
+	ResourceType             PermissionResourceType           `json:"resourceType"`
+	Source                   PermissionEvaluationResultSource `json:"source"`
+}
+
+// PermissionEvaluationResultSource defines model for PermissionEvaluationResult.Source.
+type PermissionEvaluationResultSource string
+
+// PermissionGrant defines model for PermissionGrant.
+type PermissionGrant struct {
+	Actions              []PermissionAction     `json:"actions"`
+	CreatedAt            time.Time              `json:"createdAt"`
+	GrantId              openapi_types.UUID     `json:"grantId"`
+	GrantReason          *string                `json:"grantReason,omitempty"`
+	GrantSource          PermissionGrantSource  `json:"grantSource"`
+	GrantedByUserId      openapi_types.UUID     `json:"grantedByUserId"`
+	InheritToDescendants bool                   `json:"inheritToDescendants"`
+	ResourceId           openapi_types.UUID     `json:"resourceId"`
+	ResourceType         PermissionResourceType `json:"resourceType"`
+	RevokeReason         *string                `json:"revokeReason,omitempty"`
+	RevokedAt            *time.Time             `json:"revokedAt,omitempty"`
+	RevokedByUserId      *openapi_types.UUID    `json:"revokedByUserId,omitempty"`
+	RowVersion           int64                  `json:"rowVersion"`
+	Status               PermissionGrantStatus  `json:"status"`
+	SubjectId            openapi_types.UUID     `json:"subjectId"`
+	SubjectType          PermissionSubjectType  `json:"subjectType"`
+	UpdatedAt            time.Time              `json:"updatedAt"`
+	ValidFrom            time.Time              `json:"validFrom"`
+	ValidUntil           *time.Time             `json:"validUntil,omitempty"`
+}
+
+// PermissionGrantListResponse defines model for PermissionGrantListResponse.
+type PermissionGrantListResponse struct {
+	Items     []PermissionGrant `json:"items"`
+	Page      Page              `json:"page"`
+	PageSize  PageSize          `json:"pageSize"`
+	RequestId string            `json:"requestId"`
+	Total     int64             `json:"total"`
+}
+
+// PermissionGrantResponse defines model for PermissionGrantResponse.
+type PermissionGrantResponse struct {
+	Grant     PermissionGrant `json:"grant"`
+	RequestId string          `json:"requestId"`
+}
+
+// PermissionGrantSource defines model for PermissionGrantSource.
+type PermissionGrantSource string
+
+// PermissionGrantStatus defines model for PermissionGrantStatus.
+type PermissionGrantStatus string
+
+// PermissionInheritanceResponse defines model for PermissionInheritanceResponse.
+type PermissionInheritanceResponse struct {
+	AclVersion      int64                                        `json:"aclVersion"`
+	InheritanceMode PermissionInheritanceResponseInheritanceMode `json:"inheritanceMode"`
+	RequestId       string                                       `json:"requestId"`
+	ResourceId      openapi_types.UUID                           `json:"resourceId"`
+	ResourceType    PermissionResourceType                       `json:"resourceType"`
+	RowVersion      int64                                        `json:"rowVersion"`
+}
+
+// PermissionInheritanceResponseInheritanceMode defines model for PermissionInheritanceResponse.InheritanceMode.
+type PermissionInheritanceResponseInheritanceMode string
+
+// PermissionResourceType defines model for PermissionResourceType.
+type PermissionResourceType string
+
+// PermissionSubjectType defines model for PermissionSubjectType.
+type PermissionSubjectType string
+
 // ProvisionPersonalSpaceRequest defines model for ProvisionPersonalSpaceRequest.
 type ProvisionPersonalSpaceRequest struct {
 	Config     *map[string]interface{} `json:"config,omitempty"`
@@ -735,6 +1224,18 @@ type RemoveOrganizationMemberRequest struct {
 // ResetUserPasswordRequest defines model for ResetUserPasswordRequest.
 type ResetUserPasswordRequest struct {
 	Password   string `json:"password"`
+	RowVersion int64  `json:"rowVersion"`
+}
+
+// RevokeAdminDelegationRequest defines model for RevokeAdminDelegationRequest.
+type RevokeAdminDelegationRequest struct {
+	Reason     string `json:"reason"`
+	RowVersion int64  `json:"rowVersion"`
+}
+
+// RevokePermissionGrantRequest defines model for RevokePermissionGrantRequest.
+type RevokePermissionGrantRequest struct {
+	Reason     string `json:"reason"`
 	RowVersion int64  `json:"rowVersion"`
 }
 
@@ -843,6 +1344,15 @@ type UpdateOrganizationRequest struct {
 	TypeLabel *string `json:"typeLabel,omitempty"`
 }
 
+// UpdatePermissionGrantRequest defines model for UpdatePermissionGrantRequest.
+type UpdatePermissionGrantRequest struct {
+	Actions              []PermissionAction `json:"actions"`
+	GrantReason          *string            `json:"grantReason,omitempty"`
+	InheritToDescendants bool               `json:"inheritToDescendants"`
+	RowVersion           int64              `json:"rowVersion"`
+	ValidUntil           *time.Time         `json:"validUntil,omitempty"`
+}
+
 // UpdateSpaceRequest defines model for UpdateSpaceRequest.
 type UpdateSpaceRequest struct {
 	Config              *map[string]interface{} `json:"config,omitempty"`
@@ -941,6 +1451,12 @@ type UserStateChangeRequest struct {
 // UserStatus defines model for UserStatus.
 type UserStatus string
 
+// DelegationIdPath defines model for DelegationIdPath.
+type DelegationIdPath = openapi_types.UUID
+
+// GrantIdPath defines model for GrantIdPath.
+type GrantIdPath = openapi_types.UUID
+
 // IdempotencyKeyHeader defines model for IdempotencyKeyHeader.
 type IdempotencyKeyHeader = string
 
@@ -955,6 +1471,12 @@ type PageQuery = int
 
 // PageSizeQuery defines model for PageSizeQuery.
 type PageSizeQuery = int
+
+// PermissionResourceIdPath defines model for PermissionResourceIdPath.
+type PermissionResourceIdPath = openapi_types.UUID
+
+// PermissionResourceTypePath defines model for PermissionResourceTypePath.
+type PermissionResourceTypePath = PermissionResourceType
 
 // PlanIdPath defines model for PlanIdPath.
 type PlanIdPath = openapi_types.UUID
@@ -994,6 +1516,23 @@ type SecurityRejected = ErrorResponse
 
 // TooManyRequests defines model for TooManyRequests.
 type TooManyRequests = ErrorResponse
+
+// ListAdminDelegationsParams defines parameters for ListAdminDelegations.
+type ListAdminDelegationsParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize       *PageSizeQuery         `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+	OrganizationId *openapi_types.UUID    `form:"organizationId,omitempty" json:"organizationId,omitempty"`
+	Status         *AdminDelegationStatus `form:"status,omitempty" json:"status,omitempty"`
+}
+
+// CreateAdminDelegationParams defines parameters for CreateAdminDelegation.
+type CreateAdminDelegationParams struct {
+	// IdempotencyKey 可重试写请求的稳定幂等键。
+	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
+}
 
 // ListOrganizationChangePlansParams defines parameters for ListOrganizationChangePlans.
 type ListOrganizationChangePlansParams struct {
@@ -1092,6 +1631,30 @@ type ProvisionUserPersonalSpaceParams struct {
 	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
 }
 
+// ListOrganizationAdministratorsParams defines parameters for ListOrganizationAdministrators.
+type ListOrganizationAdministratorsParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize *PageSizeQuery `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+}
+
+// CreatePermissionGrantParams defines parameters for CreatePermissionGrant.
+type CreatePermissionGrantParams struct {
+	// IdempotencyKey 可重试写请求的稳定幂等键。
+	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
+}
+
+// ListResourcePermissionGrantsParams defines parameters for ListResourcePermissionGrants.
+type ListResourcePermissionGrantsParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize *PageSizeQuery `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+}
+
 // ListCurrentUserOrganizationsParams defines parameters for ListCurrentUserOrganizations.
 type ListCurrentUserOrganizationsParams struct {
 	// Page 从 1 开始的页码。
@@ -1109,6 +1672,15 @@ type ListCurrentUserSessionsParams struct {
 	// PageSize 每页数量，最大 200。
 	PageSize *PageSizeQuery `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 }
+
+// CreateAdminDelegationJSONRequestBody defines body for CreateAdminDelegation for application/json ContentType.
+type CreateAdminDelegationJSONRequestBody = CreateAdminDelegationRequest
+
+// EvaluateAdminDelegationJSONRequestBody defines body for EvaluateAdminDelegation for application/json ContentType.
+type EvaluateAdminDelegationJSONRequestBody = AdminDelegationEvaluationRequest
+
+// RevokeAdminDelegationJSONRequestBody defines body for RevokeAdminDelegation for application/json ContentType.
+type RevokeAdminDelegationJSONRequestBody = RevokeAdminDelegationRequest
 
 // CreateOrganizationChangePlanJSONRequestBody defines body for CreateOrganizationChangePlan for application/json ContentType.
 type CreateOrganizationChangePlanJSONRequestBody = CreateOrganizationChangePlanRequest
@@ -1176,11 +1748,47 @@ type ProvisionUserPersonalSpaceJSONRequestBody = ProvisionPersonalSpaceRequest
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
 
+// BatchEvaluatePermissionsJSONRequestBody defines body for BatchEvaluatePermissions for application/json ContentType.
+type BatchEvaluatePermissionsJSONRequestBody = BatchPermissionEvaluationRequest
+
+// EvaluatePermissionJSONRequestBody defines body for EvaluatePermission for application/json ContentType.
+type EvaluatePermissionJSONRequestBody = PermissionEvaluationRequest
+
+// CreatePermissionGrantJSONRequestBody defines body for CreatePermissionGrant for application/json ContentType.
+type CreatePermissionGrantJSONRequestBody = CreatePermissionGrantRequest
+
+// UpdatePermissionGrantJSONRequestBody defines body for UpdatePermissionGrant for application/json ContentType.
+type UpdatePermissionGrantJSONRequestBody = UpdatePermissionGrantRequest
+
+// RevokePermissionGrantJSONRequestBody defines body for RevokePermissionGrant for application/json ContentType.
+type RevokePermissionGrantJSONRequestBody = RevokePermissionGrantRequest
+
+// BreakPermissionInheritanceJSONRequestBody defines body for BreakPermissionInheritance for application/json ContentType.
+type BreakPermissionInheritanceJSONRequestBody = ChangePermissionInheritanceRequest
+
+// RestorePermissionInheritanceJSONRequestBody defines body for RestorePermissionInheritance for application/json ContentType.
+type RestorePermissionInheritanceJSONRequestBody = ChangePermissionInheritanceRequest
+
 // UpdateCurrentUserJSONRequestBody defines body for UpdateCurrentUser for application/json ContentType.
 type UpdateCurrentUserJSONRequestBody = UpdateCurrentUserRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// ListAdminDelegations 查询当前用户可见的管理委派
+	// (GET /api/v1/admin-delegations)
+	ListAdminDelegations(c *gin.Context, params ListAdminDelegationsParams)
+	// CreateAdminDelegation 创建管理委派
+	// (POST /api/v1/admin-delegations)
+	CreateAdminDelegation(c *gin.Context, params CreateAdminDelegationParams)
+	// EvaluateAdminDelegation 判断当前用户是否具有组织管理能力
+	// (POST /api/v1/admin-delegations/evaluate)
+	EvaluateAdminDelegation(c *gin.Context)
+	// GetAdminDelegation 获取管理委派详情
+	// (GET /api/v1/admin-delegations/{delegationId})
+	GetAdminDelegation(c *gin.Context, delegationId DelegationIdPath)
+	// RevokeAdminDelegation 撤销管理委派
+	// (POST /api/v1/admin-delegations/{delegationId}/revoke)
+	RevokeAdminDelegation(c *gin.Context, delegationId DelegationIdPath)
 	// ListOrganizationChangePlans 分页查询组织重组计划
 	// (GET /api/v1/admin/organization-change-plans)
 	ListOrganizationChangePlans(c *gin.Context, params ListOrganizationChangePlansParams)
@@ -1283,6 +1891,33 @@ type ServerInterface interface {
 	// GetCurrentSession 获取当前认证会话
 	// (GET /api/v1/auth/session)
 	GetCurrentSession(c *gin.Context)
+	// ListOrganizationAdministrators 查询组织的有效管理员
+	// (GET /api/v1/organizations/{organizationId}/administrators)
+	ListOrganizationAdministrators(c *gin.Context, organizationId OrganizationIdPath, params ListOrganizationAdministratorsParams)
+	// BatchEvaluatePermissions 批量判断当前用户的资源动作权限
+	// (POST /api/v1/permissions/batch-evaluate)
+	BatchEvaluatePermissions(c *gin.Context)
+	// EvaluatePermission 判断当前用户的资源动作权限
+	// (POST /api/v1/permissions/evaluate)
+	EvaluatePermission(c *gin.Context)
+	// CreatePermissionGrant 创建资源 ALLOW 授权
+	// (POST /api/v1/permissions/grants)
+	CreatePermissionGrant(c *gin.Context, params CreatePermissionGrantParams)
+	// UpdatePermissionGrant 修改资源授权
+	// (PATCH /api/v1/permissions/grants/{grantId})
+	UpdatePermissionGrant(c *gin.Context, grantId GrantIdPath)
+	// RevokePermissionGrant 撤销资源授权
+	// (POST /api/v1/permissions/grants/{grantId}/revoke)
+	RevokePermissionGrant(c *gin.Context, grantId GrantIdPath)
+	// ListResourcePermissionGrants 查询资源的直接 ACL
+	// (GET /api/v1/permissions/resources/{resourceType}/{resourceId})
+	ListResourcePermissionGrants(c *gin.Context, resourceType PermissionResourceTypePath, resourceId PermissionResourceIdPath, params ListResourcePermissionGrantsParams)
+	// BreakPermissionInheritance 断开文件夹或文档的 ACL 继承
+	// (POST /api/v1/permissions/resources/{resourceType}/{resourceId}/break-inheritance)
+	BreakPermissionInheritance(c *gin.Context, resourceType PermissionResourceTypePath, resourceId PermissionResourceIdPath)
+	// RestorePermissionInheritance 恢复文件夹或文档的 ACL 继承
+	// (POST /api/v1/permissions/resources/{resourceType}/{resourceId}/restore-inheritance)
+	RestorePermissionInheritance(c *gin.Context, resourceType PermissionResourceTypePath, resourceId PermissionResourceIdPath)
 	// GetCurrentUser 获取当前用户资料
 	// (GET /api/v1/users/me)
 	GetCurrentUser(c *gin.Context)
@@ -1317,6 +1952,163 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(c *gin.Context)
+
+// ListAdminDelegations operation middleware
+func (siw *ServerInterfaceWrapper) ListAdminDelegations(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListAdminDelegationsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "organizationId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "organizationId", c.Request.URL.Query(), &params.OrganizationId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter organizationId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", c.Request.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter status: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListAdminDelegations(c, params)
+}
+
+// CreateAdminDelegation operation middleware
+func (siw *ServerInterfaceWrapper) CreateAdminDelegation(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateAdminDelegationParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKeyHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreateAdminDelegation(c, params)
+}
+
+// EvaluateAdminDelegation operation middleware
+func (siw *ServerInterfaceWrapper) EvaluateAdminDelegation(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.EvaluateAdminDelegation(c)
+}
+
+// GetAdminDelegation operation middleware
+func (siw *ServerInterfaceWrapper) GetAdminDelegation(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "delegationId" -------------
+	var delegationId DelegationIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "delegationId", c.Param("delegationId"), &delegationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter delegationId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetAdminDelegation(c, delegationId)
+}
+
+// RevokeAdminDelegation operation middleware
+func (siw *ServerInterfaceWrapper) RevokeAdminDelegation(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "delegationId" -------------
+	var delegationId DelegationIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "delegationId", c.Param("delegationId"), &delegationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter delegationId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.RevokeAdminDelegation(c, delegationId)
+}
 
 // ListOrganizationChangePlans operation middleware
 func (siw *ServerInterfaceWrapper) ListOrganizationChangePlans(c *gin.Context) {
@@ -2430,6 +3222,290 @@ func (siw *ServerInterfaceWrapper) GetCurrentSession(c *gin.Context) {
 	siw.Handler.GetCurrentSession(c)
 }
 
+// ListOrganizationAdministrators operation middleware
+func (siw *ServerInterfaceWrapper) ListOrganizationAdministrators(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "organizationId" -------------
+	var organizationId OrganizationIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "organizationId", c.Param("organizationId"), &organizationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter organizationId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListOrganizationAdministratorsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListOrganizationAdministrators(c, organizationId, params)
+}
+
+// BatchEvaluatePermissions operation middleware
+func (siw *ServerInterfaceWrapper) BatchEvaluatePermissions(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.BatchEvaluatePermissions(c)
+}
+
+// EvaluatePermission operation middleware
+func (siw *ServerInterfaceWrapper) EvaluatePermission(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.EvaluatePermission(c)
+}
+
+// CreatePermissionGrant operation middleware
+func (siw *ServerInterfaceWrapper) CreatePermissionGrant(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreatePermissionGrantParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKeyHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreatePermissionGrant(c, params)
+}
+
+// UpdatePermissionGrant operation middleware
+func (siw *ServerInterfaceWrapper) UpdatePermissionGrant(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "grantId" -------------
+	var grantId GrantIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "grantId", c.Param("grantId"), &grantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter grantId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdatePermissionGrant(c, grantId)
+}
+
+// RevokePermissionGrant operation middleware
+func (siw *ServerInterfaceWrapper) RevokePermissionGrant(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "grantId" -------------
+	var grantId GrantIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "grantId", c.Param("grantId"), &grantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter grantId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.RevokePermissionGrant(c, grantId)
+}
+
+// ListResourcePermissionGrants operation middleware
+func (siw *ServerInterfaceWrapper) ListResourcePermissionGrants(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "resourceType" -------------
+	var resourceType PermissionResourceTypePath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "resourceType", c.Param("resourceType"), &resourceType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter resourceType: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Path parameter "resourceId" -------------
+	var resourceId PermissionResourceIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "resourceId", c.Param("resourceId"), &resourceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter resourceId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListResourcePermissionGrantsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListResourcePermissionGrants(c, resourceType, resourceId, params)
+}
+
+// BreakPermissionInheritance operation middleware
+func (siw *ServerInterfaceWrapper) BreakPermissionInheritance(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "resourceType" -------------
+	var resourceType PermissionResourceTypePath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "resourceType", c.Param("resourceType"), &resourceType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter resourceType: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Path parameter "resourceId" -------------
+	var resourceId PermissionResourceIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "resourceId", c.Param("resourceId"), &resourceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter resourceId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.BreakPermissionInheritance(c, resourceType, resourceId)
+}
+
+// RestorePermissionInheritance operation middleware
+func (siw *ServerInterfaceWrapper) RestorePermissionInheritance(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "resourceType" -------------
+	var resourceType PermissionResourceTypePath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "resourceType", c.Param("resourceType"), &resourceType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter resourceType: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Path parameter "resourceId" -------------
+	var resourceId PermissionResourceIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "resourceId", c.Param("resourceId"), &resourceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter resourceId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.RestorePermissionInheritance(c, resourceType, resourceId)
+}
+
 // GetCurrentUser operation middleware
 func (siw *ServerInterfaceWrapper) GetCurrentUser(c *gin.Context) {
 
@@ -2659,6 +3735,20 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/api/v1/admin/organization-change-plans/:planId", wrapper.GetOrganizationChangePlan)
 	router.POST(options.BaseURL+"/api/v1/admin/organization-change-plans/:planId/operations", wrapper.AddOrganizationChangeOperation)
 	router.POST(options.BaseURL+"/api/v1/admin/organization-change-plans/:planId/transition", wrapper.TransitionOrganizationChangePlan)
+	router.GET(options.BaseURL+"/api/v1/admin-delegations", wrapper.ListAdminDelegations)
+	router.POST(options.BaseURL+"/api/v1/admin-delegations", wrapper.CreateAdminDelegation)
+	router.GET(options.BaseURL+"/api/v1/admin-delegations/:delegationId", wrapper.GetAdminDelegation)
+	router.POST(options.BaseURL+"/api/v1/admin-delegations/:delegationId/revoke", wrapper.RevokeAdminDelegation)
+	router.GET(options.BaseURL+"/api/v1/organizations/:organizationId/administrators", wrapper.ListOrganizationAdministrators)
+	router.POST(options.BaseURL+"/api/v1/admin-delegations/evaluate", wrapper.EvaluateAdminDelegation)
+	router.GET(options.BaseURL+"/api/v1/permissions/resources/:resourceType/:resourceId", wrapper.ListResourcePermissionGrants)
+	router.POST(options.BaseURL+"/api/v1/permissions/grants", wrapper.CreatePermissionGrant)
+	router.PATCH(options.BaseURL+"/api/v1/permissions/grants/:grantId", wrapper.UpdatePermissionGrant)
+	router.POST(options.BaseURL+"/api/v1/permissions/grants/:grantId/revoke", wrapper.RevokePermissionGrant)
+	router.POST(options.BaseURL+"/api/v1/permissions/evaluate", wrapper.EvaluatePermission)
+	router.POST(options.BaseURL+"/api/v1/permissions/batch-evaluate", wrapper.BatchEvaluatePermissions)
+	router.POST(options.BaseURL+"/api/v1/permissions/resources/:resourceType/:resourceId/break-inheritance", wrapper.BreakPermissionInheritance)
+	router.POST(options.BaseURL+"/api/v1/permissions/resources/:resourceType/:resourceId/restore-inheritance", wrapper.RestorePermissionInheritance)
 }
 
 type AccountLockedResponseHeaders struct {
@@ -2741,6 +3831,390 @@ type TooManyRequestsJSONResponse struct {
 	Body ErrorResponse
 
 	Headers TooManyRequestsResponseHeaders
+}
+
+type ListAdminDelegationsRequestObject struct {
+	Params ListAdminDelegationsParams
+}
+
+type ListAdminDelegationsResponseObject interface {
+	VisitListAdminDelegationsResponse(w http.ResponseWriter) error
+}
+
+type ListAdminDelegations200JSONResponse AdminDelegationListResponse
+
+func (response ListAdminDelegations200JSONResponse) VisitListAdminDelegationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAdminDelegations400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListAdminDelegations400JSONResponse) VisitListAdminDelegationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAdminDelegations401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListAdminDelegations401JSONResponse) VisitListAdminDelegationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAdminDelegationRequestObject struct {
+	Params CreateAdminDelegationParams
+	Body   *CreateAdminDelegationJSONRequestBody
+}
+
+type CreateAdminDelegationResponseObject interface {
+	VisitCreateAdminDelegationResponse(w http.ResponseWriter) error
+}
+
+type CreateAdminDelegation201JSONResponse AdminDelegationResponse
+
+func (response CreateAdminDelegation201JSONResponse) VisitCreateAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAdminDelegation400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response CreateAdminDelegation400JSONResponse) VisitCreateAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAdminDelegation401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response CreateAdminDelegation401JSONResponse) VisitCreateAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAdminDelegation403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response CreateAdminDelegation403JSONResponse) VisitCreateAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAdminDelegation404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response CreateAdminDelegation404JSONResponse) VisitCreateAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAdminDelegation409JSONResponse struct{ ConflictJSONResponse }
+
+func (response CreateAdminDelegation409JSONResponse) VisitCreateAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvaluateAdminDelegationRequestObject struct {
+	Body *EvaluateAdminDelegationJSONRequestBody
+}
+
+type EvaluateAdminDelegationResponseObject interface {
+	VisitEvaluateAdminDelegationResponse(w http.ResponseWriter) error
+}
+
+type EvaluateAdminDelegation200JSONResponse AdminDelegationEvaluationResponse
+
+func (response EvaluateAdminDelegation200JSONResponse) VisitEvaluateAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvaluateAdminDelegation400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response EvaluateAdminDelegation400JSONResponse) VisitEvaluateAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvaluateAdminDelegation401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response EvaluateAdminDelegation401JSONResponse) VisitEvaluateAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAdminDelegationRequestObject struct {
+	DelegationId DelegationIdPath `json:"delegationId"`
+}
+
+type GetAdminDelegationResponseObject interface {
+	VisitGetAdminDelegationResponse(w http.ResponseWriter) error
+}
+
+type GetAdminDelegation200JSONResponse AdminDelegationResponse
+
+func (response GetAdminDelegation200JSONResponse) VisitGetAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAdminDelegation401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response GetAdminDelegation401JSONResponse) VisitGetAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAdminDelegation404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetAdminDelegation404JSONResponse) VisitGetAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeAdminDelegationRequestObject struct {
+	DelegationId DelegationIdPath `json:"delegationId"`
+	Body         *RevokeAdminDelegationJSONRequestBody
+}
+
+type RevokeAdminDelegationResponseObject interface {
+	VisitRevokeAdminDelegationResponse(w http.ResponseWriter) error
+}
+
+type RevokeAdminDelegation200JSONResponse AdminDelegationResponse
+
+func (response RevokeAdminDelegation200JSONResponse) VisitRevokeAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeAdminDelegation400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response RevokeAdminDelegation400JSONResponse) VisitRevokeAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeAdminDelegation401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response RevokeAdminDelegation401JSONResponse) VisitRevokeAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeAdminDelegation403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RevokeAdminDelegation403JSONResponse) VisitRevokeAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeAdminDelegation404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response RevokeAdminDelegation404JSONResponse) VisitRevokeAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeAdminDelegation409JSONResponse struct{ ConflictJSONResponse }
+
+func (response RevokeAdminDelegation409JSONResponse) VisitRevokeAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type ListOrganizationChangePlansRequestObject struct {
@@ -5943,6 +7417,843 @@ func (response GetCurrentSession401JSONResponse) VisitGetCurrentSessionResponse(
 	return err
 }
 
+type ListOrganizationAdministratorsRequestObject struct {
+	OrganizationId OrganizationIdPath `json:"organizationId"`
+	Params         ListOrganizationAdministratorsParams
+}
+
+type ListOrganizationAdministratorsResponseObject interface {
+	VisitListOrganizationAdministratorsResponse(w http.ResponseWriter) error
+}
+
+type ListOrganizationAdministrators200JSONResponse AdminDelegationListResponse
+
+func (response ListOrganizationAdministrators200JSONResponse) VisitListOrganizationAdministratorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrganizationAdministrators400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListOrganizationAdministrators400JSONResponse) VisitListOrganizationAdministratorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrganizationAdministrators401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListOrganizationAdministrators401JSONResponse) VisitListOrganizationAdministratorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrganizationAdministrators403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListOrganizationAdministrators403JSONResponse) VisitListOrganizationAdministratorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOrganizationAdministrators404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response ListOrganizationAdministrators404JSONResponse) VisitListOrganizationAdministratorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BatchEvaluatePermissionsRequestObject struct {
+	Body *BatchEvaluatePermissionsJSONRequestBody
+}
+
+type BatchEvaluatePermissionsResponseObject interface {
+	VisitBatchEvaluatePermissionsResponse(w http.ResponseWriter) error
+}
+
+type BatchEvaluatePermissions200JSONResponse BatchPermissionEvaluationResponse
+
+func (response BatchEvaluatePermissions200JSONResponse) VisitBatchEvaluatePermissionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BatchEvaluatePermissions400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response BatchEvaluatePermissions400JSONResponse) VisitBatchEvaluatePermissionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BatchEvaluatePermissions401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response BatchEvaluatePermissions401JSONResponse) VisitBatchEvaluatePermissionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvaluatePermissionRequestObject struct {
+	Body *EvaluatePermissionJSONRequestBody
+}
+
+type EvaluatePermissionResponseObject interface {
+	VisitEvaluatePermissionResponse(w http.ResponseWriter) error
+}
+
+type EvaluatePermission200JSONResponse PermissionEvaluationResponse
+
+func (response EvaluatePermission200JSONResponse) VisitEvaluatePermissionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvaluatePermission400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response EvaluatePermission400JSONResponse) VisitEvaluatePermissionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EvaluatePermission401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response EvaluatePermission401JSONResponse) VisitEvaluatePermissionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePermissionGrantRequestObject struct {
+	Params CreatePermissionGrantParams
+	Body   *CreatePermissionGrantJSONRequestBody
+}
+
+type CreatePermissionGrantResponseObject interface {
+	VisitCreatePermissionGrantResponse(w http.ResponseWriter) error
+}
+
+type CreatePermissionGrant201JSONResponse PermissionGrantResponse
+
+func (response CreatePermissionGrant201JSONResponse) VisitCreatePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePermissionGrant400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response CreatePermissionGrant400JSONResponse) VisitCreatePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePermissionGrant401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response CreatePermissionGrant401JSONResponse) VisitCreatePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePermissionGrant403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response CreatePermissionGrant403JSONResponse) VisitCreatePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePermissionGrant404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response CreatePermissionGrant404JSONResponse) VisitCreatePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreatePermissionGrant409JSONResponse struct{ ConflictJSONResponse }
+
+func (response CreatePermissionGrant409JSONResponse) VisitCreatePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePermissionGrantRequestObject struct {
+	GrantId GrantIdPath `json:"grantId"`
+	Body    *UpdatePermissionGrantJSONRequestBody
+}
+
+type UpdatePermissionGrantResponseObject interface {
+	VisitUpdatePermissionGrantResponse(w http.ResponseWriter) error
+}
+
+type UpdatePermissionGrant200JSONResponse PermissionGrantResponse
+
+func (response UpdatePermissionGrant200JSONResponse) VisitUpdatePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePermissionGrant400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response UpdatePermissionGrant400JSONResponse) VisitUpdatePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePermissionGrant401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response UpdatePermissionGrant401JSONResponse) VisitUpdatePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePermissionGrant403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UpdatePermissionGrant403JSONResponse) VisitUpdatePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePermissionGrant404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UpdatePermissionGrant404JSONResponse) VisitUpdatePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdatePermissionGrant409JSONResponse struct{ ConflictJSONResponse }
+
+func (response UpdatePermissionGrant409JSONResponse) VisitUpdatePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokePermissionGrantRequestObject struct {
+	GrantId GrantIdPath `json:"grantId"`
+	Body    *RevokePermissionGrantJSONRequestBody
+}
+
+type RevokePermissionGrantResponseObject interface {
+	VisitRevokePermissionGrantResponse(w http.ResponseWriter) error
+}
+
+type RevokePermissionGrant200JSONResponse PermissionGrantResponse
+
+func (response RevokePermissionGrant200JSONResponse) VisitRevokePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokePermissionGrant400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response RevokePermissionGrant400JSONResponse) VisitRevokePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokePermissionGrant401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response RevokePermissionGrant401JSONResponse) VisitRevokePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokePermissionGrant403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RevokePermissionGrant403JSONResponse) VisitRevokePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokePermissionGrant404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response RevokePermissionGrant404JSONResponse) VisitRevokePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokePermissionGrant409JSONResponse struct{ ConflictJSONResponse }
+
+func (response RevokePermissionGrant409JSONResponse) VisitRevokePermissionGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListResourcePermissionGrantsRequestObject struct {
+	ResourceType PermissionResourceTypePath `json:"resourceType"`
+	ResourceId   PermissionResourceIdPath   `json:"resourceId"`
+	Params       ListResourcePermissionGrantsParams
+}
+
+type ListResourcePermissionGrantsResponseObject interface {
+	VisitListResourcePermissionGrantsResponse(w http.ResponseWriter) error
+}
+
+type ListResourcePermissionGrants200JSONResponse PermissionGrantListResponse
+
+func (response ListResourcePermissionGrants200JSONResponse) VisitListResourcePermissionGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListResourcePermissionGrants400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListResourcePermissionGrants400JSONResponse) VisitListResourcePermissionGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListResourcePermissionGrants401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListResourcePermissionGrants401JSONResponse) VisitListResourcePermissionGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListResourcePermissionGrants403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListResourcePermissionGrants403JSONResponse) VisitListResourcePermissionGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListResourcePermissionGrants404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response ListResourcePermissionGrants404JSONResponse) VisitListResourcePermissionGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BreakPermissionInheritanceRequestObject struct {
+	ResourceType PermissionResourceTypePath `json:"resourceType"`
+	ResourceId   PermissionResourceIdPath   `json:"resourceId"`
+	Body         *BreakPermissionInheritanceJSONRequestBody
+}
+
+type BreakPermissionInheritanceResponseObject interface {
+	VisitBreakPermissionInheritanceResponse(w http.ResponseWriter) error
+}
+
+type BreakPermissionInheritance200JSONResponse PermissionInheritanceResponse
+
+func (response BreakPermissionInheritance200JSONResponse) VisitBreakPermissionInheritanceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BreakPermissionInheritance400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response BreakPermissionInheritance400JSONResponse) VisitBreakPermissionInheritanceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BreakPermissionInheritance401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response BreakPermissionInheritance401JSONResponse) VisitBreakPermissionInheritanceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BreakPermissionInheritance403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response BreakPermissionInheritance403JSONResponse) VisitBreakPermissionInheritanceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BreakPermissionInheritance404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response BreakPermissionInheritance404JSONResponse) VisitBreakPermissionInheritanceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BreakPermissionInheritance409JSONResponse struct{ ConflictJSONResponse }
+
+func (response BreakPermissionInheritance409JSONResponse) VisitBreakPermissionInheritanceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestorePermissionInheritanceRequestObject struct {
+	ResourceType PermissionResourceTypePath `json:"resourceType"`
+	ResourceId   PermissionResourceIdPath   `json:"resourceId"`
+	Body         *RestorePermissionInheritanceJSONRequestBody
+}
+
+type RestorePermissionInheritanceResponseObject interface {
+	VisitRestorePermissionInheritanceResponse(w http.ResponseWriter) error
+}
+
+type RestorePermissionInheritance200JSONResponse PermissionInheritanceResponse
+
+func (response RestorePermissionInheritance200JSONResponse) VisitRestorePermissionInheritanceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestorePermissionInheritance400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response RestorePermissionInheritance400JSONResponse) VisitRestorePermissionInheritanceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestorePermissionInheritance401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response RestorePermissionInheritance401JSONResponse) VisitRestorePermissionInheritanceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestorePermissionInheritance403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RestorePermissionInheritance403JSONResponse) VisitRestorePermissionInheritanceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestorePermissionInheritance404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response RestorePermissionInheritance404JSONResponse) VisitRestorePermissionInheritanceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestorePermissionInheritance409JSONResponse struct{ ConflictJSONResponse }
+
+func (response RestorePermissionInheritance409JSONResponse) VisitRestorePermissionInheritanceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetCurrentUserRequestObject struct {
 }
 
@@ -6431,6 +8742,21 @@ func (response GetReadiness503JSONResponse) VisitGetReadinessResponse(w http.Res
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// ListAdminDelegations 查询当前用户可见的管理委派
+	// (GET /api/v1/admin-delegations)
+	ListAdminDelegations(ctx context.Context, request ListAdminDelegationsRequestObject) (ListAdminDelegationsResponseObject, error)
+	// CreateAdminDelegation 创建管理委派
+	// (POST /api/v1/admin-delegations)
+	CreateAdminDelegation(ctx context.Context, request CreateAdminDelegationRequestObject) (CreateAdminDelegationResponseObject, error)
+	// EvaluateAdminDelegation 判断当前用户是否具有组织管理能力
+	// (POST /api/v1/admin-delegations/evaluate)
+	EvaluateAdminDelegation(ctx context.Context, request EvaluateAdminDelegationRequestObject) (EvaluateAdminDelegationResponseObject, error)
+	// GetAdminDelegation 获取管理委派详情
+	// (GET /api/v1/admin-delegations/{delegationId})
+	GetAdminDelegation(ctx context.Context, request GetAdminDelegationRequestObject) (GetAdminDelegationResponseObject, error)
+	// RevokeAdminDelegation 撤销管理委派
+	// (POST /api/v1/admin-delegations/{delegationId}/revoke)
+	RevokeAdminDelegation(ctx context.Context, request RevokeAdminDelegationRequestObject) (RevokeAdminDelegationResponseObject, error)
 	// ListOrganizationChangePlans 分页查询组织重组计划
 	// (GET /api/v1/admin/organization-change-plans)
 	ListOrganizationChangePlans(ctx context.Context, request ListOrganizationChangePlansRequestObject) (ListOrganizationChangePlansResponseObject, error)
@@ -6533,6 +8859,33 @@ type StrictServerInterface interface {
 	// GetCurrentSession 获取当前认证会话
 	// (GET /api/v1/auth/session)
 	GetCurrentSession(ctx context.Context, request GetCurrentSessionRequestObject) (GetCurrentSessionResponseObject, error)
+	// ListOrganizationAdministrators 查询组织的有效管理员
+	// (GET /api/v1/organizations/{organizationId}/administrators)
+	ListOrganizationAdministrators(ctx context.Context, request ListOrganizationAdministratorsRequestObject) (ListOrganizationAdministratorsResponseObject, error)
+	// BatchEvaluatePermissions 批量判断当前用户的资源动作权限
+	// (POST /api/v1/permissions/batch-evaluate)
+	BatchEvaluatePermissions(ctx context.Context, request BatchEvaluatePermissionsRequestObject) (BatchEvaluatePermissionsResponseObject, error)
+	// EvaluatePermission 判断当前用户的资源动作权限
+	// (POST /api/v1/permissions/evaluate)
+	EvaluatePermission(ctx context.Context, request EvaluatePermissionRequestObject) (EvaluatePermissionResponseObject, error)
+	// CreatePermissionGrant 创建资源 ALLOW 授权
+	// (POST /api/v1/permissions/grants)
+	CreatePermissionGrant(ctx context.Context, request CreatePermissionGrantRequestObject) (CreatePermissionGrantResponseObject, error)
+	// UpdatePermissionGrant 修改资源授权
+	// (PATCH /api/v1/permissions/grants/{grantId})
+	UpdatePermissionGrant(ctx context.Context, request UpdatePermissionGrantRequestObject) (UpdatePermissionGrantResponseObject, error)
+	// RevokePermissionGrant 撤销资源授权
+	// (POST /api/v1/permissions/grants/{grantId}/revoke)
+	RevokePermissionGrant(ctx context.Context, request RevokePermissionGrantRequestObject) (RevokePermissionGrantResponseObject, error)
+	// ListResourcePermissionGrants 查询资源的直接 ACL
+	// (GET /api/v1/permissions/resources/{resourceType}/{resourceId})
+	ListResourcePermissionGrants(ctx context.Context, request ListResourcePermissionGrantsRequestObject) (ListResourcePermissionGrantsResponseObject, error)
+	// BreakPermissionInheritance 断开文件夹或文档的 ACL 继承
+	// (POST /api/v1/permissions/resources/{resourceType}/{resourceId}/break-inheritance)
+	BreakPermissionInheritance(ctx context.Context, request BreakPermissionInheritanceRequestObject) (BreakPermissionInheritanceResponseObject, error)
+	// RestorePermissionInheritance 恢复文件夹或文档的 ACL 继承
+	// (POST /api/v1/permissions/resources/{resourceType}/{resourceId}/restore-inheritance)
+	RestorePermissionInheritance(ctx context.Context, request RestorePermissionInheritanceRequestObject) (RestorePermissionInheritanceResponseObject, error)
 	// GetCurrentUser 获取当前用户资料
 	// (GET /api/v1/users/me)
 	GetCurrentUser(ctx context.Context, request GetCurrentUserRequestObject) (GetCurrentUserResponseObject, error)
@@ -6614,6 +8967,155 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictGinServerOptions
+}
+
+// ListAdminDelegations operation middleware
+func (sh *strictHandler) ListAdminDelegations(ctx *gin.Context, params ListAdminDelegationsParams) {
+	var request ListAdminDelegationsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAdminDelegations(ctx, request.(ListAdminDelegationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAdminDelegations")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListAdminDelegationsResponseObject); ok {
+		if err := validResponse.VisitListAdminDelegationsResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateAdminDelegation operation middleware
+func (sh *strictHandler) CreateAdminDelegation(ctx *gin.Context, params CreateAdminDelegationParams) {
+	var request CreateAdminDelegationRequestObject
+
+	request.Params = params
+
+	var body CreateAdminDelegationJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateAdminDelegation(ctx, request.(CreateAdminDelegationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateAdminDelegation")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(CreateAdminDelegationResponseObject); ok {
+		if err := validResponse.VisitCreateAdminDelegationResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EvaluateAdminDelegation operation middleware
+func (sh *strictHandler) EvaluateAdminDelegation(ctx *gin.Context) {
+	var request EvaluateAdminDelegationRequestObject
+
+	var body EvaluateAdminDelegationJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.EvaluateAdminDelegation(ctx, request.(EvaluateAdminDelegationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EvaluateAdminDelegation")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(EvaluateAdminDelegationResponseObject); ok {
+		if err := validResponse.VisitEvaluateAdminDelegationResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAdminDelegation operation middleware
+func (sh *strictHandler) GetAdminDelegation(ctx *gin.Context, delegationId DelegationIdPath) {
+	var request GetAdminDelegationRequestObject
+
+	request.DelegationId = delegationId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAdminDelegation(ctx, request.(GetAdminDelegationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAdminDelegation")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetAdminDelegationResponseObject); ok {
+		if err := validResponse.VisitGetAdminDelegationResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeAdminDelegation operation middleware
+func (sh *strictHandler) RevokeAdminDelegation(ctx *gin.Context, delegationId DelegationIdPath) {
+	var request RevokeAdminDelegationRequestObject
+
+	request.DelegationId = delegationId
+
+	var body RevokeAdminDelegationJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeAdminDelegation(ctx, request.(RevokeAdminDelegationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeAdminDelegation")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(RevokeAdminDelegationResponseObject); ok {
+		if err := validResponse.VisitRevokeAdminDelegationResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // ListOrganizationChangePlans operation middleware
@@ -7645,6 +10147,290 @@ func (sh *strictHandler) GetCurrentSession(ctx *gin.Context) {
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(GetCurrentSessionResponseObject); ok {
 		if err := validResponse.VisitGetCurrentSessionResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOrganizationAdministrators operation middleware
+func (sh *strictHandler) ListOrganizationAdministrators(ctx *gin.Context, organizationId OrganizationIdPath, params ListOrganizationAdministratorsParams) {
+	var request ListOrganizationAdministratorsRequestObject
+
+	request.OrganizationId = organizationId
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOrganizationAdministrators(ctx, request.(ListOrganizationAdministratorsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOrganizationAdministrators")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListOrganizationAdministratorsResponseObject); ok {
+		if err := validResponse.VisitListOrganizationAdministratorsResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// BatchEvaluatePermissions operation middleware
+func (sh *strictHandler) BatchEvaluatePermissions(ctx *gin.Context) {
+	var request BatchEvaluatePermissionsRequestObject
+
+	var body BatchEvaluatePermissionsJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.BatchEvaluatePermissions(ctx, request.(BatchEvaluatePermissionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "BatchEvaluatePermissions")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(BatchEvaluatePermissionsResponseObject); ok {
+		if err := validResponse.VisitBatchEvaluatePermissionsResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EvaluatePermission operation middleware
+func (sh *strictHandler) EvaluatePermission(ctx *gin.Context) {
+	var request EvaluatePermissionRequestObject
+
+	var body EvaluatePermissionJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.EvaluatePermission(ctx, request.(EvaluatePermissionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EvaluatePermission")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(EvaluatePermissionResponseObject); ok {
+		if err := validResponse.VisitEvaluatePermissionResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreatePermissionGrant operation middleware
+func (sh *strictHandler) CreatePermissionGrant(ctx *gin.Context, params CreatePermissionGrantParams) {
+	var request CreatePermissionGrantRequestObject
+
+	request.Params = params
+
+	var body CreatePermissionGrantJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CreatePermissionGrant(ctx, request.(CreatePermissionGrantRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreatePermissionGrant")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(CreatePermissionGrantResponseObject); ok {
+		if err := validResponse.VisitCreatePermissionGrantResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdatePermissionGrant operation middleware
+func (sh *strictHandler) UpdatePermissionGrant(ctx *gin.Context, grantId GrantIdPath) {
+	var request UpdatePermissionGrantRequestObject
+
+	request.GrantId = grantId
+
+	var body UpdatePermissionGrantJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdatePermissionGrant(ctx, request.(UpdatePermissionGrantRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdatePermissionGrant")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(UpdatePermissionGrantResponseObject); ok {
+		if err := validResponse.VisitUpdatePermissionGrantResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokePermissionGrant operation middleware
+func (sh *strictHandler) RevokePermissionGrant(ctx *gin.Context, grantId GrantIdPath) {
+	var request RevokePermissionGrantRequestObject
+
+	request.GrantId = grantId
+
+	var body RevokePermissionGrantJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokePermissionGrant(ctx, request.(RevokePermissionGrantRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokePermissionGrant")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(RevokePermissionGrantResponseObject); ok {
+		if err := validResponse.VisitRevokePermissionGrantResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListResourcePermissionGrants operation middleware
+func (sh *strictHandler) ListResourcePermissionGrants(ctx *gin.Context, resourceType PermissionResourceTypePath, resourceId PermissionResourceIdPath, params ListResourcePermissionGrantsParams) {
+	var request ListResourcePermissionGrantsRequestObject
+
+	request.ResourceType = resourceType
+	request.ResourceId = resourceId
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListResourcePermissionGrants(ctx, request.(ListResourcePermissionGrantsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListResourcePermissionGrants")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListResourcePermissionGrantsResponseObject); ok {
+		if err := validResponse.VisitListResourcePermissionGrantsResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// BreakPermissionInheritance operation middleware
+func (sh *strictHandler) BreakPermissionInheritance(ctx *gin.Context, resourceType PermissionResourceTypePath, resourceId PermissionResourceIdPath) {
+	var request BreakPermissionInheritanceRequestObject
+
+	request.ResourceType = resourceType
+	request.ResourceId = resourceId
+
+	var body BreakPermissionInheritanceJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.BreakPermissionInheritance(ctx, request.(BreakPermissionInheritanceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "BreakPermissionInheritance")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(BreakPermissionInheritanceResponseObject); ok {
+		if err := validResponse.VisitBreakPermissionInheritanceResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RestorePermissionInheritance operation middleware
+func (sh *strictHandler) RestorePermissionInheritance(ctx *gin.Context, resourceType PermissionResourceTypePath, resourceId PermissionResourceIdPath) {
+	var request RestorePermissionInheritanceRequestObject
+
+	request.ResourceType = resourceType
+	request.ResourceId = resourceId
+
+	var body RestorePermissionInheritanceJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RestorePermissionInheritance(ctx, request.(RestorePermissionInheritanceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RestorePermissionInheritance")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(RestorePermissionInheritanceResponseObject); ok {
+		if err := validResponse.VisitRestorePermissionInheritanceResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

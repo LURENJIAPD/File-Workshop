@@ -10,6 +10,24 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AdminDelegation struct {
+	AdminDelegationID       pgtype.UUID
+	UserID                  pgtype.UUID
+	OrganizationID          pgtype.UUID
+	Scope                   string
+	CanDelegate             bool
+	ParentAdminDelegationID pgtype.UUID
+	GrantedByUserID         pgtype.UUID
+	ValidFrom               pgtype.Timestamptz
+	ValidUntil              pgtype.Timestamptz
+	Status                  string
+	CreatedAt               pgtype.Timestamptz
+	UpdatedAt               pgtype.Timestamptz
+	RevokedAt               pgtype.Timestamptz
+	RevokeReason            pgtype.Text
+	RowVersion              int64
+}
+
 type Organization struct {
 	OrganizationID       pgtype.UUID
 	ParentOrganizationID pgtype.UUID
@@ -63,6 +81,28 @@ type OrganizationChangePlan struct {
 	CompletedAt              pgtype.Timestamptz
 	FailureCode              pgtype.Text
 	RowVersion               int64
+}
+
+type PermissionGrant struct {
+	PermissionGrantID     pgtype.UUID
+	SubjectUserID         pgtype.UUID
+	SubjectOrganizationID pgtype.UUID
+	SpaceID               pgtype.UUID
+	FolderID              pgtype.UUID
+	DocumentID            pgtype.UUID
+	InheritToDescendants  bool
+	GrantSource           string
+	ValidFrom             pgtype.Timestamptz
+	ValidUntil            pgtype.Timestamptz
+	Status                string
+	GrantedByUserID       pgtype.UUID
+	GrantReason           pgtype.Text
+	CreatedAt             pgtype.Timestamptz
+	UpdatedAt             pgtype.Timestamptz
+	RevokedAt             pgtype.Timestamptz
+	RevokedByUserID       pgtype.UUID
+	RevokeReason          pgtype.Text
+	RowVersion            int64
 }
 
 type QuotaReservation struct {
