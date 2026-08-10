@@ -763,7 +763,7 @@ TOTP 仅允许 `secret_ref` 非空；WEBAUTHN 仅允许 `credential_id/public_ke
 | deleted_at | timestamptz | 否 | 物理删除确认时间 |
 | row_version | bigint | 是 | 乐观锁 |
 
-唯一约束为 `(provider, bucket, object_key)`，不得假设不同 Bucket 的 Key 全局唯一。可选秒传索引为 `(sha256, size_bytes, scan_status, status)`。
+唯一约束为 `(provider, bucket, object_key)`，不得假设不同 Bucket 的 Key 全局唯一。`provider` 仅标识通过项目存储适配层接入的 S3 兼容实现，例如 SeaweedFS S3 Gateway 或企业 S3 服务；数据库不得保存 SeaweedFS Filer 路径、Volume ID、Needle 等产品内部结构，也不得保存 MinIO 等其他产品的私有管理字段。可选秒传索引为 `(sha256, size_bytes, scan_status, status)`。
 
 多个 Version 可以引用同一 StorageObject。垃圾回收删除前必须实时检查 `document_versions`、预览、头像和提取结果的活动引用，缓存引用计数不能成为唯一依据。
 

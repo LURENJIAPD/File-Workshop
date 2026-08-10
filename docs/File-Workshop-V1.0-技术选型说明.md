@@ -211,7 +211,7 @@ V1.0 至少包含两个自研运行进程：
 
 | 档位 | 核心组件 | 可选组件 |
 |---|---|---|
-| Lite | Nginx、Server、Worker、PostgreSQL、Redis、MinIO | ClamAV、预览、AI |
+| Lite | Nginx、Server、Worker、PostgreSQL、Redis、SeaweedFS（S3 兼容） | ClamAV、预览、AI |
 | Standard | 多应用实例、PostgreSQL、Redis、冗余对象存储 | OpenSearch、独立预览节点、企业身份源 |
 | HA | 负载均衡冗余、应用集群、PostgreSQL HA、Redis HA、分布式对象存储 | OpenSearch 集群、集中可观测平台、AI 集群 |
 
@@ -233,7 +233,7 @@ V1.0 至少包含两个自研运行进程：
 | PostgreSQL 驱动 | pgx | 冻结 |
 | SQL 代码生成 | sqlc | 冻结 |
 | 数据库迁移 | Goose | 默认，可等价替换 |
-| 对象存储 | MinIO，使用标准 S3 API | 冻结语义，组件可替换 |
+| 对象存储 | S3 Compatible API + SeaweedFS 默认实现 | 冻结协议与适配层，组件可替换 |
 | 缓存与短期状态 | Redis | 冻结 |
 | 异步可靠性 | PostgreSQL Outbox + Go Worker | 冻结 |
 | 消息队列 | V1.0 不强制引入 | 冻结 |
@@ -268,7 +268,7 @@ V1.0 至少包含两个自研运行进程：
 - Node.js 与包管理器；
 - PostgreSQL 主版本；
 - Redis 主版本；
-- MinIO 镜像版本；
+- SeaweedFS 版本与 S3 Gateway 兼容性；
 - Vue、Vite、Element Plus；
 - OpenSearch；
 - ClamAV；
@@ -381,7 +381,7 @@ Gin Handler 只负责：
 Gin Handler 禁止：
 
 - 直接执行 SQL；
-- 直接访问 MinIO 或其他对象存储；
+- 直接访问 SeaweedFS、MinIO 或其他对象存储；
 - 自行拼接权限规则；
 - 自行修改审计记录；
 - 承担跨模块事务；
@@ -601,15 +601,29 @@ HA 档可采用：
 
 # 第8章 对象存储与文件传输技术选型
 
-## 8.1 对象存储：MinIO / S3 API
+## 8.1 对象存储：S3 Compatible API + SeaweedFS
 
-Lite 默认使用 MinIO。应用代码必须面向 S3 兼容接口，避免绑定 MinIO 私有管理 API。
+V1.0 冻结对象存储协议为 **S3 Compatible API**，Lite 默认实现调整为 **SeaweedFS**。应用代码必须面向项目内 Object Storage Interface 和 AWS SDK for Go v2 暴露的标准 S3 语义，不得绑定 SeaweedFS 的 Filer、Volume、Master 或专属管理 API。
 
 可替换为：
 
 - 企业已有 S3 兼容对象存储；
 - 公有云 S3 类服务；
 - 其他经兼容测试的对象存储。
+
+SeaweedFS 作为默认实现的原因：
+
+- 单机起步和后续分布式扩展路径都比较清晰，适合 Lite 到 Standard 的渐进演进；
+- 提供 S3 Gateway，能够在业务侧保持 S3 协议抽象；
+- 元数据和文件块的内部组织不需要暴露给 File Workshop 业务模型；
+- 避免系统能力绑定到单一对象存储产品，保留企业已有 S3 兼容设施接入空间。
+
+S3 兼容性边界：
+
+- 业务代码只使用经适配器封装的 Bucket、Object、Multipart Upload、Presigned URL、HEAD、GET、PUT、COPY、DELETE 等通用能力；
+- 不依赖 SeaweedFS Filer 路径、Volume ID、Needle、Collection、TTL、Replication 等内部概念；
+- 不依赖某个产品私有事件、生命周期、加密、锁定或管理接口作为业务事实；
+- 启用其他 S3 兼容实现时，必须通过分片上传、预签名、Range 下载、对象元数据、错误映射和权限隔离兼容性测试。
 
 ## 8.2 文件数据路径
 
@@ -624,9 +638,9 @@ Lite 默认使用 MinIO。应用代码必须面向 S3 兼容接口，避免绑�
 7. 数据库事务创建存储对象、文件版本和业务记录；
 8. 后台任务执行 Hash、病毒扫描、预览和索引。
 
-## 8.3 SDK
+## 8.3 SDK 与存储适配层
 
-Go 端使用成熟 S3 SDK。业务代码不得直接依赖具体厂商 URL 和 Bucket 结构，应通过存储适配器封装：
+Go 端统一使用 **AWS SDK for Go v2** 访问 S3 Compatible API。业务代码不得直接依赖具体厂商 URL、Bucket 结构或 SeaweedFS 内部实现，应通过存储适配器封装：
 
 - 创建分片上传；
 - 生成预签名 URL；
@@ -635,6 +649,13 @@ Go 端使用成熟 S3 SDK。业务代码不得直接依赖具体厂商 URL 和 B
 - 流式读取；
 - 复制或删除对象；
 - 生命周期和保留策略查询。
+
+适配层对应用服务暴露项目内 Object Storage Interface，并负责：
+
+- 隐藏 Endpoint、Region、Path-style/Virtual-hosted-style、签名版本等实现差异；
+- 统一 S3 错误到领域可识别的稳定错误；
+- 统一预签名 URL 有效期、方法、Header 和最小权限；
+- 为健康检查、兼容性测试和未来替换实现提供单一入口。
 
 ## 8.4 对象 Key
 
@@ -986,7 +1007,7 @@ AI 不是 File Workshop 核心依赖。未部署 AI 时，文件、权限、搜�
 - 调用正式应用 API；
 - 每次读取、下载、搜索和动作均通过权限校验；
 - 所有操作写入审计；
-- 禁止模型直接连接 PostgreSQL、Redis、MinIO 或 OpenSearch。
+- 禁止模型直接连接 PostgreSQL、Redis、对象存储或 OpenSearch。
 
 ## 16.3 模型接口
 
@@ -1010,7 +1031,7 @@ Dify 是 File Workshop 启用 AI 功能时的默认 AI 编排平台，负责：
 
 AI 功能整体仍然是可选能力。未部署 Dify 时，文件、权限、搜索、共享、审计和 WebDAV 必须完整运行。
 
-Dify 不保存 File Workshop 的核心权限事实，也不得直接连接 PostgreSQL 业务表、Redis、MinIO 或 OpenSearch。Dify 只能通过 Agent Gateway 调用受控工具，所有调用都必须携带明确的用户或服务身份，并经过权限校验和审计。
+Dify 不保存 File Workshop 的核心权限事实，也不得直接连接 PostgreSQL 业务表、Redis、对象存储或 OpenSearch。Dify 只能通过 Agent Gateway 调用受控工具，所有调用都必须携带明确的用户或服务身份，并经过权限校验和审计。
 
 V1.0 不默认建设 FastAPI 或其他 Python AI 中间层。只有出现 Dify 无法承载的专项能力，例如深度定制 OCR、CAD 解析、GPU 推理调度或特殊版面分析时，才允许通过 ADR 增加独立处理服务。
 
@@ -1107,7 +1128,7 @@ Trace 应覆盖：
 
 - PostgreSQL 测试创建随机命名的临时数据库，从空库执行全部 Migration，并在结束后精确删除该临时数据库；
 - Redis 测试使用随机唯一键、短 TTL 和精确清理，不执行 `FLUSHALL` 或 `FLUSHDB`；
-- MinIO、OpenSearch 和 ClamAV 启用后，应使用专用测试实例或等价隔离环境，不得操作开发或生产业务数据；
+- SeaweedFS/S3、OpenSearch 和 ClamAV 启用后，应使用专用测试实例或等价隔离环境，不得操作开发或生产业务数据；
 - Testcontainers 仅作为具备 Docker/CI 环境后的可选自动隔离方案，不是本地开发、构建或运行前提。
 
 核心集成测试不得仅使用内存 Mock 代替数据库约束和对象存储行为。
@@ -1321,7 +1342,7 @@ Standard/HA 可采用：
 - 多应用实例；
 - PostgreSQL HA；
 - Redis Sentinel/Cluster；
-- 分布式 MinIO 或企业 S3；
+- 分布式 SeaweedFS、企业 S3 或其他经验证的 S3 兼容对象存储；
 - OpenSearch 集群；
 - Prometheus、Grafana、Loki 和 OpenTelemetry Collector。
 
@@ -1401,7 +1422,7 @@ file-workshop/
 推荐：
 
 - 本机运行 Go Server、Worker 和 Vue；
-- PostgreSQL、Redis、MinIO 等依赖通过 Docker Compose 启动；
+- PostgreSQL、Redis、SeaweedFS 等依赖通过 Docker Compose 启动；
 - 预览、ClamAV、OpenSearch 和 AI 使用可选 Profile；
 - 提供演示数据和可重复初始化脚本；
 - Windows 开发环境通过 WSL2 或标准 Docker Desktop 支持，但构建脚本不得只适配单一操作系统。
@@ -1442,7 +1463,7 @@ file-workshop/
 
 - 优先安全补丁；
 - 主版本升级先在测试环境验证；
-- PostgreSQL、OpenSearch、MinIO 等基础组件不得跨多个不兼容主版本直接升级；
+- PostgreSQL、OpenSearch、SeaweedFS 等基础组件不得跨多个不兼容主版本直接升级；
 - 升级前必须备份；
 - 数据库 Migration 与旧应用保持一段兼容窗口；
 - 客户端和 API 兼容性按主设计文档管理；
@@ -1535,7 +1556,7 @@ V1.0 核心后端已经冻结为 Go + Gin，不再同时维护 FastAPI 业务后
 - 内置认证；
 - 用户、组织、空间；
 - 权限与审计；
-- MinIO 基础接入；
+- SeaweedFS/S3 基础接入；
 - Docker Compose；
 - 基础测试和 CI。
 
@@ -1633,7 +1654,7 @@ V1.0 核心后端已经冻结为 Go + Gin，不再同时维护 FastAPI 业务后
 
 1. `oapi-codegen`；
 2. Goose；
-3. MinIO；
+3. SeaweedFS；
 4. Element Plus；
 5. Pinia + TanStack Vue Query；
 6. PDF.js；
@@ -1728,7 +1749,7 @@ V1.0 核心后端已经冻结为 Go + Gin，不再同时维护 FastAPI 业务后
 - [ ] 核实并冻结 Node.js 和包管理器版本；
 - [ ] 核实 PostgreSQL 主版本；
 - [ ] 核实 Redis 主版本；
-- [ ] 核实 MinIO 或目标 S3 服务版本；
+- [ ] 核实 SeaweedFS 或目标 S3 服务版本；
 - [ ] 核实 Vue、Vite、Element Plus 版本；
 - [ ] 核实 Docker Engine 与 Compose 版本；
 - [ ] 记录所有基础镜像摘要或不可变标签。
@@ -1748,7 +1769,7 @@ V1.0 核心后端已经冻结为 Go + Gin，不再同时维护 FastAPI 业务后
 ## C.3 基础验证
 
 - [ ] PostgreSQL 事务和迁移测试通过；
-- [ ] MinIO 分片上传与预签名测试通过；
+- [ ] SeaweedFS/S3 分片上传与预签名测试通过；
 - [ ] Redis 故障降级测试通过；
 - [ ] Outbox 幂等和重试测试通过；
 - [ ] 权限矩阵测试框架建立；

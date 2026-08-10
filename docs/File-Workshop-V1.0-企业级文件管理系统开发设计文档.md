@@ -536,7 +536,7 @@ flowchart TB
 - 前端框架；
 - PostgreSQL 驱动；
 - Redis SDK；
-- MinIO SDK；
+- AWS SDK for Go v2；
 - OpenSearch SDK；
 - Dify 或具体模型 SDK。
 
@@ -546,16 +546,32 @@ flowchart TB
 
 - PostgreSQL 仓储；
 - Redis 缓存、限流与租约辅助；
-- S3 兼容对象存储；
+- S3 Compatible API + SeaweedFS 默认实现；
 - 搜索索引；
 - 消息投递；
 - 文件解析、病毒扫描与预览；
 - 本地模型和 Agent 平台适配；
 - 邮件或企业通知适配。
 
+对象存储访问链路统一为：
+
+```text
+File Workshop
+↓
+Object Storage Interface
+↓
+S3 Compatible API
+↓
+SeaweedFS（默认实现，可替换）
+```
+
+业务模块、权限模块、预览、搜索、WebDAV 和 AI 工具不得绕过 Object Storage Interface 访问对象存储，也不得把 SeaweedFS 内部结构写入数据库或 API。
+
 ## 5.6 控制流与文件数据流
 
 ### 控制流
+
+以下流程中的“对象存储”表示 S3 Compatible API，默认由 SeaweedFS S3 Gateway 提供。应用只负责控制面、权限、审计和元数据事务；文件二进制走对象存储数据面。
 
 ```mermaid
 sequenceDiagram
@@ -1567,7 +1583,7 @@ sequenceDiagram
 - 切换存储级别；
 - 健康检查。
 
-业务层不得拼接具体 MinIO URL。
+业务层不得拼接具体 SeaweedFS、MinIO 或其他对象存储产品 URL，也不得依赖 Filer 路径、Volume ID、Bucket 内部前缀等实现细节。
 
 ## 10.13 孤儿对象与垃圾回收
 
@@ -2970,7 +2986,7 @@ SMB ACL 可能包含复杂 DENY。由于 File Workshop V1.0 不支持 DENY，迁
 ├── 后台任务执行器
 ├── PostgreSQL
 ├── Redis
-├── MinIO
+├── SeaweedFS（S3 Gateway）
 └── 可选：本地搜索、预览、AI
 ```
 
@@ -3019,7 +3035,7 @@ flowchart TB
     A2 --> PG
     A1 --> R[Redis Sentinel/Cluster]
     A2 --> R
-    A1 --> M[MinIO分布式集群]
+    A1 --> M[SeaweedFS S3 兼容集群]
     A2 --> M
     A1 --> S[OpenSearch集群]
     A2 --> S
@@ -3033,7 +3049,7 @@ flowchart TB
 - VIP：Keepalived 或企业负载均衡；
 - PostgreSQL：Patroni + etcd/Consul；
 - Redis：Sentinel 或 Cluster；
-- 对象存储：分布式 MinIO 或企业 S3；
+- 对象存储：分布式 SeaweedFS、企业 S3 或其他经验证的 S3 兼容对象存储；
 - 搜索：OpenSearch 集群；
 - 指标：Prometheus + Grafana；
 - 日志：Loki/ELK；

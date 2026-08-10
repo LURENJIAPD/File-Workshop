@@ -56,7 +56,7 @@
 - 后端：Go + Gin；底层遵循 `net/http` 标准语义。
 - API：OpenAPI 3.1，基础路径 `/api/v1`。
 - 数据库：PostgreSQL + pgx + sqlc；Migration 默认使用 Goose。
-- 对象存储：MinIO，业务代码只依赖标准 S3 兼容语义。
+- 对象存储协议：S3 Compatible API；默认实现：SeaweedFS；业务代码只依赖项目内 Object Storage Interface 和标准 S3 兼容语义。
 - 缓存和短期状态：Redis；Redis 不得成为业务事实的唯一来源。
 - 异步可靠性：PostgreSQL Outbox + Go Worker；V1.0 不默认引入消息队列。
 - 前端：Vue 3 + TypeScript + Vite + Vue Router。
@@ -170,7 +170,7 @@ GET /api/v1/files?page=1&pageSize=50
 
 ## 9. 文件、对象存储与异步任务
 
-- 应用代码通过存储适配器使用 S3 兼容接口，不依赖 MinIO 私有 URL、Bucket 结构或管理 API。
+- 应用代码通过存储适配器使用 S3 兼容接口，不依赖 SeaweedFS、MinIO 或其他产品私有 URL、Bucket 结构、Filer 路径、Volume/Filer 元数据或管理 API。
 - 对象 Key 由系统生成，禁止直接使用用户文件名或可预测路径。
 - 大文件使用分片直传和流式读写，禁止在 API 进程中一次性读入完整文件。
 - 浏览器和客户端不得获得对象存储长期凭据；预签名 URL 使用短有效期和最小权限。

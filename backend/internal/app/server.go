@@ -68,7 +68,7 @@ func RunServer(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 			},
 		},
 		{
-			Name:     "minio",
+			Name:     "objectStorage",
 			Required: false,
 			Enabled:  false,
 		},

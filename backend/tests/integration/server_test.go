@@ -54,8 +54,8 @@ func TestServerWithLocalPostgreSQLAndRedis(t *testing.T) {
 	if response.Checks["redis"].Status != api.ComponentStatusOk {
 		t.Fatalf("Redis status = %q, want ok", response.Checks["redis"].Status)
 	}
-	if response.Checks["minio"].Status != api.ComponentStatusDisabled {
-		t.Fatalf("MinIO status = %q, want disabled", response.Checks["minio"].Status)
+	if response.Checks["objectStorage"].Status != api.ComponentStatusDisabled {
+		t.Fatalf("object storage status = %q, want disabled", response.Checks["objectStorage"].Status)
 	}
 
 	cancel()

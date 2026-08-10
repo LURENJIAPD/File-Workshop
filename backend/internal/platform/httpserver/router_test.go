@@ -52,7 +52,7 @@ func TestReadinessDegradesWhenRedisIsUnavailable(t *testing.T) {
 	if response.Status != api.HealthStatusDegraded {
 		t.Fatalf("status = %q, want degraded", response.Status)
 	}
-	if response.Checks["redis"].Status != api.ComponentStatusUnavailable || response.Checks["minio"].Status != api.ComponentStatusDisabled {
+	if response.Checks["redis"].Status != api.ComponentStatusUnavailable || response.Checks["objectStorage"].Status != api.ComponentStatusDisabled {
 		t.Fatalf("unexpected component checks: %#v", response.Checks)
 	}
 }
@@ -140,7 +140,7 @@ func testRouter(t *testing.T, postgresErr, redisErr error) *gin.Engine {
 	service, err := health.NewService("file-workshop-server", []health.Dependency{
 		{Name: "postgresql", Required: true, Enabled: true, Timeout: time.Second, Check: func(context.Context) error { return postgresErr }},
 		{Name: "redis", Required: false, Enabled: true, Timeout: time.Second, Check: func(context.Context) error { return redisErr }},
-		{Name: "minio", Required: false, Enabled: false},
+		{Name: "objectStorage", Required: false, Enabled: false},
 	}, func() time.Time { return time.Date(2026, 8, 5, 8, 0, 0, 0, time.UTC) })
 	if err != nil {
 		t.Fatalf("health.NewService() error = %v", err)

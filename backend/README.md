@@ -1,6 +1,6 @@
 # File Workshop 后端
 
-后端使用 Go 1.26.5、Gin、PostgreSQL、原生 `pgxpool`、sqlc、Goose 和 go-redis，所有环境变量统一使用 `FILE_WORKSHOP_` 前缀。MinIO 尚未搭建，当前明确暂缓。
+后端使用 Go 1.26.5、Gin、PostgreSQL、原生 `pgxpool`、sqlc、Goose 和 go-redis，所有环境变量统一使用 `FILE_WORKSHOP_` 前缀。SeaweedFS/S3 尚未搭建，当前明确暂缓。
 
 ## 本地配置
 
@@ -21,7 +21,7 @@ go run ./cmd/server
 GoLand 运行配置可选择 `backend/cmd/server/main.go`，Working directory 必须设置为 `backend/`。当前基础接口：
 
 - `GET /health/live`：只检查进程存活；
-- `GET /health/ready`：PostgreSQL 必需、Redis 可降级、MinIO 显示 `disabled`。
+- `GET /health/ready`：PostgreSQL 必需、Redis 可降级、对象存储显示 `disabled`。
 
 连接池默认最大 10 个连接、最小 1 个连接，设置连接寿命、空闲回收、健康检查、连接与 Ping 超时，并为每条连接固定 `search_path=file_workshop,public`、UTC 时区和查询/锁/空闲事务超时。
 

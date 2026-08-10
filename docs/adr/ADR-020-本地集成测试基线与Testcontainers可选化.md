@@ -18,7 +18,7 @@ Go Test 是 Go 官方测试入口，必须保留；Testcontainers 是借助 Dock
 4. Mock/Fake 只用于纯业务规则、错误分支和外部边界单元测试，不代替 PostgreSQL 约束、事务、SQL 和 Redis 协议的真实验证。
 5. 禁止使用 SQLite 代替 PostgreSQL 集成测试，避免类型、约束、事务、JSONB、索引和 SQL 方言差异产生错误结论。
 6. Testcontainers 改为具备 Docker/CI 环境后的可选方案。未来启用时必须固定版本、验证许可证和供应链风险，并保持与本 ADR 相同的数据隔离和清理边界。
-7. MinIO、OpenSearch、ClamAV 等后续依赖启用时，另行选择专用测试实例或容器隔离方案，不由本 ADR 提前强制 Docker。
+7. SeaweedFS/S3、OpenSearch、ClamAV 等后续依赖启用时，另行选择专用测试实例或容器隔离方案，不由本 ADR 提前强制 Docker。
 
 ## 结果
 

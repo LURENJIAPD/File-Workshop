@@ -48,7 +48,7 @@ paths:
       operationId: getReadiness
       tags: [Health]
       summary: 检查节点是否可以接收流量
-      description: PostgreSQL 是必需依赖；Redis 故障时允许降级；MinIO 暂缓期间明确报告 disabled。
+      description: PostgreSQL 是必需依赖；Redis 故障时允许降级；对象存储暂缓期间明确报告 disabled。当前组件键名固定为 postgresql、redis、objectStorage。
       responses:
         "200":
           description: 节点就绪；响应 status 可能为 ok 或 degraded。

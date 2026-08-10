@@ -54,7 +54,7 @@ func TestServiceReadinessCombinesRequiredOptionalAndDisabledDependencies(t *test
 			service, err := NewService("file-workshop-server", []Dependency{
 				{Name: "postgresql", Required: true, Enabled: true, Timeout: time.Second, Check: func(context.Context) error { return test.postgresErr }},
 				{Name: "redis", Required: false, Enabled: true, Timeout: time.Second, Check: func(context.Context) error { return test.redisErr }},
-				{Name: "minio", Required: false, Enabled: false},
+				{Name: "objectStorage", Required: false, Enabled: false},
 			}, time.Now)
 			if err != nil {
 				t.Fatalf("NewService() error = %v", err)
@@ -64,8 +64,8 @@ func TestServiceReadinessCombinesRequiredOptionalAndDisabledDependencies(t *test
 			if report.Status != test.expectedStatus {
 				t.Fatalf("status = %q, want %q", report.Status, test.expectedStatus)
 			}
-			if report.Checks["minio"].Status != ComponentDisabled {
-				t.Fatalf("MinIO status = %q, want disabled", report.Checks["minio"].Status)
+			if report.Checks["objectStorage"].Status != ComponentDisabled {
+				t.Fatalf("object storage status = %q, want disabled", report.Checks["objectStorage"].Status)
 			}
 		})
 	}

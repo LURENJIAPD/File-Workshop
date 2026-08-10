@@ -76,7 +76,7 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 Operation ID：`getLiveness`  
 认证：不需要
 
-只确认 HTTP 进程能够响应，不访问 PostgreSQL、Redis 或 MinIO。
+只确认 HTTP 进程能够响应，不访问 PostgreSQL、Redis 或对象存储。
 
 成功状态：`200 OK`
 
@@ -96,7 +96,7 @@ Operation ID：`getLiveness`
 Operation ID：`getReadiness`  
 认证：不需要
 
-PostgreSQL 是必需依赖；Redis 是可降级依赖；MinIO 暂缓期间返回 `disabled`。
+PostgreSQL 是必需依赖；Redis 是可降级依赖；对象存储暂缓期间返回 `disabled`。当前组件键名固定为 `postgresql`、`redis`、`objectStorage`，不得使用具体产品名作为对外键名。
 
 | HTTP 状态 | 条件 |
 |---:|---|
