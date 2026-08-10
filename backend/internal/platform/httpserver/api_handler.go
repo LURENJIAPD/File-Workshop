@@ -78,20 +78,55 @@ type PermissionsAPI interface {
 	RestorePermissionInheritance(context.Context, api.RestorePermissionInheritanceRequestObject) (api.RestorePermissionInheritanceResponseObject, error)
 }
 
+type FilesAPI interface {
+	ListDirectoryEntries(context.Context, api.ListDirectoryEntriesRequestObject) (api.ListDirectoryEntriesResponseObject, error)
+	CreateFolder(context.Context, api.CreateFolderRequestObject) (api.CreateFolderResponseObject, error)
+	CreateDocument(context.Context, api.CreateDocumentRequestObject) (api.CreateDocumentResponseObject, error)
+	GetDirectoryEntry(context.Context, api.GetDirectoryEntryRequestObject) (api.GetDirectoryEntryResponseObject, error)
+	RenameDirectoryEntry(context.Context, api.RenameDirectoryEntryRequestObject) (api.RenameDirectoryEntryResponseObject, error)
+	MoveDirectoryEntry(context.Context, api.MoveDirectoryEntryRequestObject) (api.MoveDirectoryEntryResponseObject, error)
+}
+
 type APIHandler struct {
 	health        HealthAPI
 	identity      IdentityAPI
 	users         UsersAPI
 	organizations OrganizationsAPI
 	permissions   PermissionsAPI
+	files         FilesAPI
 }
 
-func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organizations OrganizationsAPI, permissionHandlers ...PermissionsAPI) *APIHandler {
+func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organizations OrganizationsAPI, optionalHandlers ...any) *APIHandler {
 	var permissions PermissionsAPI
-	if len(permissionHandlers) > 0 {
-		permissions = permissionHandlers[0]
+	var files FilesAPI
+	for _, optional := range optionalHandlers {
+		if handler, ok := optional.(PermissionsAPI); ok {
+			permissions = handler
+		}
+		if handler, ok := optional.(FilesAPI); ok {
+			files = handler
+		}
 	}
-	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions}
+	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions, files: files}
+}
+
+func (h *APIHandler) ListDirectoryEntries(ctx context.Context, request api.ListDirectoryEntriesRequestObject) (api.ListDirectoryEntriesResponseObject, error) {
+	return h.files.ListDirectoryEntries(ctx, request)
+}
+func (h *APIHandler) CreateFolder(ctx context.Context, request api.CreateFolderRequestObject) (api.CreateFolderResponseObject, error) {
+	return h.files.CreateFolder(ctx, request)
+}
+func (h *APIHandler) CreateDocument(ctx context.Context, request api.CreateDocumentRequestObject) (api.CreateDocumentResponseObject, error) {
+	return h.files.CreateDocument(ctx, request)
+}
+func (h *APIHandler) GetDirectoryEntry(ctx context.Context, request api.GetDirectoryEntryRequestObject) (api.GetDirectoryEntryResponseObject, error) {
+	return h.files.GetDirectoryEntry(ctx, request)
+}
+func (h *APIHandler) RenameDirectoryEntry(ctx context.Context, request api.RenameDirectoryEntryRequestObject) (api.RenameDirectoryEntryResponseObject, error) {
+	return h.files.RenameDirectoryEntry(ctx, request)
+}
+func (h *APIHandler) MoveDirectoryEntry(ctx context.Context, request api.MoveDirectoryEntryRequestObject) (api.MoveDirectoryEntryResponseObject, error) {
+	return h.files.MoveDirectoryEntry(ctx, request)
 }
 
 func (h *APIHandler) ListAdminDelegations(ctx context.Context, request api.ListAdminDelegationsRequestObject) (api.ListAdminDelegationsResponseObject, error) {

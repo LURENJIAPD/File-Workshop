@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.4
+> 文档版本：V0.5
 > 文档状态：按模块持续编制  
-> 最近更新：2026-08-05  
-> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派
+> 最近更新：2026-08-10
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -22,7 +22,8 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 | 02 | 用户管理 | 已完成 | 13 | 2026-08-05 |
 | 03 | 组织与空间 | 已完成当前模块边界 | 23 | 2026-08-05 |
 | 04 | 权限与管理委派 | 已完成当前模块边界 | 14 | 2026-08-05 |
-| 05～16 | 后续系统模块 | 未收录 | 0 | — |
+| 05 | 文件目录 | 已完成当前模块边界 | 6 | 2026-08-10 |
+| 06～16 | 后续系统模块 | 未收录 | 0 | — |
 
 ## 3. 全局接口约定
 
@@ -727,7 +728,60 @@ Space 授权只有在 `inheritToDescendants=true` 时才能作用于后代；Fol
 - `backend/scripts/verify.ps1`
 - `backend/scripts/verify-integration.ps1`
 
-## 9. 文档维护与冻结规则
+## 9. 模块 05：文件目录
+
+### 9.1 模块边界和权限入口
+
+本模块建立 `namespace_entries`、`folders`、`documents` 对应的目录事实层，负责统一命名空间、Folder/Document 稳定身份、根目录懒创建、目录列表、详情、重命名和移动。当前不上传二进制、不生成对象 Key、不创建版本内容、不扣减容量，也不执行扫描、预览或索引；这些由模块 06/07/10/12/16 接入。
+
+所有目录读写入口都必须调用模块 04 最终授权服务，不在 Handler、Repository 或前端重复解释 ACL。根目录尚未创建时，空间根列表和首次创建会以 Space 为授权资源；根目录创建后，目录读写以 Folder/Document 为授权资源。移动目录项会递增 `spaces.security_epoch`，使继承路径变化后的权限缓存自然失效。
+
+### 9.2 目录接口
+
+| 接口 | Operation ID | 成功响应 | 关键约束 |
+|---|---|---:|---|
+| `GET /api/v1/spaces/{spaceId}/entries?page=1&pageSize=50` | `listDirectoryEntries` | `200/DirectoryEntryListResponse` | 列出根目录或指定 `parentFolderId` 子项；支持 `entryType`、`lifecycleStatus`；稳定排序为 `entryType/normalizedName/entryId`；无根目录时返回空列表 |
+| `POST /api/v1/spaces/{spaceId}/folders` | `createFolder` | `201/DirectoryEntryResponse` | 要求 `Idempotency-Key`；请求体为 `name/parentFolderId`；首次在空间下创建时懒创建根文件夹 |
+| `POST /api/v1/spaces/{spaceId}/documents` | `createDocument` | `201/DirectoryEntryResponse` | 要求 `Idempotency-Key`；请求体为 `name/parentFolderId/classification/metadata`；仅创建 Document 占位，`availabilityStatus=BLOCKED`，`currentVersionId=null` |
+| `GET /api/v1/entries/{entryId}` | `getDirectoryEntry` | `200/DirectoryEntryResponse` | 读取 Folder 或 Document 元数据；调用者必须具备 `READ_METADATA` |
+| `PATCH /api/v1/entries/{entryId}` | `renameDirectoryEntry` | `200/DirectoryEntryResponse` | 请求体为 `name/rowVersion`；根文件夹不可重命名；文件夹重命名会刷新后代路径缓存 |
+| `POST /api/v1/entries/{entryId}/move` | `moveDirectoryEntry` | `200/DirectoryEntryResponse` | 请求体为 `targetParentFolderId/rowVersion`；根文件夹不可移动；文件夹不可移动到自身或后代；移动成功后递增空间安全纪元 |
+
+### 9.3 请求和响应字段
+
+分页请求统一使用 `page`、`pageSize`，默认值为 `1/50`，最大 `pageSize=200`。列表响应至少包含 `items/page/pageSize/total/requestId`，并在适用时返回 `spaceId/rootFolderId/parentFolderId`。
+
+`DirectoryEntry` 字段严格映射数据库事实和 OpenAPI：
+
+- 公共字段：`entryId/spaceId/parentFolderId/entryType/name/normalizedName/pathCache/depth/lifecycleStatus/isRoot/createdByUserId/createdAt/updatedAt/deletedAt/rowVersion`；
+- Folder 字段：`inheritanceMode/aclVersion`；
+- Document 字段：`ownerUserId/currentVersionId/availabilityStatus/extensionNormalized/inheritanceMode/aclVersion/classification/metadataSchemaVersion/metadata`。
+
+目录名称允许中文和普通业务字符，但禁止空名、`.`、`..`、斜杠、反斜杠和控制字符。同一父目录下 `ACTIVE/ARCHIVED` 目录项名称归一化后唯一；根目录由系统创建，不作为普通用户可移动或重命名对象。
+
+### 9.4 错误码和接口测试依据
+
+除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN/AUTH_ORIGIN_REJECTED` 外，本模块使用：
+
+| HTTP | 错误码 | 含义 |
+|---:|---|---|
+| 404 | `DIRECTORY_ENTRY_NOT_FOUND` | 目录项、父目录或空间不存在、已删除或对调用者不可见 |
+| 409 | `DIRECTORY_CONFLICT` | 名称唯一约束、引用约束或其他目录事实冲突 |
+| 409 | `ROW_VERSION_CONFLICT` | `rowVersion` 已过期 |
+| 409 | `IDEMPOTENCY_CONFLICT` | 同一幂等键对应不同请求体 |
+| 409 | `DIRECTORY_TREE_CYCLE` | 文件夹移动会形成循环 |
+| 409 | `DIRECTORY_ROOT_OPERATION_FORBIDDEN` | 对根文件夹执行移动或重命名 |
+
+正式接口测试至少覆盖：未登录拒绝；普通用户越权；系统管理员通过统一权限入口操作公共空间；根目录懒创建；中文目录名；同目录重名冲突；`page/pageSize` 默认值、非法值和最大值；Document 占位状态；详情读取；乐观锁重命名；文件夹重命名后代路径刷新；移动到新父目录；文件夹防环；幂等重放和冲突；Outbox 与幂等记录同事务写入。
+
+现有自动化证据：
+
+- `backend/internal/modules/files/domain/validation_test.go`
+- `backend/internal/modules/files/application/service_test.go`
+- `backend/tests/integration/files_http_test.go`
+- `backend/scripts/verify.ps1`
+
+## 10. 文档维护与冻结规则
 
 1. 新模块先更新 `backend/api/openapi.yaml`，再生成代码和实现。
 2. 模块开发完成时，在本文档追加对应模块章节和接口测试要点，并更新第 2 章状态。

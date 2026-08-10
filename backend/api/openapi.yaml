@@ -25,6 +25,8 @@ tags:
     description: 组织及其子树的管理能力委派；管理委派与普通文件 ACL 严格分离。
   - name: Permissions
     description: 全系统唯一资源授权判定入口；采用显式允许、继承和默认拒绝，不支持显式 DENY。
+  - name: FileDirectory
+    description: 文件夹树、Document 稳定身份和统一目录命名空间；不处理对象存储上传下载数据面。
 
 paths:
   /health/live:
@@ -107,6 +109,184 @@ paths:
           $ref: "#/components/responses/AccountLocked"
         "429":
           $ref: "#/components/responses/TooManyRequests"
+
+  /api/v1/spaces/{spaceId}/entries:
+    get:
+      operationId: listDirectoryEntries
+      tags: [FileDirectory]
+      summary: 分页列出目录项
+      description: 省略 parentFolderId 时列出空间根目录子项；若空间根目录尚未初始化且没有内容，返回空列表。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdPath"
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+        - name: parentFolderId
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+        - name: entryType
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/DirectoryEntryType" }
+        - name: lifecycleStatus
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/DirectoryLifecycleStatus" }
+      responses:
+        "200":
+          description: 目录项列表。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DirectoryEntryListResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/spaces/{spaceId}/folders:
+    post:
+      operationId: createFolder
+      tags: [FileDirectory]
+      summary: 创建文件夹
+      description: 省略 parentFolderId 时在空间根目录下创建；必要时同事务初始化空间根文件夹。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdPath"
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFolderRequest"
+      responses:
+        "201":
+          description: 文件夹已创建。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DirectoryEntryResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/spaces/{spaceId}/documents:
+    post:
+      operationId: createDocument
+      tags: [FileDirectory]
+      summary: 创建 Document 稳定身份
+      description: 当前只创建文档目录身份和元数据，占位文档 availabilityStatus 为 BLOCKED；实际版本和对象存储内容由后续上传模块写入。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/SpaceIdPath"
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDocumentRequest"
+      responses:
+        "201":
+          description: Document 身份已创建。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DirectoryEntryResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/entries/{entryId}:
+    get:
+      operationId: getDirectoryEntry
+      tags: [FileDirectory]
+      summary: 获取目录项详情
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/DirectoryEntryIdPath"
+      responses:
+        "200":
+          description: 目录项详情。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DirectoryEntryResponse"
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      operationId: renameDirectoryEntry
+      tags: [FileDirectory]
+      summary: 重命名目录项
+      description: 根文件夹不可重命名；同一父目录下 ACTIVE/ARCHIVED 名称保持唯一。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/DirectoryEntryIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenameDirectoryEntryRequest"
+      responses:
+        "200":
+          description: 目录项已重命名。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DirectoryEntryResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/entries/{entryId}/move:
+    post:
+      operationId: moveDirectoryEntry
+      tags: [FileDirectory]
+      summary: 移动目录项
+      description: 根文件夹不可移动；文件夹不能移动到自身或后代目录；移动会使空间权限安全版本递增以失效继承权限缓存。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/DirectoryEntryIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MoveDirectoryEntryRequest"
+      responses:
+        "200":
+          description: 目录项已移动。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DirectoryEntryResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
 
   /api/v1/auth/refresh:
     post:
@@ -1545,6 +1725,13 @@ components:
       schema:
         type: string
         format: uuid
+    DirectoryEntryIdPath:
+      name: entryId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     PlanIdPath:
       name: planId
       in: path
@@ -1679,6 +1866,112 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
 
   schemas:
+    DirectoryEntryType:
+      type: string
+      enum: [FOLDER, DOCUMENT]
+
+    DirectoryLifecycleStatus:
+      type: string
+      enum: [ACTIVE, TRASHED, ARCHIVED, PURGING, PURGED]
+
+    DocumentAvailabilityStatus:
+      type: string
+      enum: [AVAILABLE, PENDING_SCAN, QUARANTINED, BLOCKED]
+
+    DirectoryEntry:
+      type: object
+      additionalProperties: false
+      required: [entryId, spaceId, entryType, name, normalizedName, depth, lifecycleStatus, isRoot, createdByUserId, createdAt, updatedAt, rowVersion]
+      properties:
+        entryId: { type: string, format: uuid }
+        spaceId: { type: string, format: uuid }
+        parentFolderId: { type: string, format: uuid }
+        entryType: { $ref: "#/components/schemas/DirectoryEntryType" }
+        name: { type: string, minLength: 1, maxLength: 512 }
+        normalizedName: { type: string, minLength: 1, maxLength: 512 }
+        pathCache: { type: string, maxLength: 4096 }
+        depth: { type: integer, minimum: 0 }
+        lifecycleStatus: { $ref: "#/components/schemas/DirectoryLifecycleStatus" }
+        isRoot: { type: boolean }
+        inheritanceMode:
+          type: string
+          enum: [INHERIT, BREAK]
+        aclVersion: { type: integer, format: int64, minimum: 1 }
+        ownerUserId: { type: string, format: uuid }
+        currentVersionId: { type: string, format: uuid }
+        availabilityStatus: { $ref: "#/components/schemas/DocumentAvailabilityStatus" }
+        extensionNormalized: { type: string, maxLength: 64 }
+        classification: { type: string, maxLength: 64 }
+        metadataSchemaVersion: { type: integer, minimum: 1 }
+        metadata:
+          type: object
+          additionalProperties: true
+        createdByUserId: { type: string, format: uuid }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        deletedAt: { type: string, format: date-time }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    DirectoryEntryResponse:
+      type: object
+      additionalProperties: false
+      required: [entry, requestId]
+      properties:
+        entry: { $ref: "#/components/schemas/DirectoryEntry" }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    DirectoryEntryListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/DirectoryEntry" }
+        spaceId: { type: string, format: uuid }
+        parentFolderId: { type: string, format: uuid }
+        rootFolderId: { type: string, format: uuid }
+        page: { $ref: "#/components/schemas/Page" }
+        pageSize: { $ref: "#/components/schemas/PageSize" }
+        total: { type: integer, format: int64, minimum: 0 }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    CreateFolderRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        parentFolderId: { type: string, format: uuid }
+        name: { type: string, minLength: 1, maxLength: 512 }
+
+    CreateDocumentRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        parentFolderId: { type: string, format: uuid }
+        name: { type: string, minLength: 1, maxLength: 512 }
+        classification: { type: string, maxLength: 64 }
+        metadata:
+          type: object
+          additionalProperties: true
+
+    RenameDirectoryEntryRequest:
+      type: object
+      additionalProperties: false
+      required: [name, rowVersion]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 512 }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    MoveDirectoryEntryRequest:
+      type: object
+      additionalProperties: false
+      required: [rowVersion]
+      properties:
+        targetParentFolderId: { type: string, format: uuid }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
     AdminDelegationScope:
       type: string
       enum: [SELF, SUBTREE]

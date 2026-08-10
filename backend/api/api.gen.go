@@ -166,6 +166,93 @@ func (e ComponentStatus) Valid() bool {
 	}
 }
 
+// Defines values for DirectoryEntryInheritanceMode.
+const (
+	DirectoryEntryInheritanceModeBREAK   DirectoryEntryInheritanceMode = "BREAK"
+	DirectoryEntryInheritanceModeINHERIT DirectoryEntryInheritanceMode = "INHERIT"
+)
+
+// Valid indicates whether the value is a known member of the DirectoryEntryInheritanceMode enum.
+func (e DirectoryEntryInheritanceMode) Valid() bool {
+	switch e {
+	case DirectoryEntryInheritanceModeBREAK:
+		return true
+	case DirectoryEntryInheritanceModeINHERIT:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DirectoryEntryType.
+const (
+	DirectoryEntryTypeDOCUMENT DirectoryEntryType = "DOCUMENT"
+	DirectoryEntryTypeFOLDER   DirectoryEntryType = "FOLDER"
+)
+
+// Valid indicates whether the value is a known member of the DirectoryEntryType enum.
+func (e DirectoryEntryType) Valid() bool {
+	switch e {
+	case DirectoryEntryTypeDOCUMENT:
+		return true
+	case DirectoryEntryTypeFOLDER:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DirectoryLifecycleStatus.
+const (
+	DirectoryLifecycleStatusACTIVE   DirectoryLifecycleStatus = "ACTIVE"
+	DirectoryLifecycleStatusARCHIVED DirectoryLifecycleStatus = "ARCHIVED"
+	DirectoryLifecycleStatusPURGED   DirectoryLifecycleStatus = "PURGED"
+	DirectoryLifecycleStatusPURGING  DirectoryLifecycleStatus = "PURGING"
+	DirectoryLifecycleStatusTRASHED  DirectoryLifecycleStatus = "TRASHED"
+)
+
+// Valid indicates whether the value is a known member of the DirectoryLifecycleStatus enum.
+func (e DirectoryLifecycleStatus) Valid() bool {
+	switch e {
+	case DirectoryLifecycleStatusACTIVE:
+		return true
+	case DirectoryLifecycleStatusARCHIVED:
+		return true
+	case DirectoryLifecycleStatusPURGED:
+		return true
+	case DirectoryLifecycleStatusPURGING:
+		return true
+	case DirectoryLifecycleStatusTRASHED:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentAvailabilityStatus.
+const (
+	AVAILABLE   DocumentAvailabilityStatus = "AVAILABLE"
+	BLOCKED     DocumentAvailabilityStatus = "BLOCKED"
+	PENDINGSCAN DocumentAvailabilityStatus = "PENDING_SCAN"
+	QUARANTINED DocumentAvailabilityStatus = "QUARANTINED"
+)
+
+// Valid indicates whether the value is a known member of the DocumentAvailabilityStatus enum.
+func (e DocumentAvailabilityStatus) Valid() bool {
+	switch e {
+	case AVAILABLE:
+		return true
+	case BLOCKED:
+		return true
+	case PENDINGSCAN:
+		return true
+	case QUARANTINED:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for HealthStatus.
 const (
 	HealthStatusDegraded    HealthStatus = "degraded"
@@ -516,16 +603,16 @@ func (e PermissionGrantStatus) Valid() bool {
 
 // Defines values for PermissionInheritanceResponseInheritanceMode.
 const (
-	BREAK   PermissionInheritanceResponseInheritanceMode = "BREAK"
-	INHERIT PermissionInheritanceResponseInheritanceMode = "INHERIT"
+	PermissionInheritanceResponseInheritanceModeBREAK   PermissionInheritanceResponseInheritanceMode = "BREAK"
+	PermissionInheritanceResponseInheritanceModeINHERIT PermissionInheritanceResponseInheritanceMode = "INHERIT"
 )
 
 // Valid indicates whether the value is a known member of the PermissionInheritanceResponseInheritanceMode enum.
 func (e PermissionInheritanceResponseInheritanceMode) Valid() bool {
 	switch e {
-	case BREAK:
+	case PermissionInheritanceResponseInheritanceModeBREAK:
 		return true
-	case INHERIT:
+	case PermissionInheritanceResponseInheritanceModeINHERIT:
 		return true
 	default:
 		return false
@@ -534,19 +621,19 @@ func (e PermissionInheritanceResponseInheritanceMode) Valid() bool {
 
 // Defines values for PermissionResourceType.
 const (
-	DOCUMENT PermissionResourceType = "DOCUMENT"
-	FOLDER   PermissionResourceType = "FOLDER"
-	SPACE    PermissionResourceType = "SPACE"
+	PermissionResourceTypeDOCUMENT PermissionResourceType = "DOCUMENT"
+	PermissionResourceTypeFOLDER   PermissionResourceType = "FOLDER"
+	PermissionResourceTypeSPACE    PermissionResourceType = "SPACE"
 )
 
 // Valid indicates whether the value is a known member of the PermissionResourceType enum.
 func (e PermissionResourceType) Valid() bool {
 	switch e {
-	case DOCUMENT:
+	case PermissionResourceTypeDOCUMENT:
 		return true
-	case FOLDER:
+	case PermissionResourceTypeFOLDER:
 		return true
-	case SPACE:
+	case PermissionResourceTypeSPACE:
 		return true
 	default:
 		return false
@@ -861,6 +948,20 @@ type CreateAdminDelegationRequest struct {
 	ValidUntil         *time.Time           `json:"validUntil,omitempty"`
 }
 
+// CreateDocumentRequest defines model for CreateDocumentRequest.
+type CreateDocumentRequest struct {
+	Classification *string                 `json:"classification,omitempty"`
+	Metadata       *map[string]interface{} `json:"metadata,omitempty"`
+	Name           string                  `json:"name"`
+	ParentFolderId *openapi_types.UUID     `json:"parentFolderId,omitempty"`
+}
+
+// CreateFolderRequest defines model for CreateFolderRequest.
+type CreateFolderRequest struct {
+	Name           string              `json:"name"`
+	ParentFolderId *openapi_types.UUID `json:"parentFolderId,omitempty"`
+}
+
 // CreateOrganizationChangePlanRequest defines model for CreateOrganizationChangePlanRequest.
 type CreateOrganizationChangePlanRequest struct {
 	ExpectedTreeVersion int64                      `json:"expectedTreeVersion"`
@@ -919,6 +1020,64 @@ type CurrentSessionResponse struct {
 	User      AuthenticatedUser `json:"user"`
 }
 
+// DirectoryEntry defines model for DirectoryEntry.
+type DirectoryEntry struct {
+	AclVersion            *int64                         `json:"aclVersion,omitempty"`
+	AvailabilityStatus    *DocumentAvailabilityStatus    `json:"availabilityStatus,omitempty"`
+	Classification        *string                        `json:"classification,omitempty"`
+	CreatedAt             time.Time                      `json:"createdAt"`
+	CreatedByUserId       openapi_types.UUID             `json:"createdByUserId"`
+	CurrentVersionId      *openapi_types.UUID            `json:"currentVersionId,omitempty"`
+	DeletedAt             *time.Time                     `json:"deletedAt,omitempty"`
+	Depth                 int                            `json:"depth"`
+	EntryId               openapi_types.UUID             `json:"entryId"`
+	EntryType             DirectoryEntryType             `json:"entryType"`
+	ExtensionNormalized   *string                        `json:"extensionNormalized,omitempty"`
+	InheritanceMode       *DirectoryEntryInheritanceMode `json:"inheritanceMode,omitempty"`
+	IsRoot                bool                           `json:"isRoot"`
+	LifecycleStatus       DirectoryLifecycleStatus       `json:"lifecycleStatus"`
+	Metadata              *map[string]interface{}        `json:"metadata,omitempty"`
+	MetadataSchemaVersion *int                           `json:"metadataSchemaVersion,omitempty"`
+	Name                  string                         `json:"name"`
+	NormalizedName        string                         `json:"normalizedName"`
+	OwnerUserId           *openapi_types.UUID            `json:"ownerUserId,omitempty"`
+	ParentFolderId        *openapi_types.UUID            `json:"parentFolderId,omitempty"`
+	PathCache             *string                        `json:"pathCache,omitempty"`
+	RowVersion            int64                          `json:"rowVersion"`
+	SpaceId               openapi_types.UUID             `json:"spaceId"`
+	UpdatedAt             time.Time                      `json:"updatedAt"`
+}
+
+// DirectoryEntryInheritanceMode defines model for DirectoryEntry.InheritanceMode.
+type DirectoryEntryInheritanceMode string
+
+// DirectoryEntryListResponse defines model for DirectoryEntryListResponse.
+type DirectoryEntryListResponse struct {
+	Items          []DirectoryEntry    `json:"items"`
+	Page           Page                `json:"page"`
+	PageSize       PageSize            `json:"pageSize"`
+	ParentFolderId *openapi_types.UUID `json:"parentFolderId,omitempty"`
+	RequestId      string              `json:"requestId"`
+	RootFolderId   *openapi_types.UUID `json:"rootFolderId,omitempty"`
+	SpaceId        *openapi_types.UUID `json:"spaceId,omitempty"`
+	Total          int64               `json:"total"`
+}
+
+// DirectoryEntryResponse defines model for DirectoryEntryResponse.
+type DirectoryEntryResponse struct {
+	Entry     DirectoryEntry `json:"entry"`
+	RequestId string         `json:"requestId"`
+}
+
+// DirectoryEntryType defines model for DirectoryEntryType.
+type DirectoryEntryType string
+
+// DirectoryLifecycleStatus defines model for DirectoryLifecycleStatus.
+type DirectoryLifecycleStatus string
+
+// DocumentAvailabilityStatus defines model for DocumentAvailabilityStatus.
+type DocumentAvailabilityStatus string
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
 	Code      string                  `json:"code"`
@@ -944,6 +1103,12 @@ type LoginRequest struct {
 	DeviceId *string `json:"deviceId,omitempty"`
 	Password string  `json:"password"`
 	Username string  `json:"username"`
+}
+
+// MoveDirectoryEntryRequest defines model for MoveDirectoryEntryRequest.
+type MoveDirectoryEntryRequest struct {
+	RowVersion           int64               `json:"rowVersion"`
+	TargetParentFolderId *openapi_types.UUID `json:"targetParentFolderId,omitempty"`
 }
 
 // MoveOrganizationRequest defines model for MoveOrganizationRequest.
@@ -1221,6 +1386,12 @@ type RemoveOrganizationMemberRequest struct {
 	RowVersion int64  `json:"rowVersion"`
 }
 
+// RenameDirectoryEntryRequest defines model for RenameDirectoryEntryRequest.
+type RenameDirectoryEntryRequest struct {
+	Name       string `json:"name"`
+	RowVersion int64  `json:"rowVersion"`
+}
+
 // ResetUserPasswordRequest defines model for ResetUserPasswordRequest.
 type ResetUserPasswordRequest struct {
 	Password   string `json:"password"`
@@ -1454,6 +1625,9 @@ type UserStatus string
 // DelegationIdPath defines model for DelegationIdPath.
 type DelegationIdPath = openapi_types.UUID
 
+// DirectoryEntryIdPath defines model for DirectoryEntryIdPath.
+type DirectoryEntryIdPath = openapi_types.UUID
+
 // GrantIdPath defines model for GrantIdPath.
 type GrantIdPath = openapi_types.UUID
 
@@ -1655,6 +1829,30 @@ type ListResourcePermissionGrantsParams struct {
 	PageSize *PageSizeQuery `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 }
 
+// CreateDocumentParams defines parameters for CreateDocument.
+type CreateDocumentParams struct {
+	// IdempotencyKey 可重试写请求的稳定幂等键。
+	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
+}
+
+// ListDirectoryEntriesParams defines parameters for ListDirectoryEntries.
+type ListDirectoryEntriesParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize        *PageSizeQuery            `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+	ParentFolderId  *openapi_types.UUID       `form:"parentFolderId,omitempty" json:"parentFolderId,omitempty"`
+	EntryType       *DirectoryEntryType       `form:"entryType,omitempty" json:"entryType,omitempty"`
+	LifecycleStatus *DirectoryLifecycleStatus `form:"lifecycleStatus,omitempty" json:"lifecycleStatus,omitempty"`
+}
+
+// CreateFolderParams defines parameters for CreateFolder.
+type CreateFolderParams struct {
+	// IdempotencyKey 可重试写请求的稳定幂等键。
+	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
+}
+
 // ListCurrentUserOrganizationsParams defines parameters for ListCurrentUserOrganizations.
 type ListCurrentUserOrganizationsParams struct {
 	// Page 从 1 开始的页码。
@@ -1748,6 +1946,12 @@ type ProvisionUserPersonalSpaceJSONRequestBody = ProvisionPersonalSpaceRequest
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
 
+// RenameDirectoryEntryJSONRequestBody defines body for RenameDirectoryEntry for application/json ContentType.
+type RenameDirectoryEntryJSONRequestBody = RenameDirectoryEntryRequest
+
+// MoveDirectoryEntryJSONRequestBody defines body for MoveDirectoryEntry for application/json ContentType.
+type MoveDirectoryEntryJSONRequestBody = MoveDirectoryEntryRequest
+
 // BatchEvaluatePermissionsJSONRequestBody defines body for BatchEvaluatePermissions for application/json ContentType.
 type BatchEvaluatePermissionsJSONRequestBody = BatchPermissionEvaluationRequest
 
@@ -1768,6 +1972,12 @@ type BreakPermissionInheritanceJSONRequestBody = ChangePermissionInheritanceRequ
 
 // RestorePermissionInheritanceJSONRequestBody defines body for RestorePermissionInheritance for application/json ContentType.
 type RestorePermissionInheritanceJSONRequestBody = ChangePermissionInheritanceRequest
+
+// CreateDocumentJSONRequestBody defines body for CreateDocument for application/json ContentType.
+type CreateDocumentJSONRequestBody = CreateDocumentRequest
+
+// CreateFolderJSONRequestBody defines body for CreateFolder for application/json ContentType.
+type CreateFolderJSONRequestBody = CreateFolderRequest
 
 // UpdateCurrentUserJSONRequestBody defines body for UpdateCurrentUser for application/json ContentType.
 type UpdateCurrentUserJSONRequestBody = UpdateCurrentUserRequest
@@ -1891,6 +2101,15 @@ type ServerInterface interface {
 	// GetCurrentSession 获取当前认证会话
 	// (GET /api/v1/auth/session)
 	GetCurrentSession(c *gin.Context)
+	// GetDirectoryEntry 获取目录项详情
+	// (GET /api/v1/entries/{entryId})
+	GetDirectoryEntry(c *gin.Context, entryId DirectoryEntryIdPath)
+	// RenameDirectoryEntry 重命名目录项
+	// (PATCH /api/v1/entries/{entryId})
+	RenameDirectoryEntry(c *gin.Context, entryId DirectoryEntryIdPath)
+	// MoveDirectoryEntry 移动目录项
+	// (POST /api/v1/entries/{entryId}/move)
+	MoveDirectoryEntry(c *gin.Context, entryId DirectoryEntryIdPath)
 	// ListOrganizationAdministrators 查询组织的有效管理员
 	// (GET /api/v1/organizations/{organizationId}/administrators)
 	ListOrganizationAdministrators(c *gin.Context, organizationId OrganizationIdPath, params ListOrganizationAdministratorsParams)
@@ -1918,6 +2137,15 @@ type ServerInterface interface {
 	// RestorePermissionInheritance 恢复文件夹或文档的 ACL 继承
 	// (POST /api/v1/permissions/resources/{resourceType}/{resourceId}/restore-inheritance)
 	RestorePermissionInheritance(c *gin.Context, resourceType PermissionResourceTypePath, resourceId PermissionResourceIdPath)
+	// CreateDocument 创建 Document 稳定身份
+	// (POST /api/v1/spaces/{spaceId}/documents)
+	CreateDocument(c *gin.Context, spaceId SpaceIdPath, params CreateDocumentParams)
+	// ListDirectoryEntries 分页列出目录项
+	// (GET /api/v1/spaces/{spaceId}/entries)
+	ListDirectoryEntries(c *gin.Context, spaceId SpaceIdPath, params ListDirectoryEntriesParams)
+	// CreateFolder 创建文件夹
+	// (POST /api/v1/spaces/{spaceId}/folders)
+	CreateFolder(c *gin.Context, spaceId SpaceIdPath, params CreateFolderParams)
 	// GetCurrentUser 获取当前用户资料
 	// (GET /api/v1/users/me)
 	GetCurrentUser(c *gin.Context)
@@ -3222,6 +3450,81 @@ func (siw *ServerInterfaceWrapper) GetCurrentSession(c *gin.Context) {
 	siw.Handler.GetCurrentSession(c)
 }
 
+// GetDirectoryEntry operation middleware
+func (siw *ServerInterfaceWrapper) GetDirectoryEntry(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "entryId" -------------
+	var entryId DirectoryEntryIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "entryId", c.Param("entryId"), &entryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter entryId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetDirectoryEntry(c, entryId)
+}
+
+// RenameDirectoryEntry operation middleware
+func (siw *ServerInterfaceWrapper) RenameDirectoryEntry(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "entryId" -------------
+	var entryId DirectoryEntryIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "entryId", c.Param("entryId"), &entryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter entryId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.RenameDirectoryEntry(c, entryId)
+}
+
+// MoveDirectoryEntry operation middleware
+func (siw *ServerInterfaceWrapper) MoveDirectoryEntry(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "entryId" -------------
+	var entryId DirectoryEntryIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "entryId", c.Param("entryId"), &entryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter entryId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.MoveDirectoryEntry(c, entryId)
+}
+
 // ListOrganizationAdministrators operation middleware
 func (siw *ServerInterfaceWrapper) ListOrganizationAdministrators(c *gin.Context) {
 
@@ -3506,6 +3809,178 @@ func (siw *ServerInterfaceWrapper) RestorePermissionInheritance(c *gin.Context) 
 	siw.Handler.RestorePermissionInheritance(c, resourceType, resourceId)
 }
 
+// CreateDocument operation middleware
+func (siw *ServerInterfaceWrapper) CreateDocument(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", c.Param("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter spaceId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateDocumentParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKeyHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreateDocument(c, spaceId, params)
+}
+
+// ListDirectoryEntries operation middleware
+func (siw *ServerInterfaceWrapper) ListDirectoryEntries(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", c.Param("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter spaceId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListDirectoryEntriesParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "parentFolderId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "parentFolderId", c.Request.URL.Query(), &params.ParentFolderId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter parentFolderId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "entryType" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "entryType", c.Request.URL.Query(), &params.EntryType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter entryType: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "lifecycleStatus" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "lifecycleStatus", c.Request.URL.Query(), &params.LifecycleStatus, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter lifecycleStatus: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListDirectoryEntries(c, spaceId, params)
+}
+
+// CreateFolder operation middleware
+func (siw *ServerInterfaceWrapper) CreateFolder(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", c.Param("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter spaceId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateFolderParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKeyHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreateFolder(c, spaceId, params)
+}
+
 // GetCurrentUser operation middleware
 func (siw *ServerInterfaceWrapper) GetCurrentUser(c *gin.Context) {
 
@@ -3696,6 +4171,12 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/health/live", wrapper.GetLiveness)
 	router.GET(options.BaseURL+"/health/ready", wrapper.GetReadiness)
 	router.POST(options.BaseURL+"/api/v1/auth/login", wrapper.Login)
+	router.GET(options.BaseURL+"/api/v1/spaces/:spaceId/entries", wrapper.ListDirectoryEntries)
+	router.POST(options.BaseURL+"/api/v1/spaces/:spaceId/folders", wrapper.CreateFolder)
+	router.POST(options.BaseURL+"/api/v1/spaces/:spaceId/documents", wrapper.CreateDocument)
+	router.GET(options.BaseURL+"/api/v1/entries/:entryId", wrapper.GetDirectoryEntry)
+	router.PATCH(options.BaseURL+"/api/v1/entries/:entryId", wrapper.RenameDirectoryEntry)
+	router.POST(options.BaseURL+"/api/v1/entries/:entryId/move", wrapper.MoveDirectoryEntry)
 	router.POST(options.BaseURL+"/api/v1/auth/refresh", wrapper.RefreshSession)
 	router.POST(options.BaseURL+"/api/v1/auth/logout", wrapper.Logout)
 	router.GET(options.BaseURL+"/api/v1/auth/session", wrapper.GetCurrentSession)
@@ -7417,6 +7898,295 @@ func (response GetCurrentSession401JSONResponse) VisitGetCurrentSessionResponse(
 	return err
 }
 
+type GetDirectoryEntryRequestObject struct {
+	EntryId DirectoryEntryIdPath `json:"entryId"`
+}
+
+type GetDirectoryEntryResponseObject interface {
+	VisitGetDirectoryEntryResponse(w http.ResponseWriter) error
+}
+
+type GetDirectoryEntry200JSONResponse DirectoryEntryResponse
+
+func (response GetDirectoryEntry200JSONResponse) VisitGetDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDirectoryEntry401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response GetDirectoryEntry401JSONResponse) VisitGetDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDirectoryEntry403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetDirectoryEntry403JSONResponse) VisitGetDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDirectoryEntry404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetDirectoryEntry404JSONResponse) VisitGetDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameDirectoryEntryRequestObject struct {
+	EntryId DirectoryEntryIdPath `json:"entryId"`
+	Body    *RenameDirectoryEntryJSONRequestBody
+}
+
+type RenameDirectoryEntryResponseObject interface {
+	VisitRenameDirectoryEntryResponse(w http.ResponseWriter) error
+}
+
+type RenameDirectoryEntry200JSONResponse DirectoryEntryResponse
+
+func (response RenameDirectoryEntry200JSONResponse) VisitRenameDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameDirectoryEntry400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response RenameDirectoryEntry400JSONResponse) VisitRenameDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameDirectoryEntry401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response RenameDirectoryEntry401JSONResponse) VisitRenameDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameDirectoryEntry403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RenameDirectoryEntry403JSONResponse) VisitRenameDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameDirectoryEntry404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response RenameDirectoryEntry404JSONResponse) VisitRenameDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameDirectoryEntry409JSONResponse struct{ ConflictJSONResponse }
+
+func (response RenameDirectoryEntry409JSONResponse) VisitRenameDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveDirectoryEntryRequestObject struct {
+	EntryId DirectoryEntryIdPath `json:"entryId"`
+	Body    *MoveDirectoryEntryJSONRequestBody
+}
+
+type MoveDirectoryEntryResponseObject interface {
+	VisitMoveDirectoryEntryResponse(w http.ResponseWriter) error
+}
+
+type MoveDirectoryEntry200JSONResponse DirectoryEntryResponse
+
+func (response MoveDirectoryEntry200JSONResponse) VisitMoveDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveDirectoryEntry400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response MoveDirectoryEntry400JSONResponse) VisitMoveDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveDirectoryEntry401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response MoveDirectoryEntry401JSONResponse) VisitMoveDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveDirectoryEntry403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response MoveDirectoryEntry403JSONResponse) VisitMoveDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveDirectoryEntry404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response MoveDirectoryEntry404JSONResponse) VisitMoveDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveDirectoryEntry409JSONResponse struct{ ConflictJSONResponse }
+
+func (response MoveDirectoryEntry409JSONResponse) VisitMoveDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListOrganizationAdministratorsRequestObject struct {
 	OrganizationId OrganizationIdPath `json:"organizationId"`
 	Params         ListOrganizationAdministratorsParams
@@ -8254,6 +9024,315 @@ func (response RestorePermissionInheritance409JSONResponse) VisitRestorePermissi
 	return err
 }
 
+type CreateDocumentRequestObject struct {
+	SpaceId SpaceIdPath `json:"spaceId"`
+	Params  CreateDocumentParams
+	Body    *CreateDocumentJSONRequestBody
+}
+
+type CreateDocumentResponseObject interface {
+	VisitCreateDocumentResponse(w http.ResponseWriter) error
+}
+
+type CreateDocument201JSONResponse DirectoryEntryResponse
+
+func (response CreateDocument201JSONResponse) VisitCreateDocumentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDocument400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response CreateDocument400JSONResponse) VisitCreateDocumentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDocument401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response CreateDocument401JSONResponse) VisitCreateDocumentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDocument403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response CreateDocument403JSONResponse) VisitCreateDocumentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDocument404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response CreateDocument404JSONResponse) VisitCreateDocumentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDocument409JSONResponse struct{ ConflictJSONResponse }
+
+func (response CreateDocument409JSONResponse) VisitCreateDocumentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDirectoryEntriesRequestObject struct {
+	SpaceId SpaceIdPath `json:"spaceId"`
+	Params  ListDirectoryEntriesParams
+}
+
+type ListDirectoryEntriesResponseObject interface {
+	VisitListDirectoryEntriesResponse(w http.ResponseWriter) error
+}
+
+type ListDirectoryEntries200JSONResponse DirectoryEntryListResponse
+
+func (response ListDirectoryEntries200JSONResponse) VisitListDirectoryEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDirectoryEntries400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListDirectoryEntries400JSONResponse) VisitListDirectoryEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDirectoryEntries401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListDirectoryEntries401JSONResponse) VisitListDirectoryEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDirectoryEntries403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListDirectoryEntries403JSONResponse) VisitListDirectoryEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDirectoryEntries404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response ListDirectoryEntries404JSONResponse) VisitListDirectoryEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFolderRequestObject struct {
+	SpaceId SpaceIdPath `json:"spaceId"`
+	Params  CreateFolderParams
+	Body    *CreateFolderJSONRequestBody
+}
+
+type CreateFolderResponseObject interface {
+	VisitCreateFolderResponse(w http.ResponseWriter) error
+}
+
+type CreateFolder201JSONResponse DirectoryEntryResponse
+
+func (response CreateFolder201JSONResponse) VisitCreateFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFolder400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response CreateFolder400JSONResponse) VisitCreateFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFolder401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response CreateFolder401JSONResponse) VisitCreateFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFolder403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response CreateFolder403JSONResponse) VisitCreateFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFolder404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response CreateFolder404JSONResponse) VisitCreateFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFolder409JSONResponse struct{ ConflictJSONResponse }
+
+func (response CreateFolder409JSONResponse) VisitCreateFolderResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetCurrentUserRequestObject struct {
 }
 
@@ -8859,6 +9938,15 @@ type StrictServerInterface interface {
 	// GetCurrentSession 获取当前认证会话
 	// (GET /api/v1/auth/session)
 	GetCurrentSession(ctx context.Context, request GetCurrentSessionRequestObject) (GetCurrentSessionResponseObject, error)
+	// GetDirectoryEntry 获取目录项详情
+	// (GET /api/v1/entries/{entryId})
+	GetDirectoryEntry(ctx context.Context, request GetDirectoryEntryRequestObject) (GetDirectoryEntryResponseObject, error)
+	// RenameDirectoryEntry 重命名目录项
+	// (PATCH /api/v1/entries/{entryId})
+	RenameDirectoryEntry(ctx context.Context, request RenameDirectoryEntryRequestObject) (RenameDirectoryEntryResponseObject, error)
+	// MoveDirectoryEntry 移动目录项
+	// (POST /api/v1/entries/{entryId}/move)
+	MoveDirectoryEntry(ctx context.Context, request MoveDirectoryEntryRequestObject) (MoveDirectoryEntryResponseObject, error)
 	// ListOrganizationAdministrators 查询组织的有效管理员
 	// (GET /api/v1/organizations/{organizationId}/administrators)
 	ListOrganizationAdministrators(ctx context.Context, request ListOrganizationAdministratorsRequestObject) (ListOrganizationAdministratorsResponseObject, error)
@@ -8886,6 +9974,15 @@ type StrictServerInterface interface {
 	// RestorePermissionInheritance 恢复文件夹或文档的 ACL 继承
 	// (POST /api/v1/permissions/resources/{resourceType}/{resourceId}/restore-inheritance)
 	RestorePermissionInheritance(ctx context.Context, request RestorePermissionInheritanceRequestObject) (RestorePermissionInheritanceResponseObject, error)
+	// CreateDocument 创建 Document 稳定身份
+	// (POST /api/v1/spaces/{spaceId}/documents)
+	CreateDocument(ctx context.Context, request CreateDocumentRequestObject) (CreateDocumentResponseObject, error)
+	// ListDirectoryEntries 分页列出目录项
+	// (GET /api/v1/spaces/{spaceId}/entries)
+	ListDirectoryEntries(ctx context.Context, request ListDirectoryEntriesRequestObject) (ListDirectoryEntriesResponseObject, error)
+	// CreateFolder 创建文件夹
+	// (POST /api/v1/spaces/{spaceId}/folders)
+	CreateFolder(ctx context.Context, request CreateFolderRequestObject) (CreateFolderResponseObject, error)
 	// GetCurrentUser 获取当前用户资料
 	// (GET /api/v1/users/me)
 	GetCurrentUser(ctx context.Context, request GetCurrentUserRequestObject) (GetCurrentUserResponseObject, error)
@@ -10154,6 +11251,98 @@ func (sh *strictHandler) GetCurrentSession(ctx *gin.Context) {
 	}
 }
 
+// GetDirectoryEntry operation middleware
+func (sh *strictHandler) GetDirectoryEntry(ctx *gin.Context, entryId DirectoryEntryIdPath) {
+	var request GetDirectoryEntryRequestObject
+
+	request.EntryId = entryId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetDirectoryEntry(ctx, request.(GetDirectoryEntryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetDirectoryEntry")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetDirectoryEntryResponseObject); ok {
+		if err := validResponse.VisitGetDirectoryEntryResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RenameDirectoryEntry operation middleware
+func (sh *strictHandler) RenameDirectoryEntry(ctx *gin.Context, entryId DirectoryEntryIdPath) {
+	var request RenameDirectoryEntryRequestObject
+
+	request.EntryId = entryId
+
+	var body RenameDirectoryEntryJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RenameDirectoryEntry(ctx, request.(RenameDirectoryEntryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RenameDirectoryEntry")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(RenameDirectoryEntryResponseObject); ok {
+		if err := validResponse.VisitRenameDirectoryEntryResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// MoveDirectoryEntry operation middleware
+func (sh *strictHandler) MoveDirectoryEntry(ctx *gin.Context, entryId DirectoryEntryIdPath) {
+	var request MoveDirectoryEntryRequestObject
+
+	request.EntryId = entryId
+
+	var body MoveDirectoryEntryJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.MoveDirectoryEntry(ctx, request.(MoveDirectoryEntryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "MoveDirectoryEntry")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(MoveDirectoryEntryResponseObject); ok {
+		if err := validResponse.VisitMoveDirectoryEntryResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListOrganizationAdministrators operation middleware
 func (sh *strictHandler) ListOrganizationAdministrators(ctx *gin.Context, organizationId OrganizationIdPath, params ListOrganizationAdministratorsParams) {
 	var request ListOrganizationAdministratorsRequestObject
@@ -10431,6 +11620,101 @@ func (sh *strictHandler) RestorePermissionInheritance(ctx *gin.Context, resource
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(RestorePermissionInheritanceResponseObject); ok {
 		if err := validResponse.VisitRestorePermissionInheritanceResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateDocument operation middleware
+func (sh *strictHandler) CreateDocument(ctx *gin.Context, spaceId SpaceIdPath, params CreateDocumentParams) {
+	var request CreateDocumentRequestObject
+
+	request.SpaceId = spaceId
+	request.Params = params
+
+	var body CreateDocumentJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateDocument(ctx, request.(CreateDocumentRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateDocument")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(CreateDocumentResponseObject); ok {
+		if err := validResponse.VisitCreateDocumentResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListDirectoryEntries operation middleware
+func (sh *strictHandler) ListDirectoryEntries(ctx *gin.Context, spaceId SpaceIdPath, params ListDirectoryEntriesParams) {
+	var request ListDirectoryEntriesRequestObject
+
+	request.SpaceId = spaceId
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListDirectoryEntries(ctx, request.(ListDirectoryEntriesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListDirectoryEntries")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListDirectoryEntriesResponseObject); ok {
+		if err := validResponse.VisitListDirectoryEntriesResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateFolder operation middleware
+func (sh *strictHandler) CreateFolder(ctx *gin.Context, spaceId SpaceIdPath, params CreateFolderParams) {
+	var request CreateFolderRequestObject
+
+	request.SpaceId = spaceId
+	request.Params = params
+
+	var body CreateFolderJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateFolder(ctx, request.(CreateFolderRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateFolder")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(CreateFolderResponseObject); ok {
+		if err := validResponse.VisitCreateFolderResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

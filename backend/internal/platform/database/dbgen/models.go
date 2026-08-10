@@ -28,6 +28,39 @@ type AdminDelegation struct {
 	RowVersion              int64
 }
 
+type Document struct {
+	DocumentID            pgtype.UUID
+	OwnerUserID           pgtype.UUID
+	CurrentVersionID      pgtype.UUID
+	AvailabilityStatus    string
+	ExtensionNormalized   pgtype.Text
+	InheritanceMode       string
+	AclVersion            int64
+	Classification        pgtype.Text
+	MetadataSchemaVersion int32
+	MetadataJson          []byte
+	CreatedAt             pgtype.Timestamptz
+	UpdatedAt             pgtype.Timestamptz
+	RowVersion            int64
+}
+
+type NamespaceEntry struct {
+	NamespaceEntryID pgtype.UUID
+	SpaceID          pgtype.UUID
+	ParentFolderID   pgtype.UUID
+	EntryType        string
+	Name             string
+	NormalizedName   string
+	PathCache        pgtype.Text
+	Depth            int32
+	LifecycleStatus  string
+	CreatedByUserID  pgtype.UUID
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+	DeletedAt        pgtype.Timestamptz
+	RowVersion       int64
+}
+
 type Organization struct {
 	OrganizationID       pgtype.UUID
 	ParentOrganizationID pgtype.UUID

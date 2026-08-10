@@ -8,6 +8,9 @@ import (
 	"net/http"
 	"time"
 
+	filesapplication "file-workshop/backend/internal/modules/files/application"
+	filesrepository "file-workshop/backend/internal/modules/files/repository"
+	filestransport "file-workshop/backend/internal/modules/files/transport"
 	"file-workshop/backend/internal/modules/identity/application"
 	"file-workshop/backend/internal/modules/identity/domain"
 	identityrepository "file-workshop/backend/internal/modules/identity/repository"
@@ -101,7 +104,10 @@ func RunServer(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 	permissionsRepository := permissionsrepository.NewPostgreSQL(postgresPool)
 	permissionsService := permissionsapplication.NewService(permissionsRepository, permissionsRepository, permissionscache.NewRedisDecisionCache(redisClient), time.Now)
 	permissionsHandler := permissionstransport.NewHandler(permissionsService, identityService, cfg.Auth)
-	router := httpserver.NewRouter(httpserver.NewAPIHandler(healthHandler, identityHandler, usersHandler, organizationsHandler, permissionsHandler), logger, cfg.Auth.AllowedOrigins)
+	filesRepository := filesrepository.NewPostgreSQL(postgresPool)
+	filesService := filesapplication.NewService(filesRepository, filesRepository, permissionsService, time.Now)
+	filesHandler := filestransport.NewHandler(filesService, identityService, cfg.Auth)
+	router := httpserver.NewRouter(httpserver.NewAPIHandler(healthHandler, identityHandler, usersHandler, organizationsHandler, permissionsHandler, filesHandler), logger, cfg.Auth.AllowedOrigins)
 	server := httpserver.NewServer(cfg.HTTP, router)
 
 	serverErrors := make(chan error, 1)
