@@ -42,6 +42,7 @@ type Querier interface {
 	CountOrganizations(ctx context.Context, arg *CountOrganizationsParams) (int64, error)
 	CountOutboxEvents(ctx context.Context, arg *CountOutboxEventsParams) (int64, error)
 	CountOutboxEventsByStatus(ctx context.Context) ([]*CountOutboxEventsByStatusRow, error)
+	CountPreservationHolds(ctx context.Context, arg *CountPreservationHoldsParams) (int64, error)
 	CountReceivedShares(ctx context.Context, arg *CountReceivedSharesParams) (int64, error)
 	CountRecycleItems(ctx context.Context, spaceID pgtype.UUID) (int64, error)
 	CountSpaces(ctx context.Context, arg *CountSpacesParams) (int64, error)
@@ -75,6 +76,7 @@ type Querier interface {
 	GetFileSpaceDirectoryInfo(ctx context.Context, spaceID pgtype.UUID) (*GetFileSpaceDirectoryInfoRow, error)
 	GetFileSpaceDirectoryInfoForUpdate(ctx context.Context, spaceID pgtype.UUID) (*GetFileSpaceDirectoryInfoForUpdateRow, error)
 	GetFolderAuthorizationResource(ctx context.Context, folderID pgtype.UUID) (*GetFolderAuthorizationResourceRow, error)
+	GetLifecycleDocumentRef(ctx context.Context, documentID pgtype.UUID) (*GetLifecycleDocumentRefRow, error)
 	GetLifecycleEntryForUpdate(ctx context.Context, namespaceEntryID pgtype.UUID) (*GetLifecycleEntryForUpdateRow, error)
 	GetLifecycleFolderForUpdate(ctx context.Context, namespaceEntryID pgtype.UUID) (*GetLifecycleFolderForUpdateRow, error)
 	GetLifecycleIdempotency(ctx context.Context, arg *GetLifecycleIdempotencyParams) (*GetLifecycleIdempotencyRow, error)
@@ -96,6 +98,8 @@ type Querier interface {
 	GetPermissionGrantWithActionsForUpdate(ctx context.Context, permissionGrantID pgtype.UUID) (*GetPermissionGrantWithActionsForUpdateRow, error)
 	GetPermissionIdempotency(ctx context.Context, arg *GetPermissionIdempotencyParams) (*GetPermissionIdempotencyRow, error)
 	GetPersonalSpaceByUser(ctx context.Context, ownerUserID pgtype.UUID) (*Space, error)
+	GetPreservationHold(ctx context.Context, legalHoldID pgtype.UUID) (*LegalHold, error)
+	GetPreservationHoldForUpdate(ctx context.Context, legalHoldID pgtype.UUID) (*LegalHold, error)
 	GetQuotaReservationForUpdate(ctx context.Context, quotaReservationID pgtype.UUID) (*QuotaReservation, error)
 	GetRecentLoginFailureState(ctx context.Context, arg *GetRecentLoginFailureStateParams) (*GetRecentLoginFailureStateRow, error)
 	GetRecycleItemWithEntry(ctx context.Context, recycleItemID pgtype.UUID) (*GetRecycleItemWithEntryRow, error)
@@ -156,6 +160,7 @@ type Querier interface {
 	InsertPermissionGrant(ctx context.Context, arg *InsertPermissionGrantParams) (*PermissionGrant, error)
 	InsertPermissionGrantAction(ctx context.Context, arg *InsertPermissionGrantActionParams) error
 	InsertPermissionOutboxEvent(ctx context.Context, arg *InsertPermissionOutboxEventParams) error
+	InsertPreservationHold(ctx context.Context, arg *InsertPreservationHoldParams) (*LegalHold, error)
 	InsertPrincipalSecurityVersions(ctx context.Context, arg *InsertPrincipalSecurityVersionsParams) error
 	InsertQuotaReservation(ctx context.Context, arg *InsertQuotaReservationParams) (*QuotaReservation, error)
 	InsertRecycleItem(ctx context.Context, arg *InsertRecycleItemParams) (*RecycleItem, error)
@@ -190,6 +195,7 @@ type Querier interface {
 	ListOrganizationChangePlans(ctx context.Context, arg *ListOrganizationChangePlansParams) ([]*OrganizationChangePlan, error)
 	ListOrganizations(ctx context.Context, arg *ListOrganizationsParams) ([]*Organization, error)
 	ListOutboxEvents(ctx context.Context, arg *ListOutboxEventsParams) ([]*OutboxEvent, error)
+	ListPreservationHolds(ctx context.Context, arg *ListPreservationHoldsParams) ([]*LegalHold, error)
 	ListReceivedShares(ctx context.Context, arg *ListReceivedSharesParams) ([]*ListReceivedSharesRow, error)
 	ListRecycleItems(ctx context.Context, arg *ListRecycleItemsParams) ([]*ListRecycleItemsRow, error)
 	ListSpaces(ctx context.Context, arg *ListSpacesParams) ([]*Space, error)
@@ -220,6 +226,7 @@ type Querier interface {
 	OrganizationWouldCreateCycle(ctx context.Context, arg *OrganizationWouldCreateCycleParams) (bool, error)
 	PermissionOrganizationExists(ctx context.Context, organizationID pgtype.UUID) (bool, error)
 	ReleaseDocumentLock(ctx context.Context, arg *ReleaseDocumentLockParams) (*DocumentLock, error)
+	ReleasePreservationHold(ctx context.Context, arg *ReleasePreservationHoldParams) (*LegalHold, error)
 	ReleaseSpaceQuotaReservation(ctx context.Context, arg *ReleaseSpaceQuotaReservationParams) (int64, error)
 	RenameFileNamespaceEntry(ctx context.Context, arg *RenameFileNamespaceEntryParams) (*NamespaceEntry, error)
 	RenewBackgroundJobLease(ctx context.Context, arg *RenewBackgroundJobLeaseParams) (int64, error)

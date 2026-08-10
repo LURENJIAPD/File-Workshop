@@ -936,6 +936,24 @@ func (e PermissionSubjectType) Valid() bool {
 	}
 }
 
+// Defines values for PreservationHoldStatus.
+const (
+	PreservationHoldStatusACTIVE   PreservationHoldStatus = "ACTIVE"
+	PreservationHoldStatusRELEASED PreservationHoldStatus = "RELEASED"
+)
+
+// Valid indicates whether the value is a known member of the PreservationHoldStatus enum.
+func (e PreservationHoldStatus) Valid() bool {
+	switch e {
+	case PreservationHoldStatusACTIVE:
+		return true
+	case PreservationHoldStatusRELEASED:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RecycleItemStatus.
 const (
 	RecycleItemStatusACTIVE   RecycleItemStatus = "ACTIVE"
@@ -2241,6 +2259,49 @@ type PermissionResourceType string
 // PermissionSubjectType defines model for PermissionSubjectType.
 type PermissionSubjectType string
 
+// PlacePreservationHoldRequest defines model for PlacePreservationHoldRequest.
+type PlacePreservationHoldRequest struct {
+	CaseReference     string              `json:"caseReference"`
+	DocumentVersionId *openapi_types.UUID `json:"documentVersionId,omitempty"`
+	Reason            string              `json:"reason"`
+}
+
+// PreservationHold defines model for PreservationHold.
+type PreservationHold struct {
+	CaseReference      string                 `json:"caseReference"`
+	CreatedAt          time.Time              `json:"createdAt"`
+	DocumentId         openapi_types.UUID     `json:"documentId"`
+	DocumentVersionId  *openapi_types.UUID    `json:"documentVersionId,omitempty"`
+	PlacedAt           time.Time              `json:"placedAt"`
+	PlacedByUserId     openapi_types.UUID     `json:"placedByUserId"`
+	PreservationHoldId openapi_types.UUID     `json:"preservationHoldId"`
+	Reason             string                 `json:"reason"`
+	ReleaseReason      *string                `json:"releaseReason,omitempty"`
+	ReleasedAt         *time.Time             `json:"releasedAt,omitempty"`
+	ReleasedByUserId   *openapi_types.UUID    `json:"releasedByUserId,omitempty"`
+	RowVersion         int64                  `json:"rowVersion"`
+	Status             PreservationHoldStatus `json:"status"`
+	UpdatedAt          time.Time              `json:"updatedAt"`
+}
+
+// PreservationHoldListResponse defines model for PreservationHoldListResponse.
+type PreservationHoldListResponse struct {
+	Items     []PreservationHold `json:"items"`
+	Page      Page               `json:"page"`
+	PageSize  PageSize           `json:"pageSize"`
+	RequestId string             `json:"requestId"`
+	Total     int64              `json:"total"`
+}
+
+// PreservationHoldResponse defines model for PreservationHoldResponse.
+type PreservationHoldResponse struct {
+	Hold      PreservationHold `json:"hold"`
+	RequestId string           `json:"requestId"`
+}
+
+// PreservationHoldStatus defines model for PreservationHoldStatus.
+type PreservationHoldStatus string
+
 // PresignedUploadPart defines model for PresignedUploadPart.
 type PresignedUploadPart struct {
 	ExpiresAt       time.Time          `json:"expiresAt"`
@@ -2316,6 +2377,12 @@ type ReleaseDocumentLockRequest struct {
 	RowVersion int64   `json:"rowVersion"`
 }
 
+// ReleasePreservationHoldRequest defines model for ReleasePreservationHoldRequest.
+type ReleasePreservationHoldRequest struct {
+	Reason     string `json:"reason"`
+	RowVersion int64  `json:"rowVersion"`
+}
+
 // RemoveOrganizationMemberRequest defines model for RemoveOrganizationMemberRequest.
 type RemoveOrganizationMemberRequest struct {
 	Reason     string `json:"reason"`
@@ -2379,11 +2446,11 @@ type ScanExpiredRecycleItemsRequest struct {
 
 // ScanExpiredRecycleItemsResponse defines model for ScanExpiredRecycleItemsResponse.
 type ScanExpiredRecycleItemsResponse struct {
-	Enqueued         int                                    `json:"enqueued"`
-	JobType          ScanExpiredRecycleItemsResponseJobType `json:"jobType"`
-	RequestId        string                                 `json:"requestId"`
-	Scanned          int                                    `json:"scanned"`
-	SkippedLegalHold int                                    `json:"skippedLegalHold"`
+	Enqueued                int                                    `json:"enqueued"`
+	JobType                 ScanExpiredRecycleItemsResponseJobType `json:"jobType"`
+	RequestId               string                                 `json:"requestId"`
+	Scanned                 int                                    `json:"scanned"`
+	SkippedPreservationHold int                                    `json:"skippedPreservationHold"`
 }
 
 // ScanExpiredRecycleItemsResponseJobType defines model for ScanExpiredRecycleItemsResponse.JobType.
@@ -2799,6 +2866,9 @@ type PermissionResourceTypePath = PermissionResourceType
 // PlanIdPath defines model for PlanIdPath.
 type PlanIdPath = openapi_types.UUID
 
+// PreservationHoldIdPath defines model for PreservationHoldIdPath.
+type PreservationHoldIdPath = openapi_types.UUID
+
 // RecycleItemIdPath defines model for RecycleItemIdPath.
 type RecycleItemIdPath = openapi_types.UUID
 
@@ -3018,6 +3088,12 @@ type GetAuditIntegrityParams struct {
 	Status   *AuditChainStatus `form:"status,omitempty" json:"status,omitempty"`
 }
 
+// PlacePreservationHoldParams defines parameters for PlacePreservationHold.
+type PlacePreservationHoldParams struct {
+	// IdempotencyKey 可重试写请求的稳定幂等键。
+	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
+}
+
 // ListDocumentVersionsParams defines parameters for ListDocumentVersions.
 type ListDocumentVersionsParams struct {
 	// Page 从 1 开始的页码。
@@ -3061,6 +3137,18 @@ type ListResourcePermissionGrantsParams struct {
 
 	// PageSize 每页数量，最大 200。
 	PageSize *PageSizeQuery `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+}
+
+// ListPreservationHoldsParams defines parameters for ListPreservationHolds.
+type ListPreservationHoldsParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize      *PageSizeQuery          `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+	DocumentId    *openapi_types.UUID     `form:"documentId,omitempty" json:"documentId,omitempty"`
+	Status        *PreservationHoldStatus `form:"status,omitempty" json:"status,omitempty"`
+	CaseReference *string                 `form:"caseReference,omitempty" json:"caseReference,omitempty"`
 }
 
 // ListRecycleBinItemsParams defines parameters for ListRecycleBinItems.
@@ -3265,6 +3353,9 @@ type ForceReleaseDocumentLockJSONRequestBody = ForceReleaseDocumentLockRequest
 // HeartbeatDocumentLockJSONRequestBody defines body for HeartbeatDocumentLock for application/json ContentType.
 type HeartbeatDocumentLockJSONRequestBody = HeartbeatDocumentLockRequest
 
+// PlacePreservationHoldJSONRequestBody defines body for PlacePreservationHold for application/json ContentType.
+type PlacePreservationHoldJSONRequestBody = PlacePreservationHoldRequest
+
 // RestoreDocumentVersionJSONRequestBody defines body for RestoreDocumentVersion for application/json ContentType.
 type RestoreDocumentVersionJSONRequestBody = RestoreDocumentVersionRequest
 
@@ -3297,6 +3388,9 @@ type BreakPermissionInheritanceJSONRequestBody = ChangePermissionInheritanceRequ
 
 // RestorePermissionInheritanceJSONRequestBody defines body for RestorePermissionInheritance for application/json ContentType.
 type RestorePermissionInheritanceJSONRequestBody = ChangePermissionInheritanceRequest
+
+// ReleasePreservationHoldJSONRequestBody defines body for ReleasePreservationHold for application/json ContentType.
+type ReleasePreservationHoldJSONRequestBody = ReleasePreservationHoldRequest
 
 // PurgeRecycleItemJSONRequestBody defines body for PurgeRecycleItem for application/json ContentType.
 type PurgeRecycleItemJSONRequestBody = PurgeRecycleItemRequest
@@ -3492,6 +3586,9 @@ type ServerInterface interface {
 	// HeartbeatDocumentLock 续租文件级租约锁
 	// (POST /api/v1/documents/{documentId}/lock/heartbeat)
 	HeartbeatDocumentLock(c *gin.Context, documentId DocumentIdPath)
+	// PlacePreservationHold Place preservation hold on a document
+	// (POST /api/v1/documents/{documentId}/preservation-holds)
+	PlacePreservationHold(c *gin.Context, documentId DocumentIdPath, params PlacePreservationHoldParams)
 	// ListDocumentVersions 分页查询文档版本
 	// (GET /api/v1/documents/{documentId}/versions)
 	ListDocumentVersions(c *gin.Context, documentId DocumentIdPath, params ListDocumentVersionsParams)
@@ -3537,6 +3634,15 @@ type ServerInterface interface {
 	// RestorePermissionInheritance 恢复文件夹或文档的 ACL 继承
 	// (POST /api/v1/permissions/resources/{resourceType}/{resourceId}/restore-inheritance)
 	RestorePermissionInheritance(c *gin.Context, resourceType PermissionResourceTypePath, resourceId PermissionResourceIdPath)
+	// ListPreservationHolds List preservation holds
+	// (GET /api/v1/preservation-holds)
+	ListPreservationHolds(c *gin.Context, params ListPreservationHoldsParams)
+	// GetPreservationHold Get preservation hold detail
+	// (GET /api/v1/preservation-holds/{preservationHoldId})
+	GetPreservationHold(c *gin.Context, preservationHoldId PreservationHoldIdPath)
+	// ReleasePreservationHold Release preservation hold
+	// (POST /api/v1/preservation-holds/{preservationHoldId}/release)
+	ReleasePreservationHold(c *gin.Context, preservationHoldId PreservationHoldIdPath)
 	// ListRecycleBinItems 分页查询可见回收站条目
 	// (GET /api/v1/recycle-bin)
 	ListRecycleBinItems(c *gin.Context, params ListRecycleBinItemsParams)
@@ -5408,6 +5514,58 @@ func (siw *ServerInterfaceWrapper) HeartbeatDocumentLock(c *gin.Context) {
 	siw.Handler.HeartbeatDocumentLock(c, documentId)
 }
 
+// PlacePreservationHold operation middleware
+func (siw *ServerInterfaceWrapper) PlacePreservationHold(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "documentId" -------------
+	var documentId DocumentIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "documentId", c.Param("documentId"), &documentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter documentId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PlacePreservationHoldParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKeyHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PlacePreservationHold(c, documentId, params)
+}
+
 // ListDocumentVersions operation middleware
 func (siw *ServerInterfaceWrapper) ListDocumentVersions(c *gin.Context) {
 
@@ -5922,6 +6080,115 @@ func (siw *ServerInterfaceWrapper) RestorePermissionInheritance(c *gin.Context) 
 	}
 
 	siw.Handler.RestorePermissionInheritance(c, resourceType, resourceId)
+}
+
+// ListPreservationHolds operation middleware
+func (siw *ServerInterfaceWrapper) ListPreservationHolds(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPreservationHoldsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "documentId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "documentId", c.Request.URL.Query(), &params.DocumentId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter documentId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", c.Request.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter status: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "caseReference" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "caseReference", c.Request.URL.Query(), &params.CaseReference, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter caseReference: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListPreservationHolds(c, params)
+}
+
+// GetPreservationHold operation middleware
+func (siw *ServerInterfaceWrapper) GetPreservationHold(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "preservationHoldId" -------------
+	var preservationHoldId PreservationHoldIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "preservationHoldId", c.Param("preservationHoldId"), &preservationHoldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter preservationHoldId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetPreservationHold(c, preservationHoldId)
+}
+
+// ReleasePreservationHold operation middleware
+func (siw *ServerInterfaceWrapper) ReleasePreservationHold(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "preservationHoldId" -------------
+	var preservationHoldId PreservationHoldIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "preservationHoldId", c.Param("preservationHoldId"), &preservationHoldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter preservationHoldId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ReleasePreservationHold(c, preservationHoldId)
 }
 
 // ListRecycleBinItems operation middleware
@@ -6863,6 +7130,10 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/api/v1/recycle-bin/:recycleItemId/restore", wrapper.RestoreRecycleItem)
 	router.POST(options.BaseURL+"/api/v1/recycle-bin/:recycleItemId/purge", wrapper.PurgeRecycleItem)
 	router.POST(options.BaseURL+"/api/v1/admin/lifecycle/recycle-bin/expired/scan", wrapper.ScanExpiredRecycleItems)
+	router.POST(options.BaseURL+"/api/v1/documents/:documentId/preservation-holds", wrapper.PlacePreservationHold)
+	router.GET(options.BaseURL+"/api/v1/preservation-holds", wrapper.ListPreservationHolds)
+	router.GET(options.BaseURL+"/api/v1/preservation-holds/:preservationHoldId", wrapper.GetPreservationHold)
+	router.POST(options.BaseURL+"/api/v1/preservation-holds/:preservationHoldId/release", wrapper.ReleasePreservationHold)
 	router.GET(options.BaseURL+"/api/v1/search", wrapper.SearchDirectoryEntries)
 	router.POST(options.BaseURL+"/api/v1/auth/refresh", wrapper.RefreshSession)
 	router.POST(options.BaseURL+"/api/v1/auth/logout", wrapper.Logout)
@@ -11894,6 +12165,115 @@ func (response HeartbeatDocumentLock409JSONResponse) VisitHeartbeatDocumentLockR
 	return err
 }
 
+type PlacePreservationHoldRequestObject struct {
+	DocumentId DocumentIdPath `json:"documentId"`
+	Params     PlacePreservationHoldParams
+	Body       *PlacePreservationHoldJSONRequestBody
+}
+
+type PlacePreservationHoldResponseObject interface {
+	VisitPlacePreservationHoldResponse(w http.ResponseWriter) error
+}
+
+type PlacePreservationHold201JSONResponse PreservationHoldResponse
+
+func (response PlacePreservationHold201JSONResponse) VisitPlacePreservationHoldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PlacePreservationHold400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response PlacePreservationHold400JSONResponse) VisitPlacePreservationHoldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PlacePreservationHold401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response PlacePreservationHold401JSONResponse) VisitPlacePreservationHoldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PlacePreservationHold403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response PlacePreservationHold403JSONResponse) VisitPlacePreservationHoldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PlacePreservationHold404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response PlacePreservationHold404JSONResponse) VisitPlacePreservationHoldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PlacePreservationHold409JSONResponse struct{ ConflictJSONResponse }
+
+func (response PlacePreservationHold409JSONResponse) VisitPlacePreservationHoldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListDocumentVersionsRequestObject struct {
 	DocumentId DocumentIdPath `json:"documentId"`
 	Params     ListDocumentVersionsParams
@@ -13316,6 +13696,260 @@ func (response RestorePermissionInheritance404JSONResponse) VisitRestorePermissi
 type RestorePermissionInheritance409JSONResponse struct{ ConflictJSONResponse }
 
 func (response RestorePermissionInheritance409JSONResponse) VisitRestorePermissionInheritanceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPreservationHoldsRequestObject struct {
+	Params ListPreservationHoldsParams
+}
+
+type ListPreservationHoldsResponseObject interface {
+	VisitListPreservationHoldsResponse(w http.ResponseWriter) error
+}
+
+type ListPreservationHolds200JSONResponse PreservationHoldListResponse
+
+func (response ListPreservationHolds200JSONResponse) VisitListPreservationHoldsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPreservationHolds400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListPreservationHolds400JSONResponse) VisitListPreservationHoldsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPreservationHolds401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListPreservationHolds401JSONResponse) VisitListPreservationHoldsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPreservationHolds403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListPreservationHolds403JSONResponse) VisitListPreservationHoldsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPreservationHoldRequestObject struct {
+	PreservationHoldId PreservationHoldIdPath `json:"preservationHoldId"`
+}
+
+type GetPreservationHoldResponseObject interface {
+	VisitGetPreservationHoldResponse(w http.ResponseWriter) error
+}
+
+type GetPreservationHold200JSONResponse PreservationHoldResponse
+
+func (response GetPreservationHold200JSONResponse) VisitGetPreservationHoldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPreservationHold401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response GetPreservationHold401JSONResponse) VisitGetPreservationHoldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPreservationHold403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetPreservationHold403JSONResponse) VisitGetPreservationHoldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPreservationHold404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetPreservationHold404JSONResponse) VisitGetPreservationHoldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReleasePreservationHoldRequestObject struct {
+	PreservationHoldId PreservationHoldIdPath `json:"preservationHoldId"`
+	Body               *ReleasePreservationHoldJSONRequestBody
+}
+
+type ReleasePreservationHoldResponseObject interface {
+	VisitReleasePreservationHoldResponse(w http.ResponseWriter) error
+}
+
+type ReleasePreservationHold200JSONResponse PreservationHoldResponse
+
+func (response ReleasePreservationHold200JSONResponse) VisitReleasePreservationHoldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReleasePreservationHold400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ReleasePreservationHold400JSONResponse) VisitReleasePreservationHoldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReleasePreservationHold401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ReleasePreservationHold401JSONResponse) VisitReleasePreservationHoldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReleasePreservationHold403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ReleasePreservationHold403JSONResponse) VisitReleasePreservationHoldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReleasePreservationHold404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response ReleasePreservationHold404JSONResponse) VisitReleasePreservationHoldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReleasePreservationHold409JSONResponse struct{ ConflictJSONResponse }
+
+func (response ReleasePreservationHold409JSONResponse) VisitReleasePreservationHoldResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -15645,6 +16279,9 @@ type StrictServerInterface interface {
 	// HeartbeatDocumentLock 续租文件级租约锁
 	// (POST /api/v1/documents/{documentId}/lock/heartbeat)
 	HeartbeatDocumentLock(ctx context.Context, request HeartbeatDocumentLockRequestObject) (HeartbeatDocumentLockResponseObject, error)
+	// PlacePreservationHold Place preservation hold on a document
+	// (POST /api/v1/documents/{documentId}/preservation-holds)
+	PlacePreservationHold(ctx context.Context, request PlacePreservationHoldRequestObject) (PlacePreservationHoldResponseObject, error)
 	// ListDocumentVersions 分页查询文档版本
 	// (GET /api/v1/documents/{documentId}/versions)
 	ListDocumentVersions(ctx context.Context, request ListDocumentVersionsRequestObject) (ListDocumentVersionsResponseObject, error)
@@ -15690,6 +16327,15 @@ type StrictServerInterface interface {
 	// RestorePermissionInheritance 恢复文件夹或文档的 ACL 继承
 	// (POST /api/v1/permissions/resources/{resourceType}/{resourceId}/restore-inheritance)
 	RestorePermissionInheritance(ctx context.Context, request RestorePermissionInheritanceRequestObject) (RestorePermissionInheritanceResponseObject, error)
+	// ListPreservationHolds List preservation holds
+	// (GET /api/v1/preservation-holds)
+	ListPreservationHolds(ctx context.Context, request ListPreservationHoldsRequestObject) (ListPreservationHoldsResponseObject, error)
+	// GetPreservationHold Get preservation hold detail
+	// (GET /api/v1/preservation-holds/{preservationHoldId})
+	GetPreservationHold(ctx context.Context, request GetPreservationHoldRequestObject) (GetPreservationHoldResponseObject, error)
+	// ReleasePreservationHold Release preservation hold
+	// (POST /api/v1/preservation-holds/{preservationHoldId}/release)
+	ReleasePreservationHold(ctx context.Context, request ReleasePreservationHoldRequestObject) (ReleasePreservationHoldResponseObject, error)
 	// ListRecycleBinItems 分页查询可见回收站条目
 	// (GET /api/v1/recycle-bin)
 	ListRecycleBinItems(ctx context.Context, request ListRecycleBinItemsRequestObject) (ListRecycleBinItemsResponseObject, error)
@@ -17429,6 +18075,40 @@ func (sh *strictHandler) HeartbeatDocumentLock(ctx *gin.Context, documentId Docu
 	}
 }
 
+// PlacePreservationHold operation middleware
+func (sh *strictHandler) PlacePreservationHold(ctx *gin.Context, documentId DocumentIdPath, params PlacePreservationHoldParams) {
+	var request PlacePreservationHoldRequestObject
+
+	request.DocumentId = documentId
+	request.Params = params
+
+	var body PlacePreservationHoldJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PlacePreservationHold(ctx, request.(PlacePreservationHoldRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PlacePreservationHold")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(PlacePreservationHoldResponseObject); ok {
+		if err := validResponse.VisitPlacePreservationHoldResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListDocumentVersions operation middleware
 func (sh *strictHandler) ListDocumentVersions(ctx *gin.Context, documentId DocumentIdPath, params ListDocumentVersionsParams) {
 	var request ListDocumentVersionsRequestObject
@@ -17894,6 +18574,91 @@ func (sh *strictHandler) RestorePermissionInheritance(ctx *gin.Context, resource
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(RestorePermissionInheritanceResponseObject); ok {
 		if err := validResponse.VisitRestorePermissionInheritanceResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListPreservationHolds operation middleware
+func (sh *strictHandler) ListPreservationHolds(ctx *gin.Context, params ListPreservationHoldsParams) {
+	var request ListPreservationHoldsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListPreservationHolds(ctx, request.(ListPreservationHoldsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListPreservationHolds")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListPreservationHoldsResponseObject); ok {
+		if err := validResponse.VisitListPreservationHoldsResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetPreservationHold operation middleware
+func (sh *strictHandler) GetPreservationHold(ctx *gin.Context, preservationHoldId PreservationHoldIdPath) {
+	var request GetPreservationHoldRequestObject
+
+	request.PreservationHoldId = preservationHoldId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPreservationHold(ctx, request.(GetPreservationHoldRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPreservationHold")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetPreservationHoldResponseObject); ok {
+		if err := validResponse.VisitGetPreservationHoldResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ReleasePreservationHold operation middleware
+func (sh *strictHandler) ReleasePreservationHold(ctx *gin.Context, preservationHoldId PreservationHoldIdPath) {
+	var request ReleasePreservationHoldRequestObject
+
+	request.PreservationHoldId = preservationHoldId
+
+	var body ReleasePreservationHoldJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ReleasePreservationHold(ctx, request.(ReleasePreservationHoldRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReleasePreservationHold")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ReleasePreservationHoldResponseObject); ok {
+		if err := validResponse.VisitReleasePreservationHoldResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

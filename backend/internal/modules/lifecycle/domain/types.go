@@ -11,9 +11,10 @@ const (
 	DefaultPageSize = 50
 	MaxPageSize     = 200
 
-	ResourceFolder      = "FOLDER"
-	ResourceDocument    = "DOCUMENT"
-	ResourceRecycleItem = "RECYCLE_ITEM"
+	ResourceFolder           = "FOLDER"
+	ResourceDocument         = "DOCUMENT"
+	ResourceRecycleItem      = "RECYCLE_ITEM"
+	ResourcePreservationHold = "PRESERVATION_HOLD"
 
 	EntryTypeFolder   = "FOLDER"
 	EntryTypeDocument = "DOCUMENT"
@@ -28,6 +29,9 @@ const (
 	RecycleStatusRestored = "RESTORED"
 	RecycleStatusPurging  = "PURGING"
 	RecycleStatusPurged   = "PURGED"
+
+	PreservationHoldStatusActive   = "ACTIVE"
+	PreservationHoldStatusReleased = "RELEASED"
 
 	ActionDelete       = "DELETE"
 	ActionRestore      = "RESTORE"
@@ -127,10 +131,64 @@ type ExpiredScanInput struct {
 }
 
 type ExpiredScanResult struct {
-	Scanned          int
-	Enqueued         int
-	SkippedLegalHold int
-	JobType          string
+	Scanned                 int
+	Enqueued                int
+	SkippedPreservationHold int
+	JobType                 string
+}
+
+type DocumentRef struct {
+	ID               uuid.UUID
+	SpaceID          uuid.UUID
+	Name             string
+	LifecycleStatus  string
+	CurrentVersionID *uuid.UUID
+}
+
+type PreservationHold struct {
+	ID                uuid.UUID
+	DocumentID        uuid.UUID
+	DocumentVersionID *uuid.UUID
+	CaseReference     string
+	Reason            string
+	Status            string
+	PlacedByUserID    uuid.UUID
+	PlacedAt          time.Time
+	ReleasedByUserID  *uuid.UUID
+	ReleasedAt        *time.Time
+	ReleaseReason     *string
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+	RowVersion        int64
+}
+
+type PlacePreservationHoldInput struct {
+	DocumentVersionID *uuid.UUID
+	CaseReference     string
+	Reason            string
+	IdempotencyKey    string
+	RequestID         uuid.UUID
+}
+
+type ReleasePreservationHoldInput struct {
+	Reason     string
+	RowVersion int64
+	RequestID  uuid.UUID
+}
+
+type PreservationHoldListFilter struct {
+	DocumentID    *uuid.UUID
+	Status        *string
+	CaseReference *string
+	Page          int
+	PageSize      int
+}
+
+type PreservationHoldListResult struct {
+	Items    []PreservationHold
+	Page     int
+	PageSize int
+	Total    int64
 }
 
 type IdempotencyRecord struct {

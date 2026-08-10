@@ -18,8 +18,9 @@ import (
 )
 
 const (
-	trashOperation = "TRASH_DIRECTORY_ENTRY"
-	idempotencyTTL = 24 * time.Hour
+	trashOperation                 = "TRASH_DIRECTORY_ENTRY"
+	placePreservationHoldOperation = "PLACE_PRESERVATION_HOLD"
+	idempotencyTTL                 = 24 * time.Hour
 )
 
 type Authorizer interface {
@@ -241,7 +242,7 @@ func (s *Service) PurgeRecycleItem(ctx context.Context, actor domain.Actor, recy
 			return err
 		}
 		if hold {
-			return domain.ErrLegalHoldActive
+			return domain.ErrPreservationHoldActive
 		}
 		if _, err = repository.MarkEntrySubtreePurging(ctx, entry.ID, now); err != nil {
 			return err
@@ -284,7 +285,7 @@ func (s *Service) ScanExpiredRecycleItems(ctx context.Context, actor domain.Acto
 			return domain.ExpiredScanResult{}, err
 		}
 		if hold {
-			result.SkippedLegalHold++
+			result.SkippedPreservationHold++
 			continue
 		}
 		payload, err := json.Marshal(map[string]any{
@@ -317,6 +318,136 @@ func (s *Service) ScanExpiredRecycleItems(ctx context.Context, actor domain.Acto
 		result.Enqueued++
 	}
 	return result, nil
+}
+
+func (s *Service) PlacePreservationHold(ctx context.Context, actor domain.Actor, documentID uuid.UUID, input domain.PlacePreservationHoldInput) (domain.PreservationHold, error) {
+	if actor.Role != domain.SystemRoleAdmin {
+		return domain.PreservationHold{}, domain.ErrForbidden
+	}
+	if err := validateIdempotencyKey(input.IdempotencyKey); err != nil {
+		return domain.PreservationHold{}, err
+	}
+	caseReference := strings.TrimSpace(input.CaseReference)
+	reason := strings.TrimSpace(input.Reason)
+	if err := domain.ValidateCaseReference(caseReference); err != nil {
+		return domain.PreservationHold{}, err
+	}
+	if err := domain.ValidateReason(reason); err != nil {
+		return domain.PreservationHold{}, err
+	}
+	now := s.now().UTC()
+	hash, err := requestHash(struct {
+		DocumentID        uuid.UUID
+		DocumentVersionID *uuid.UUID
+		CaseReference     string
+		Reason            string
+	}{documentID, input.DocumentVersionID, caseReference, reason})
+	if err != nil {
+		return domain.PreservationHold{}, err
+	}
+	var result domain.PreservationHold
+	err = s.transactor.WithinTransaction(ctx, func(repository Repository) error {
+		replayID, err := claimIdempotency(ctx, repository, actor.UserID, placePreservationHoldOperation, input.IdempotencyKey, hash, now)
+		if err != nil {
+			return err
+		}
+		if replayID != nil {
+			result, err = repository.GetPreservationHold(ctx, *replayID)
+			return err
+		}
+		document, err := repository.GetDocumentRef(ctx, documentID)
+		if err != nil {
+			return err
+		}
+		holdID, err := uuid.NewV7()
+		if err != nil {
+			return err
+		}
+		result, err = repository.InsertPreservationHold(ctx, domain.PreservationHold{ID: holdID, DocumentID: documentID, DocumentVersionID: input.DocumentVersionID, CaseReference: caseReference, Reason: reason, Status: domain.PreservationHoldStatusActive, PlacedByUserID: actor.UserID, PlacedAt: now, CreatedAt: now, UpdatedAt: now, RowVersion: 1})
+		if err != nil {
+			return err
+		}
+		if err = repository.TouchSpaceSecurityEpoch(ctx, document.SpaceID, now); err != nil {
+			return err
+		}
+		if err = insertPreservationEvent(ctx, repository, "PRESERVATION_HOLD_PLACED", result, input.RequestID, now); err != nil {
+			return err
+		}
+		return repository.CompleteIdempotency(ctx, actor.UserID, placePreservationHoldOperation, input.IdempotencyKey, result.ID, domain.ResourcePreservationHold, now)
+	})
+	return result, err
+}
+
+func (s *Service) ListPreservationHolds(ctx context.Context, actor domain.Actor, filter domain.PreservationHoldListFilter) (domain.PreservationHoldListResult, error) {
+	if actor.Role != domain.SystemRoleAdmin {
+		return domain.PreservationHoldListResult{}, domain.ErrForbidden
+	}
+	page, pageSize, err := domain.NormalizePage(filter.Page, filter.PageSize)
+	if err != nil {
+		return domain.PreservationHoldListResult{}, err
+	}
+	if filter.Status != nil {
+		status := strings.TrimSpace(*filter.Status)
+		if err := domain.ValidatePreservationHoldStatus(status); err != nil {
+			return domain.PreservationHoldListResult{}, err
+		}
+		filter.Status = &status
+	}
+	filter.CaseReference = trimmedOptional(filter.CaseReference)
+	filter.Page, filter.PageSize = page, pageSize
+	total, err := s.repository.CountPreservationHolds(ctx, filter)
+	if err != nil {
+		return domain.PreservationHoldListResult{}, err
+	}
+	items, err := s.repository.ListPreservationHolds(ctx, filter)
+	if err != nil {
+		return domain.PreservationHoldListResult{}, err
+	}
+	return domain.PreservationHoldListResult{Items: items, Page: page, PageSize: pageSize, Total: total}, nil
+}
+
+func (s *Service) GetPreservationHold(ctx context.Context, actor domain.Actor, id uuid.UUID) (domain.PreservationHold, error) {
+	if actor.Role != domain.SystemRoleAdmin {
+		return domain.PreservationHold{}, domain.ErrForbidden
+	}
+	return s.repository.GetPreservationHold(ctx, id)
+}
+
+func (s *Service) ReleasePreservationHold(ctx context.Context, actor domain.Actor, id uuid.UUID, input domain.ReleasePreservationHoldInput) (domain.PreservationHold, error) {
+	if actor.Role != domain.SystemRoleAdmin {
+		return domain.PreservationHold{}, domain.ErrForbidden
+	}
+	if input.RowVersion < 1 {
+		return domain.PreservationHold{}, &domain.ValidationError{Field: "rowVersion"}
+	}
+	reason := strings.TrimSpace(input.Reason)
+	if err := domain.ValidateReason(reason); err != nil {
+		return domain.PreservationHold{}, err
+	}
+	now := s.now().UTC()
+	var result domain.PreservationHold
+	err := s.transactor.WithinTransaction(ctx, func(repository Repository) error {
+		hold, err := repository.GetPreservationHoldForUpdate(ctx, id)
+		if err != nil {
+			return err
+		}
+		if hold.RowVersion != input.RowVersion || hold.Status != domain.PreservationHoldStatusActive {
+			return domain.ErrVersionConflict
+		}
+		document, err := repository.GetDocumentRef(ctx, hold.DocumentID)
+		if err != nil {
+			return err
+		}
+		result, err = repository.ReleasePreservationHold(ctx, id, actor.UserID, reason, input.RowVersion, now)
+		if err != nil {
+			return err
+		}
+		if err = repository.TouchSpaceSecurityEpoch(ctx, document.SpaceID, now); err != nil {
+			return err
+		}
+		return insertPreservationEvent(ctx, repository, "PRESERVATION_HOLD_RELEASED", result, input.RequestID, now)
+	})
+	return result, err
 }
 
 func (s *Service) requirePermission(ctx context.Context, actor domain.Actor, resourceType string, resourceID uuid.UUID, action string) error {
@@ -402,4 +533,27 @@ func insertEvent(ctx context.Context, repository Repository, eventType string, i
 		return err
 	}
 	return repository.InsertEvent(ctx, domain.Event{ID: id, AggregateType: domain.ResourceRecycleItem, AggregateID: item.ID, AggregateVersion: item.RowVersion, Type: eventType, Payload: payload, DeduplicationKey: fmt.Sprintf("%s:%s:%d", eventType, item.ID, item.RowVersion), CorrelationID: requestID, CreatedAt: now})
+}
+
+func insertPreservationEvent(ctx context.Context, repository Repository, eventType string, hold domain.PreservationHold, requestID uuid.UUID, now time.Time) error {
+	id, err := uuid.NewV7()
+	if err != nil {
+		return err
+	}
+	payload, err := json.Marshal(map[string]any{"preservationHoldId": hold.ID, "documentId": hold.DocumentID, "documentVersionId": hold.DocumentVersionID, "caseReference": hold.CaseReference, "status": hold.Status})
+	if err != nil {
+		return err
+	}
+	return repository.InsertEvent(ctx, domain.Event{ID: id, AggregateType: domain.ResourcePreservationHold, AggregateID: hold.ID, AggregateVersion: hold.RowVersion, Type: eventType, Payload: payload, DeduplicationKey: fmt.Sprintf("%s:%s:%d", eventType, hold.ID, hold.RowVersion), CorrelationID: requestID, CreatedAt: now})
+}
+
+func trimmedOptional(value *string) *string {
+	if value == nil {
+		return nil
+	}
+	trimmed := strings.TrimSpace(*value)
+	if trimmed == "" {
+		return nil
+	}
+	return &trimmed
 }

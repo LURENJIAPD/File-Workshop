@@ -928,6 +928,123 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/Conflict" }
 
+  /api/v1/documents/{documentId}/preservation-holds:
+    post:
+      operationId: placePreservationHold
+      tags: [Lifecycle]
+      summary: Place preservation hold on a document
+      description: SYSTEM_ADMIN operation. It creates a preservation hold backed by legal_holds and prevents lifecycle purge while ACTIVE.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/DocumentIdPath"
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlacePreservationHoldRequest"
+      responses:
+        "201":
+          description: Preservation hold has been placed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreservationHoldResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/preservation-holds:
+    get:
+      operationId: listPreservationHolds
+      tags: [Lifecycle]
+      summary: List preservation holds
+      description: SYSTEM_ADMIN operation. Pagination uses page and pageSize.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+        - name: documentId
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/PreservationHoldStatus" }
+        - name: caseReference
+          in: query
+          required: false
+          schema: { type: string, minLength: 1, maxLength: 256 }
+      responses:
+        "200":
+          description: Preservation hold list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreservationHoldListResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/v1/preservation-holds/{preservationHoldId}:
+    get:
+      operationId: getPreservationHold
+      tags: [Lifecycle]
+      summary: Get preservation hold detail
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PreservationHoldIdPath"
+      responses:
+        "200":
+          description: Preservation hold detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreservationHoldResponse"
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/preservation-holds/{preservationHoldId}/release:
+    post:
+      operationId: releasePreservationHold
+      tags: [Lifecycle]
+      summary: Release preservation hold
+      description: SYSTEM_ADMIN operation. It releases an ACTIVE preservation hold with rowVersion concurrency check and keeps the historical row.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PreservationHoldIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReleasePreservationHoldRequest"
+      responses:
+        "200":
+          description: Preservation hold has been released.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreservationHoldResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
   /api/v1/search:
     get:
       operationId: searchDirectoryEntries
@@ -2734,6 +2851,13 @@ components:
       schema:
         type: string
         format: uuid
+    PreservationHoldIdPath:
+      name: preservationHoldId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     PlanIdPath:
       name: planId
       in: path
@@ -3767,7 +3891,7 @@ components:
     ScanExpiredRecycleItemsResponse:
       type: object
       additionalProperties: false
-      required: [scanned, enqueued, skippedLegalHold, jobType, requestId]
+      required: [scanned, enqueued, skippedPreservationHold, jobType, requestId]
       properties:
         scanned:
           type: integer
@@ -3775,7 +3899,7 @@ components:
         enqueued:
           type: integer
           minimum: 0
-        skippedLegalHold:
+        skippedPreservationHold:
           type: integer
           minimum: 0
         jobType:
@@ -3785,6 +3909,126 @@ components:
           type: string
           minLength: 1
           maxLength: 128
+
+    PreservationHoldStatus:
+      type: string
+      enum: [ACTIVE, RELEASED]
+
+    PreservationHold:
+      type: object
+      additionalProperties: false
+      required: [preservationHoldId, documentId, caseReference, reason, status, placedByUserId, placedAt, createdAt, updatedAt, rowVersion]
+      properties:
+        preservationHoldId:
+          type: string
+          format: uuid
+        documentId:
+          type: string
+          format: uuid
+        documentVersionId:
+          type: string
+          format: uuid
+        caseReference:
+          type: string
+          minLength: 1
+          maxLength: 256
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 512
+        status:
+          $ref: "#/components/schemas/PreservationHoldStatus"
+        placedByUserId:
+          type: string
+          format: uuid
+        placedAt:
+          type: string
+          format: date-time
+        releasedByUserId:
+          type: string
+          format: uuid
+        releasedAt:
+          type: string
+          format: date-time
+        releaseReason:
+          type: string
+          minLength: 1
+          maxLength: 512
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
+
+    PreservationHoldResponse:
+      type: object
+      additionalProperties: false
+      required: [hold, requestId]
+      properties:
+        hold:
+          $ref: "#/components/schemas/PreservationHold"
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    PreservationHoldListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PreservationHold"
+        page:
+          $ref: "#/components/schemas/Page"
+        pageSize:
+          $ref: "#/components/schemas/PageSize"
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+
+    PlacePreservationHoldRequest:
+      type: object
+      additionalProperties: false
+      required: [caseReference, reason]
+      properties:
+        documentVersionId:
+          type: string
+          format: uuid
+        caseReference:
+          type: string
+          minLength: 1
+          maxLength: 256
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 512
+
+    ReleasePreservationHoldRequest:
+      type: object
+      additionalProperties: false
+      required: [reason, rowVersion]
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 512
+        rowVersion:
+          type: integer
+          format: int64
+          minimum: 1
 
     AdminDelegationScope:
       type: string

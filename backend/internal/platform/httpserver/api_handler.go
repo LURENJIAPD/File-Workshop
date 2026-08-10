@@ -120,6 +120,10 @@ type LifecycleAPI interface {
 	RestoreRecycleItem(context.Context, api.RestoreRecycleItemRequestObject) (api.RestoreRecycleItemResponseObject, error)
 	PurgeRecycleItem(context.Context, api.PurgeRecycleItemRequestObject) (api.PurgeRecycleItemResponseObject, error)
 	ScanExpiredRecycleItems(context.Context, api.ScanExpiredRecycleItemsRequestObject) (api.ScanExpiredRecycleItemsResponseObject, error)
+	PlacePreservationHold(context.Context, api.PlacePreservationHoldRequestObject) (api.PlacePreservationHoldResponseObject, error)
+	ListPreservationHolds(context.Context, api.ListPreservationHoldsRequestObject) (api.ListPreservationHoldsResponseObject, error)
+	GetPreservationHold(context.Context, api.GetPreservationHoldRequestObject) (api.GetPreservationHoldResponseObject, error)
+	ReleasePreservationHold(context.Context, api.ReleasePreservationHoldRequestObject) (api.ReleasePreservationHoldResponseObject, error)
 }
 
 type SearchAPI interface {
@@ -216,6 +220,18 @@ func (h *APIHandler) PurgeRecycleItem(ctx context.Context, request api.PurgeRecy
 }
 func (h *APIHandler) ScanExpiredRecycleItems(ctx context.Context, request api.ScanExpiredRecycleItemsRequestObject) (api.ScanExpiredRecycleItemsResponseObject, error) {
 	return h.lifecycle.ScanExpiredRecycleItems(ctx, request)
+}
+func (h *APIHandler) PlacePreservationHold(ctx context.Context, request api.PlacePreservationHoldRequestObject) (api.PlacePreservationHoldResponseObject, error) {
+	return h.lifecycle.PlacePreservationHold(ctx, request)
+}
+func (h *APIHandler) ListPreservationHolds(ctx context.Context, request api.ListPreservationHoldsRequestObject) (api.ListPreservationHoldsResponseObject, error) {
+	return h.lifecycle.ListPreservationHolds(ctx, request)
+}
+func (h *APIHandler) GetPreservationHold(ctx context.Context, request api.GetPreservationHoldRequestObject) (api.GetPreservationHoldResponseObject, error) {
+	return h.lifecycle.GetPreservationHold(ctx, request)
+}
+func (h *APIHandler) ReleasePreservationHold(ctx context.Context, request api.ReleasePreservationHoldRequestObject) (api.ReleasePreservationHoldResponseObject, error) {
+	return h.lifecycle.ReleasePreservationHold(ctx, request)
 }
 
 func (h *APIHandler) CreateShare(ctx context.Context, request api.CreateShareRequestObject) (api.CreateShareResponseObject, error) {

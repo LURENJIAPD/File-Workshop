@@ -20,7 +20,7 @@
 6. 统一目录命名空间与文件  
 7. 存储对象、上传、版本与锁  
 8. 权限、管理委派与共享  
-9. 标签、回收、保留与法定冻结  
+9. 标签、回收、保留与资料保全
 10. 审计、幂等、事务外盒与后台任务  
 11. 搜索、预览、AI 与 Agent  
 12. 迁移、配置与历史  
@@ -62,7 +62,7 @@
 - PostgreSQL 保存业务事实，对象存储保存二进制；
 - 文件路径、名称、工号、组织编码等可变业务属性不作为实体主键；
 - 关键安全事实优先使用类型化外键，不在权限表中使用无法校验的 `type + id` 多态引用；
-- 生命周期状态、可用性状态和法定保留相互独立，不复用单一状态字段表达多个维度；
+- 生命周期状态、可用性状态和资料保全相互独立，不复用单一状态字段表达多个维度；
 - 历史事实只追加；当前状态与历史记录分表保存；
 - 业务删除默认逻辑删除，物理删除必须经过保留、审计和引用安全检查；
 - Redis、搜索、预览和 AI 表均不成为权限或文件事实的唯一来源。
@@ -178,7 +178,7 @@ flowchart LR
     PG --> D
     D --> SH[共享]
     F --> SH
-    D --> LH[法定保留]
+    D --> LH[资料保全]
 ```
 
 ## 3.2 表清单
@@ -199,7 +199,7 @@ flowchart LR
 
 ## 3.3 事实与投影
 
-- 文件、版本、授权、共享、法定保留、审计、幂等结果和系统配置属于事实；
+- 文件、版本、授权、共享、资料保全、审计、幂等结果和系统配置属于事实；
 - `recent_documents`、路径缓存、容量缓存、预览、分块、Embedding 和搜索索引属于可重建投影；
 - 投影故障不得修改事实，也不得绕过最终权限校验；
 - 投影表可以物理清理并重建，事实表只能按本文件定义的生命周期处理。
@@ -216,7 +216,7 @@ flowchart LR
 - WebSocket/SSE 在线连接状态；
 - 可重新生成的临时导出下载地址。
 
-Redis 不得成为会话撤销、权限、幂等业务结果、上传完成结果或法定保留的唯一事实来源。
+Redis 不得成为会话撤销、权限、幂等业务结果、上传完成结果或资料保全的唯一事实来源。
 
 ---
 
@@ -424,7 +424,7 @@ TOTP 仅允许 `secret_ref` 非空；WEBAUTHN 仅允许 `credential_id/public_ke
 | failure_code | varchar(64) | 否 | 失败码 |
 | row_version | bigint | 是 | 乐观锁 |
 
-用户禁用、会话和凭据撤销可以先完成，但个人空间转交、归档和 Legal Hold 检查必须通过该 Case 形成可恢复、可审计流程。每个离职用户最多一个未终结 Case。
+用户禁用、会话和凭据撤销可以先完成，但个人空间转交、归档和资料保全检查必须通过该 Case 形成可恢复、可审计流程。每个离职用户最多一个未终结 Case。
 
 ---
 
@@ -615,7 +615,7 @@ TOTP 仅允许 `secret_ref` 非空；WEBAUTHN 仅允许 `credential_id/public_ke
 | failure_code | varchar(64) | 否 | 失败码 |
 | row_version | bigint | 是 | 乐观锁 |
 
-执行前必须重新校验 `expected_tree_version`、权限、成员、空间、委派、迁移任务和 Legal Hold；过期计划返回冲突，不静默套用到新组织结构。
+执行前必须重新校验 `expected_tree_version`、权限、成员、空间、委派、迁移任务和资料保全；过期计划返回冲突，不静默套用到新组织结构。
 
 ## 5.10 `organization_change_operations`
 
@@ -706,7 +706,7 @@ TOTP 仅允许 `secret_ref` 非空；WEBAUTHN 仅允许 `credential_id/public_ke
 | updated_at | timestamptz | 是 | 更新时间 |
 | row_version | bigint | 是 | 乐观锁 |
 
-文档生命周期由 `namespace_entries.lifecycle_status` 表达，扫描可用性由 `availability_status` 表达，法定冻结由 `legal_holds` 表达，三者不得互相覆盖。
+文档生命周期由 `namespace_entries.lifecycle_status` 表达，扫描可用性由 `availability_status` 表达，资料保全由 `legal_holds` 表达，三者不得互相覆盖。
 
 约束触发器保证对应命名空间项的 `entry_type='DOCUMENT'`。`current_version_id` 必须属于同一 `document_id`；详细组合外键见第7章。
 
@@ -984,7 +984,7 @@ TOTP 仅允许 `secret_ref` 非空；WEBAUTHN 仅允许 `credential_id/public_ke
 
 ---
 
-# 第9章 标签、回收、保留与法定冻结
+# 第9章 标签、回收、保留与资料保全
 
 ## 9.1 `tags`
 
@@ -1122,7 +1122,7 @@ GLOBAL 标签按 `normalized_name` 唯一；SPACE 标签按 `(scope_space_id, no
 | updated_at | timestamptz | 是 | 更新时间 |
 | row_version | bigint | 是 | 并发控制 |
 
-版本级 Hold 使用 `(document_id, document_version_id)` 组合外键。允许同一文档存在多个独立 Hold；任一 ACTIVE Hold 都阻止相应文档或版本永久清理。设置和解除只能追加或完成既有 Hold，不删除历史行，并必须强审计。
+版本级资料保全使用 `(document_id, document_version_id)` 组合外键。允许同一文档存在多个独立资料保全记录；任一 ACTIVE 记录都阻止相应文档或版本永久清理。设置和解除只能追加或完成既有记录，不删除历史行，并必须强审计。底层表名保留为 `legal_holds`，对外产品表述统一为“资料保全”。
 
 ---
 
@@ -1552,7 +1552,7 @@ Migration 的执行租约由关联 `background_jobs` 管理；本表保存用户
 | Organization | Membership/Space/Delegation | RESTRICT | 删除前必须完成业务处置 |
 | Space | Namespace/Quota/Grant | RESTRICT | 禁止级联丢失文件事实 |
 | Namespace Entry | Folder/Document/Shared Entry Subtype | RESTRICT | 使用共享主键并由业务流程清理 |
-| Document | Version/Lock/Hold/Share | RESTRICT | 保留版本、安全和合规事实 |
+| Document | Version/Lock/资料保全/Share | RESTRICT | 保留版本、安全和合规事实 |
 | Storage Object | Version/Artifact/Extraction/Avatar | RESTRICT | 有引用绝不删除 |
 | Permission Grant | Action | CASCADE | Action 完全从属 Grant |
 | Share | Action | CASCADE | Action 完全从属 Share |
@@ -1583,7 +1583,7 @@ Migration 的执行租约由关联 `background_jobs` 管理；本表保存用户
 5. Document Current Version 和 Restore Source 必须属于同一 Document；
 6. Upload 的 Folder、目标 Document、预期 Version 属于同一目标上下文；
 7. Shared Entry 的命名空间位置与 Share 目标 Space 一致；
-8. Version 级 Legal Hold 的 Version 属于目标 Document；
+8. 版本级资料保全的 Version 属于目标 Document；
 9. 子管理委派的范围、期限、能力和 `can_delegate` 不超出父委派；
 10. 组织邻接表和 Closure Table 在事务结束时一致。
 
@@ -1653,7 +1653,7 @@ Migration 的执行租约由关联 `background_jobs` 管理；本表保存用户
 | Worker 领取 | `outbox_events(status, available_at, lease_until, priority)` 对活动行部分索引 |
 | 后台任务领取 | `background_jobs(status, available_at, lease_until, priority DESC)` 对活动行部分索引 |
 | 回收清理 | `recycle_items(status, expires_at)` |
-| 活动 Hold | `legal_holds(document_id, status)` |
+| 活动资料保全 | `legal_holds(document_id, status)` |
 
 列表排序必须在最后包含唯一 ID，避免翻页重复或遗漏。外部仍使用 `page`、`pageSize`，大数据深页通过索引、查询改写和经评审的内部定位机制优化，不改变外部字段。
 
@@ -1769,7 +1769,7 @@ Migration 的执行租约由关联 `background_jobs` 管理；本表保存用户
 
 永久清理前必须在同一一致性视图验证：
 
-- 无 ACTIVE Legal Hold；
+- 无 ACTIVE 资料保全；
 - 满足保留策略；
 - 无活动共享、上传、锁、恢复或迁移任务；
 - 强审计已持久化；
@@ -1847,7 +1847,7 @@ Migration 的执行租约由关联 `background_jobs` 管理；本表保存用户
 2. 用户、凭据、会话和组织；
 3. Space、Namespace、Folder、Document 基础表；
 4. StorageObject、Version、Upload、Lock，并后置添加循环外键；
-5. Permission、Delegation、Share、Tag、Retention、Legal Hold；
+5. Permission、Delegation、Share、Tag、Retention、资料保全；
 6. Idempotency、Outbox、Job；
 7. Audit 分区父表、初始分区和 Chain Head；
 8. Preview、Extraction、AI、Agent；
@@ -1874,7 +1874,7 @@ Migration 的执行租约由关联 `background_jobs` 管理；本表保存用户
 - 根组织 NULL 场景名称唯一；
 - 文件、文件夹、共享引用跨类型同名冲突；
 - 父目录同 Space 和文件夹移动防环；
-- Current Version、Restore Version、Legal Hold Version 归属一致；
+- Current Version、Restore Version、资料保全 Version 归属一致；
 - 并发版本号、并发同名创建、并发活动锁；
 - Fencing Token 阻止旧锁写入；
 - Grant 主体/资源 XOR、Share 来源/目标 XOR、Retention Target XOR；
@@ -1882,7 +1882,7 @@ Migration 的执行租约由关联 `background_jobs` 管理；本表保存用户
 - 配额预留并发不超卖；
 - Outbox/Job Worker 崩溃后租约恢复；
 - Refresh Token 重用触发会话家族撤销；
-- Legal Hold 阻止清理；
+- 资料保全阻止清理；
 - 审计分区主键、链序号和只追加权限；
 - Secret Reference 与 JSON 值互斥；
 - 状态和时间字段一致。
@@ -1914,7 +1914,7 @@ Migration 的执行租约由关联 `background_jobs` 管理；本表保存用户
 
 ## 17.6 开发启动结论
 
-本数据库设计替代原主设计文档中的数据库章节。开发必须以本文档建立首版 Schema，不得恢复旧的通用 `id`、裸 `TIMESTAMP`、权限多态外键、单字段分区主键、策略布尔 Legal Hold、上传专用幂等键或无租约 PROCESSING 任务设计。
+本数据库设计替代原主设计文档中的数据库章节。开发必须以本文档建立首版 Schema，不得恢复旧的通用 `id`、裸 `TIMESTAMP`、权限多态外键、单字段分区主键、策略布尔资料保全、上传专用幂等键或无租约 PROCESSING 任务设计。
 
 ---
 

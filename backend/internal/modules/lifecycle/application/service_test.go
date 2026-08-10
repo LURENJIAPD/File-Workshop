@@ -91,8 +91,8 @@ func TestPurgeRecycleItemRejectsActiveLegalHold(t *testing.T) {
 	service := NewService(repository, repository, allowAuthorizer{}, func() time.Time { return now })
 
 	_, err := service.PurgeRecycleItem(context.Background(), testActor(), recycleID, domain.PurgeInput{Reason: "管理员确认清理", RowVersion: 4, RequestID: uuid.Must(uuid.NewV7())})
-	if !errors.Is(err, domain.ErrLegalHoldActive) {
-		t.Fatalf("expected ErrLegalHoldActive, got %v", err)
+	if !errors.Is(err, domain.ErrPreservationHoldActive) {
+		t.Fatalf("expected ErrPreservationHoldActive, got %v", err)
 	}
 }
 
@@ -113,7 +113,7 @@ func TestScanExpiredRecycleItemsEnqueuesPurgeJobsAndSkipsLegalHold(t *testing.T)
 	if err != nil {
 		t.Fatalf("ScanExpiredRecycleItems returned error: %v", err)
 	}
-	if result.Scanned != 2 || result.Enqueued != 1 || result.SkippedLegalHold != 1 || result.JobType != domain.LifecyclePurgeJobType {
+	if result.Scanned != 2 || result.Enqueued != 1 || result.SkippedPreservationHold != 1 || result.JobType != domain.LifecyclePurgeJobType {
 		t.Fatalf("unexpected scan result: %+v", result)
 	}
 	if len(enqueuer.commands) != 1 {
@@ -157,10 +157,64 @@ func TestScanExpiredRecycleItemsRejectsInvalidBatchSize(t *testing.T) {
 	}
 }
 
+func TestPlacePreservationHoldCreatesHoldAndEvent(t *testing.T) {
+	now := time.Date(2026, 8, 10, 13, 0, 0, 0, time.UTC)
+	actor := testActor()
+	actor.Role = domain.SystemRoleAdmin
+	document := testDocumentRef()
+	repository := newFakeRepository()
+	repository.documents[document.ID] = document
+	service := NewService(repository, repository, allowAuthorizer{}, func() time.Time { return now })
+
+	hold, err := service.PlacePreservationHold(context.Background(), actor, document.ID, domain.PlacePreservationHoldInput{CaseReference: "QA-2026-0001", Reason: "质量追溯资料需要保全", IdempotencyKey: "preserve-001", RequestID: uuid.Must(uuid.NewV7())})
+	if err != nil {
+		t.Fatalf("PlacePreservationHold returned error: %v", err)
+	}
+	if hold.DocumentID != document.ID || hold.Status != domain.PreservationHoldStatusActive || hold.CaseReference != "QA-2026-0001" {
+		t.Fatalf("unexpected preservation hold: %+v", hold)
+	}
+	if !repository.securityEpochTouched || len(repository.events) != 1 || repository.events[0].Type != "PRESERVATION_HOLD_PLACED" {
+		t.Fatalf("expected security epoch touch and placement event, security=%v events=%+v", repository.securityEpochTouched, repository.events)
+	}
+}
+
+func TestReleasePreservationHoldMarksReleasedAndWritesEvent(t *testing.T) {
+	now := time.Date(2026, 8, 10, 14, 0, 0, 0, time.UTC)
+	actor := testActor()
+	actor.Role = domain.SystemRoleAdmin
+	document := testDocumentRef()
+	hold := testPreservationHold(document.ID, actor.UserID, now.Add(-time.Hour))
+	repository := newFakeRepository()
+	repository.documents[document.ID] = document
+	repository.preservationHolds[hold.ID] = hold
+	service := NewService(repository, repository, allowAuthorizer{}, func() time.Time { return now })
+
+	result, err := service.ReleasePreservationHold(context.Background(), actor, hold.ID, domain.ReleasePreservationHoldInput{Reason: "质量追溯已关闭", RowVersion: hold.RowVersion, RequestID: uuid.Must(uuid.NewV7())})
+	if err != nil {
+		t.Fatalf("ReleasePreservationHold returned error: %v", err)
+	}
+	if result.Status != domain.PreservationHoldStatusReleased || result.ReleasedByUserID == nil || *result.ReleasedByUserID != actor.UserID || result.ReleaseReason == nil || *result.ReleaseReason != "质量追溯已关闭" {
+		t.Fatalf("unexpected released hold: %+v", result)
+	}
+	if len(repository.events) != 1 || repository.events[0].Type != "PRESERVATION_HOLD_RELEASED" {
+		t.Fatalf("expected release event, got %+v", repository.events)
+	}
+}
+
+func TestPreservationHoldRequiresSystemAdmin(t *testing.T) {
+	service := NewService(newFakeRepository(), newFakeRepository(), allowAuthorizer{}, time.Now)
+	_, err := service.ListPreservationHolds(context.Background(), testActor(), domain.PreservationHoldListFilter{})
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("expected ErrForbidden, got %v", err)
+	}
+}
+
 type fakeRepository struct {
 	entries              map[uuid.UUID]domain.Entry
 	recycle              map[uuid.UUID]domain.RecycleItem
 	expiredRecycle       []domain.RecycleItem
+	documents            map[uuid.UUID]domain.DocumentRef
+	preservationHolds    map[uuid.UUID]domain.PreservationHold
 	idempotency          map[string]domain.IdempotencyRecord
 	events               []domain.Event
 	nameExists           bool
@@ -171,7 +225,7 @@ type fakeRepository struct {
 }
 
 func newFakeRepository() *fakeRepository {
-	return &fakeRepository{entries: map[uuid.UUID]domain.Entry{}, recycle: map[uuid.UUID]domain.RecycleItem{}, idempotency: map[string]domain.IdempotencyRecord{}}
+	return &fakeRepository{entries: map[uuid.UUID]domain.Entry{}, recycle: map[uuid.UUID]domain.RecycleItem{}, documents: map[uuid.UUID]domain.DocumentRef{}, preservationHolds: map[uuid.UUID]domain.PreservationHold{}, idempotency: map[string]domain.IdempotencyRecord{}}
 }
 
 func (r *fakeRepository) WithinTransaction(_ context.Context, operation func(Repository) error) error {
@@ -256,6 +310,14 @@ func (r *fakeRepository) ActiveLegalHoldExists(_ context.Context, rootID uuid.UU
 	return r.legalHold, nil
 }
 
+func (r *fakeRepository) GetDocumentRef(_ context.Context, documentID uuid.UUID) (domain.DocumentRef, error) {
+	document, ok := r.documents[documentID]
+	if !ok {
+		return domain.DocumentRef{}, domain.ErrNotFound
+	}
+	return document, nil
+}
+
 func (r *fakeRepository) InsertRecycleItem(_ context.Context, recycleID uuid.UUID, entry domain.Entry, deletedBy uuid.UUID, deletedAt, expiresAt time.Time) (domain.RecycleItem, error) {
 	item := domain.RecycleItem{ID: recycleID, EntryID: entry.ID, EntryType: entry.EntryType, OriginalSpaceID: entry.SpaceID, OriginalParentFolderID: entry.ParentFolderID, OriginalName: entry.Name, CurrentName: entry.Name, LifecycleStatus: domain.LifecycleTrashed, DeletedByUserID: deletedBy, DeletedAt: deletedAt, ExpiresAt: expiresAt, Status: domain.RecycleStatusActive, CreatedAt: deletedAt, UpdatedAt: deletedAt, RowVersion: 1}
 	r.recycle[recycleID] = item
@@ -316,6 +378,57 @@ func (r *fakeRepository) MarkRecycleItemPurging(_ context.Context, recycleID uui
 	return item, nil
 }
 
+func (r *fakeRepository) InsertPreservationHold(_ context.Context, hold domain.PreservationHold) (domain.PreservationHold, error) {
+	hold.Status = domain.PreservationHoldStatusActive
+	hold.RowVersion = 1
+	hold.CreatedAt = hold.PlacedAt
+	hold.UpdatedAt = hold.PlacedAt
+	r.preservationHolds[hold.ID] = hold
+	return hold, nil
+}
+
+func (r *fakeRepository) GetPreservationHold(_ context.Context, id uuid.UUID) (domain.PreservationHold, error) {
+	hold, ok := r.preservationHolds[id]
+	if !ok {
+		return domain.PreservationHold{}, domain.ErrNotFound
+	}
+	return hold, nil
+}
+
+func (r *fakeRepository) GetPreservationHoldForUpdate(ctx context.Context, id uuid.UUID) (domain.PreservationHold, error) {
+	return r.GetPreservationHold(ctx, id)
+}
+
+func (r *fakeRepository) CountPreservationHolds(context.Context, domain.PreservationHoldListFilter) (int64, error) {
+	return int64(len(r.preservationHolds)), nil
+}
+
+func (r *fakeRepository) ListPreservationHolds(context.Context, domain.PreservationHoldListFilter) ([]domain.PreservationHold, error) {
+	items := make([]domain.PreservationHold, 0, len(r.preservationHolds))
+	for _, hold := range r.preservationHolds {
+		items = append(items, hold)
+	}
+	return items, nil
+}
+
+func (r *fakeRepository) ReleasePreservationHold(_ context.Context, id uuid.UUID, releasedBy uuid.UUID, reason string, rowVersion int64, at time.Time) (domain.PreservationHold, error) {
+	hold, ok := r.preservationHolds[id]
+	if !ok {
+		return domain.PreservationHold{}, domain.ErrNotFound
+	}
+	if hold.RowVersion != rowVersion || hold.Status != domain.PreservationHoldStatusActive {
+		return domain.PreservationHold{}, domain.ErrVersionConflict
+	}
+	hold.Status = domain.PreservationHoldStatusReleased
+	hold.ReleasedByUserID = &releasedBy
+	hold.ReleasedAt = &at
+	hold.ReleaseReason = &reason
+	hold.UpdatedAt = at
+	hold.RowVersion++
+	r.preservationHolds[id] = hold
+	return hold, nil
+}
+
 func (r *fakeRepository) TryCreateIdempotency(_ context.Context, _ uuid.UUID, actorID uuid.UUID, operation, key string, hash []byte, _ time.Time, _ time.Time) (bool, error) {
 	storageKey := actorID.String() + ":" + operation + ":" + key
 	if _, ok := r.idempotency[storageKey]; ok {
@@ -365,6 +478,14 @@ func testEntry(parentID uuid.UUID) domain.Entry {
 		parent = &parentID
 	}
 	return domain.Entry{ID: entryID, SpaceID: spaceID, ParentFolderID: parent, EntryType: domain.EntryTypeDocument, Name: "设计说明.docx", NormalizedName: "设计说明.docx", PathCache: ptr("/设计说明.docx"), Depth: 1, LifecycleStatus: domain.LifecycleActive, CreatedByUserID: uuid.Must(uuid.NewV7()), RowVersion: 3}
+}
+
+func testDocumentRef() domain.DocumentRef {
+	return domain.DocumentRef{ID: uuid.Must(uuid.NewV7()), SpaceID: uuid.Must(uuid.NewV7()), Name: "检验报告.pdf", LifecycleStatus: domain.LifecycleActive}
+}
+
+func testPreservationHold(documentID, placedBy uuid.UUID, at time.Time) domain.PreservationHold {
+	return domain.PreservationHold{ID: uuid.Must(uuid.NewV7()), DocumentID: documentID, CaseReference: "QA-2026-0001", Reason: "质量追溯资料需要保全", Status: domain.PreservationHoldStatusActive, PlacedByUserID: placedBy, PlacedAt: at, CreatedAt: at, UpdatedAt: at, RowVersion: 1}
 }
 
 func expiredRecycleItem(now time.Time, entryType string) domain.RecycleItem {

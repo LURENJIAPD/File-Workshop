@@ -230,6 +230,61 @@ SELECT EXISTS (
   WHERE hold.status = 'ACTIVE'
 )::boolean;
 
+-- name: GetLifecycleDocumentRef :one
+SELECT
+  e.namespace_entry_id AS document_id,
+  e.space_id,
+  e.name,
+  e.lifecycle_status,
+  d.current_version_id
+FROM documents d
+JOIN namespace_entries e ON e.namespace_entry_id = d.document_id
+WHERE d.document_id = $1
+  AND e.entry_type = 'DOCUMENT'
+  AND e.lifecycle_status <> 'PURGED';
+
+-- name: InsertPreservationHold :one
+INSERT INTO legal_holds (
+  legal_hold_id, document_id, document_version_id, case_reference, reason,
+  placed_by_user_id, placed_at, created_at, updated_at
+) VALUES ($1,$2,$3,$4,$5,$6,$7,$7,$7)
+RETURNING *;
+
+-- name: GetPreservationHold :one
+SELECT * FROM legal_holds WHERE legal_hold_id = $1;
+
+-- name: GetPreservationHoldForUpdate :one
+SELECT * FROM legal_holds WHERE legal_hold_id = $1 FOR UPDATE;
+
+-- name: CountPreservationHolds :one
+SELECT count(*)::bigint
+FROM legal_holds
+WHERE (sqlc.narg('document_id')::uuid IS NULL OR document_id = sqlc.narg('document_id')::uuid)
+  AND (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status')::text)
+  AND (sqlc.narg('case_reference')::text IS NULL OR case_reference ILIKE '%' || sqlc.narg('case_reference')::text || '%');
+
+-- name: ListPreservationHolds :many
+SELECT *
+FROM legal_holds
+WHERE (sqlc.narg('document_id')::uuid IS NULL OR document_id = sqlc.narg('document_id')::uuid)
+  AND (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status')::text)
+  AND (sqlc.narg('case_reference')::text IS NULL OR case_reference ILIKE '%' || sqlc.narg('case_reference')::text || '%')
+ORDER BY placed_at DESC, legal_hold_id DESC
+LIMIT sqlc.arg('page_size')::integer OFFSET sqlc.arg('page_offset')::bigint;
+
+-- name: ReleasePreservationHold :one
+UPDATE legal_holds
+SET status = 'RELEASED',
+    released_by_user_id = $2,
+    released_at = $3,
+    release_reason = $4,
+    updated_at = $3,
+    row_version = row_version + 1
+WHERE legal_hold_id = $1
+  AND row_version = $5
+  AND status = 'ACTIVE'
+RETURNING *;
+
 -- name: MarkSharesSourceUnavailableForEntrySubtree :exec
 WITH RECURSIVE tree AS (
   SELECT namespace_entry_id, entry_type

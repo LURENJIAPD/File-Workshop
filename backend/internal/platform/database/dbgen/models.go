@@ -120,6 +120,23 @@ type DocumentVersion struct {
 	CreatedAt             pgtype.Timestamptz
 }
 
+type LegalHold struct {
+	LegalHoldID       pgtype.UUID
+	DocumentID        pgtype.UUID
+	DocumentVersionID pgtype.UUID
+	CaseReference     string
+	Reason            string
+	Status            string
+	PlacedByUserID    pgtype.UUID
+	PlacedAt          pgtype.Timestamptz
+	ReleasedByUserID  pgtype.UUID
+	ReleasedAt        pgtype.Timestamptz
+	ReleaseReason     pgtype.Text
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+	RowVersion        int64
+}
+
 type NamespaceEntry struct {
 	NamespaceEntryID pgtype.UUID
 	SpaceID          pgtype.UUID

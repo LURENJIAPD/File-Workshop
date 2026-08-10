@@ -46,3 +46,20 @@ func ValidateReason(value string) error {
 	}
 	return nil
 }
+
+func ValidateCaseReference(value string) error {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" || len(trimmed) > 256 {
+		return &ValidationError{Field: "caseReference"}
+	}
+	return nil
+}
+
+func ValidatePreservationHoldStatus(value string) error {
+	switch strings.TrimSpace(value) {
+	case PreservationHoldStatusActive, PreservationHoldStatusReleased:
+		return nil
+	default:
+		return &ValidationError{Field: "status"}
+	}
+}

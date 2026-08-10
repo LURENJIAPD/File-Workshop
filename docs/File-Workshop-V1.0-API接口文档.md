@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.13
+> 文档版本：V0.14
 > 文档状态：按模块持续编制  
 > 最近更新：2026-08-10
-> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 09 回收与生命周期元数据闭环及过期扫描入队、模块 10 PostgreSQL 元数据搜索基础接口、模块 16 后台任务基础调度与运维接口
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 09 回收与生命周期元数据闭环、过期扫描入队和资料保全管理接口、模块 10 PostgreSQL 元数据搜索基础接口、模块 16 后台任务基础调度与运维接口
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -26,7 +26,7 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 | 06 | 文件传输与存储 | 已收录上传控制面当前边界 | 4 | 2026-08-10 |
 | 07 | 版本与并发 | 已收录版本与锁基础接口 | 7 | 2026-08-10 |
 | 08 | 共享 | 已收录用户/组织/LINK 基础接口 | 7 | 2026-08-10 |
-| 09 | 回收与生命周期 | 已收录元数据回收、恢复、清理发起和过期扫描入队接口 | 5 | 2026-08-10 |
+| 09 | 回收与生命周期 | 已收录元数据回收、恢复、清理发起、过期扫描入队和资料保全管理接口 | 9 | 2026-08-10 |
 | 10 | 搜索 | 已收录 PostgreSQL 元数据搜索基础接口 | 1 | 2026-08-10 |
 | 11～15 | 后续系统模块 | 未收录 | 0 | — |
 | 16 | 后台任务 | 已完成基础调度与管理员运维接口 | 4 | 2026-08-10 |
@@ -1124,11 +1124,12 @@ POST /api/v1/uploads/0198a8e9-0c8a-7d21-9ea9-e9e70d477eed/parts/1/presign
 - 恢复时支持指定新名称，并校验同目录重名冲突；
 - 发起永久清理，将目录子树标记为 `PURGING`，并写入 Outbox 事件等待后续 Worker；
 - 管理员可扫描已过期且仍为 `ACTIVE` 的回收项，并为合规项目入队 `LIFECYCLE_PURGE` 后台任务；
+- 管理员可创建、查询和解除资料保全；保全事实写入底层 `legal_holds` 表，对外统一使用“资料保全”表述；
 - 删除时把源资源相关共享标记为 `SOURCE_UNAVAILABLE`；
 - 删除、恢复和清理都会递增空间安全纪元，确保权限/搜索等后续缓存可失效；
-- 法务保留存在时阻断永久清理。
+- 资料保全存在时阻断永久清理。
 
-尚未完成：`LIFECYCLE_PURGE` 真实业务处理器、法务保留创建/解除接口、归档/冷存储策略、真实对象存储删除、版本对象引用计数、HTTP 集成测试和大目录性能压测。
+尚未完成：`LIFECYCLE_PURGE` 真实业务处理器、资料保全审批流、归档/冷存储策略、真实对象存储删除、版本对象引用计数、HTTP 集成测试和大目录性能压测。
 
 ### 13.2 接口清单
 
@@ -1137,8 +1138,12 @@ POST /api/v1/uploads/0198a8e9-0c8a-7d21-9ea9-e9e70d477eed/parts/1/presign
 | `POST /api/v1/entries/{entryId}/trash` | `trashDirectoryEntry` | `201/RecycleItemResponse` | 要求 `Idempotency-Key`；根目录不可删除；要求资源 `DELETE` 权限；要求 `rowVersion` |
 | `GET /api/v1/recycle-bin?page=1&pageSize=50` | `listRecycleBinItems` | `200/RecycleItemListResponse` | 分页统一使用 `page/pageSize`；可选 `spaceId`；仅返回通过 `RESTORE` 权限复核的项目；当前 `total` 为本页可见数量，避免泄露无权项目总量 |
 | `POST /api/v1/recycle-bin/{recycleItemId}/restore` | `restoreRecycleItem` | `200/RecycleItemResponse` | 要求回收项 `rowVersion`；要求源资源 `RESTORE` 权限和目标父目录 `UPLOAD/CREATE_FOLDER` 权限；同名冲突返回 409 |
-| `POST /api/v1/recycle-bin/{recycleItemId}/purge` | `purgeRecycleItem` | `200/RecycleItemResponse` | 要求回收项 `rowVersion` 和 `reason`；要求源资源 `PURGE` 权限；存在有效法务保留时拒绝 |
-| `POST /api/v1/admin/lifecycle/recycle-bin/expired/scan` | `scanExpiredRecycleItems` | `200/ScanExpiredRecycleItemsResponse` | 仅 `SYSTEM_ADMIN`；扫描 `expiresAt` 已到期且状态为 `ACTIVE` 的回收项；存在有效法务保留时跳过；为合规项目入队 `LIFECYCLE_PURGE`，不直接删除对象存储数据 |
+| `POST /api/v1/recycle-bin/{recycleItemId}/purge` | `purgeRecycleItem` | `200/RecycleItemResponse` | 要求回收项 `rowVersion` 和 `reason`；要求源资源 `PURGE` 权限；存在有效资料保全时拒绝 |
+| `POST /api/v1/admin/lifecycle/recycle-bin/expired/scan` | `scanExpiredRecycleItems` | `200/ScanExpiredRecycleItemsResponse` | 仅 `SYSTEM_ADMIN`；扫描 `expiresAt` 已到期且状态为 `ACTIVE` 的回收项；存在有效资料保全时跳过；为合规项目入队 `LIFECYCLE_PURGE`，不直接删除对象存储数据 |
+| `POST /api/v1/documents/{documentId}/preservation-holds` | `placePreservationHold` | `201/PreservationHoldResponse` | 仅 `SYSTEM_ADMIN`；要求 `Idempotency-Key`；写入底层 `legal_holds` 表；创建后写入 Outbox 审计事件 |
+| `GET /api/v1/preservation-holds?page=1&pageSize=50` | `listPreservationHolds` | `200/PreservationHoldListResponse` | 仅 `SYSTEM_ADMIN`；分页统一使用 `page/pageSize`；可按 `documentId/status/caseReference` 筛选 |
+| `GET /api/v1/preservation-holds/{preservationHoldId}` | `getPreservationHold` | `200/PreservationHoldResponse` | 仅 `SYSTEM_ADMIN`；查看资料保全详情和解除状态 |
+| `POST /api/v1/preservation-holds/{preservationHoldId}/release` | `releasePreservationHold` | `200/PreservationHoldResponse` | 仅 `SYSTEM_ADMIN`；要求 `rowVersion` 和解除 `reason`；只把历史行从 `ACTIVE` 改为 `RELEASED`，不删除记录 |
 
 ### 13.3 字段和示例
 
@@ -1219,13 +1224,59 @@ Content-Type: application/json
 {
   "scanned": 12,
   "enqueued": 10,
-  "skippedLegalHold": 2,
+  "skippedPreservationHold": 2,
   "jobType": "LIFECYCLE_PURGE",
   "requestId": "019fcc32-0bc6-7d82-aa70-62d5324b1fbb"
 }
 ```
 
 注意：过期扫描接口只负责发现到期项目并写入 `background_jobs`。未注册 `LIFECYCLE_PURGE` 处理器时，后台任务框架会保留该任务，不会空消费；真实清理需等待对象存储环境和生命周期清理 Worker 周期接入。
+
+资料保全字段严格映射到底层 `legal_holds` 表：`preservationHoldId`（映射 `legal_hold_id`）、`documentId`、`documentVersionId`、`caseReference`、`reason`、`status`、`placedByUserId`、`placedAt`、`releasedByUserId`、`releasedAt`、`releaseReason`、`createdAt`、`updatedAt`、`rowVersion`。对外不使用 `legalHoldId` 字段名，只在数据库说明中保留底层表名。
+
+创建资料保全请求示例：
+
+```http
+POST /api/v1/documents/0198b100-0000-7000-8000-000000000101/preservation-holds HTTP/1.1
+Host: 127.0.0.1:8080
+Authorization: Bearer <accessToken>
+Idempotency-Key: preservation-qa-2026-0001
+Content-Type: application/json
+
+{
+  "caseReference": "QA-2026-0001",
+  "reason": "质量追溯资料需要保全"
+}
+```
+
+资料保全响应示例：
+
+```json
+{
+  "hold": {
+    "preservationHoldId": "0198b100-0000-7000-8000-000000000301",
+    "documentId": "0198b100-0000-7000-8000-000000000101",
+    "caseReference": "QA-2026-0001",
+    "reason": "质量追溯资料需要保全",
+    "status": "ACTIVE",
+    "placedByUserId": "0198b100-0000-7000-8000-000000000020",
+    "placedAt": "2026-08-10T13:00:00Z",
+    "createdAt": "2026-08-10T13:00:00Z",
+    "updatedAt": "2026-08-10T13:00:00Z",
+    "rowVersion": 1
+  },
+  "requestId": "019fcc32-0bc6-7d82-aa70-62d5324b1fbb"
+}
+```
+
+解除资料保全请求示例：
+
+```json
+{
+  "rowVersion": 1,
+  "reason": "质量追溯已关闭，允许恢复正常生命周期"
+}
+```
 
 ### 13.4 错误码和接口测试依据
 
@@ -1239,9 +1290,10 @@ Content-Type: application/json
 | 409 | `IDEMPOTENCY_CONFLICT` | 同一幂等键对应不同请求 |
 | 409 | `RECYCLE_ROOT_OPERATION_FORBIDDEN` | 根目录不允许进入回收站 |
 | 409 | `RECYCLE_NAME_CONFLICT` | 恢复目标位置已存在同名活动文件或文件夹 |
-| 409 | `LEGAL_HOLD_ACTIVE` | 存在有效法务保留，不能永久清理 |
+| 404 | `PRESERVATION_HOLD_NOT_FOUND` | 资料或资料保全记录不存在 |
+| 409 | `PRESERVATION_HOLD_ACTIVE` | 存在有效资料保全，不能永久清理 |
 
-正式接口测试至少覆盖：未登录拒绝；普通用户越权；根目录删除拒绝；进入回收站成功并生成 `recycle_items`；重复幂等键重放和冲突；删除后共享变为 `SOURCE_UNAVAILABLE`；回收站列表分页默认值、非法值和最大值；无 `RESTORE` 权限的项目不返回；恢复原位置；恢复到指定父目录；恢复重名冲突；陈旧 `rowVersion` 拒绝；永久清理要求原因；法务保留阻断清理；清理只进入 `PURGING` 并产生 Outbox，不伪造对象存储删除完成；管理员过期扫描只入队 `LIFECYCLE_PURGE`，法务保留项目计入 `skippedLegalHold`，非法 `batchSize` 返回 400，普通用户返回 403。
+正式接口测试至少覆盖：未登录拒绝；普通用户越权；根目录删除拒绝；进入回收站成功并生成 `recycle_items`；重复幂等键重放和冲突；删除后共享变为 `SOURCE_UNAVAILABLE`；回收站列表分页默认值、非法值和最大值；无 `RESTORE` 权限的项目不返回；恢复原位置；恢复到指定父目录；恢复重名冲突；陈旧 `rowVersion` 拒绝；永久清理要求原因；资料保全阻断清理；清理只进入 `PURGING` 并产生 Outbox，不伪造对象存储删除完成；管理员过期扫描只入队 `LIFECYCLE_PURGE`，资料保全项目计入 `skippedPreservationHold`，非法 `batchSize` 返回 400，普通用户返回 403；资料保全创建要求幂等键；资料保全列表分页和状态筛选；解除资料保全要求 `rowVersion/reason` 并写入 Outbox。
 
 现有自动化证据：
 

@@ -63,6 +63,27 @@ func (q *Queries) CompleteLifecycleIdempotency(ctx context.Context, arg *Complet
 	return err
 }
 
+const countPreservationHolds = `-- name: CountPreservationHolds :one
+SELECT count(*)::bigint
+FROM legal_holds
+WHERE ($1::uuid IS NULL OR document_id = $1::uuid)
+  AND ($2::text IS NULL OR status = $2::text)
+  AND ($3::text IS NULL OR case_reference ILIKE '%' || $3::text || '%')
+`
+
+type CountPreservationHoldsParams struct {
+	DocumentID    pgtype.UUID
+	Status        pgtype.Text
+	CaseReference pgtype.Text
+}
+
+func (q *Queries) CountPreservationHolds(ctx context.Context, arg *CountPreservationHoldsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countPreservationHolds, arg.DocumentID, arg.Status, arg.CaseReference)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const countRecycleItems = `-- name: CountRecycleItems :one
 SELECT count(*)::bigint
 FROM recycle_items r
@@ -76,6 +97,41 @@ func (q *Queries) CountRecycleItems(ctx context.Context, spaceID pgtype.UUID) (i
 	var column_1 int64
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const getLifecycleDocumentRef = `-- name: GetLifecycleDocumentRef :one
+SELECT
+  e.namespace_entry_id AS document_id,
+  e.space_id,
+  e.name,
+  e.lifecycle_status,
+  d.current_version_id
+FROM documents d
+JOIN namespace_entries e ON e.namespace_entry_id = d.document_id
+WHERE d.document_id = $1
+  AND e.entry_type = 'DOCUMENT'
+  AND e.lifecycle_status <> 'PURGED'
+`
+
+type GetLifecycleDocumentRefRow struct {
+	DocumentID       pgtype.UUID
+	SpaceID          pgtype.UUID
+	Name             string
+	LifecycleStatus  string
+	CurrentVersionID pgtype.UUID
+}
+
+func (q *Queries) GetLifecycleDocumentRef(ctx context.Context, documentID pgtype.UUID) (*GetLifecycleDocumentRefRow, error) {
+	row := q.db.QueryRow(ctx, getLifecycleDocumentRef, documentID)
+	var i GetLifecycleDocumentRefRow
+	err := row.Scan(
+		&i.DocumentID,
+		&i.SpaceID,
+		&i.Name,
+		&i.LifecycleStatus,
+		&i.CurrentVersionID,
+	)
+	return &i, err
 }
 
 const getLifecycleEntryForUpdate = `-- name: GetLifecycleEntryForUpdate :one
@@ -210,6 +266,58 @@ func (q *Queries) GetLifecycleIdempotency(ctx context.Context, arg *GetLifecycle
 	row := q.db.QueryRow(ctx, getLifecycleIdempotency, arg.UserID, arg.Operation, arg.IdempotencyKey)
 	var i GetLifecycleIdempotencyRow
 	err := row.Scan(&i.RequestHash, &i.Status, &i.ResultResourceID)
+	return &i, err
+}
+
+const getPreservationHold = `-- name: GetPreservationHold :one
+SELECT legal_hold_id, document_id, document_version_id, case_reference, reason, status, placed_by_user_id, placed_at, released_by_user_id, released_at, release_reason, created_at, updated_at, row_version FROM legal_holds WHERE legal_hold_id = $1
+`
+
+func (q *Queries) GetPreservationHold(ctx context.Context, legalHoldID pgtype.UUID) (*LegalHold, error) {
+	row := q.db.QueryRow(ctx, getPreservationHold, legalHoldID)
+	var i LegalHold
+	err := row.Scan(
+		&i.LegalHoldID,
+		&i.DocumentID,
+		&i.DocumentVersionID,
+		&i.CaseReference,
+		&i.Reason,
+		&i.Status,
+		&i.PlacedByUserID,
+		&i.PlacedAt,
+		&i.ReleasedByUserID,
+		&i.ReleasedAt,
+		&i.ReleaseReason,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.RowVersion,
+	)
+	return &i, err
+}
+
+const getPreservationHoldForUpdate = `-- name: GetPreservationHoldForUpdate :one
+SELECT legal_hold_id, document_id, document_version_id, case_reference, reason, status, placed_by_user_id, placed_at, released_by_user_id, released_at, release_reason, created_at, updated_at, row_version FROM legal_holds WHERE legal_hold_id = $1 FOR UPDATE
+`
+
+func (q *Queries) GetPreservationHoldForUpdate(ctx context.Context, legalHoldID pgtype.UUID) (*LegalHold, error) {
+	row := q.db.QueryRow(ctx, getPreservationHoldForUpdate, legalHoldID)
+	var i LegalHold
+	err := row.Scan(
+		&i.LegalHoldID,
+		&i.DocumentID,
+		&i.DocumentVersionID,
+		&i.CaseReference,
+		&i.Reason,
+		&i.Status,
+		&i.PlacedByUserID,
+		&i.PlacedAt,
+		&i.ReleasedByUserID,
+		&i.ReleasedAt,
+		&i.ReleaseReason,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.RowVersion,
+	)
 	return &i, err
 }
 
@@ -360,6 +468,54 @@ func (q *Queries) InsertLifecycleOutboxEvent(ctx context.Context, arg *InsertLif
 	return err
 }
 
+const insertPreservationHold = `-- name: InsertPreservationHold :one
+INSERT INTO legal_holds (
+  legal_hold_id, document_id, document_version_id, case_reference, reason,
+  placed_by_user_id, placed_at, created_at, updated_at
+) VALUES ($1,$2,$3,$4,$5,$6,$7,$7,$7)
+RETURNING legal_hold_id, document_id, document_version_id, case_reference, reason, status, placed_by_user_id, placed_at, released_by_user_id, released_at, release_reason, created_at, updated_at, row_version
+`
+
+type InsertPreservationHoldParams struct {
+	LegalHoldID       pgtype.UUID
+	DocumentID        pgtype.UUID
+	DocumentVersionID pgtype.UUID
+	CaseReference     string
+	Reason            string
+	PlacedByUserID    pgtype.UUID
+	PlacedAt          pgtype.Timestamptz
+}
+
+func (q *Queries) InsertPreservationHold(ctx context.Context, arg *InsertPreservationHoldParams) (*LegalHold, error) {
+	row := q.db.QueryRow(ctx, insertPreservationHold,
+		arg.LegalHoldID,
+		arg.DocumentID,
+		arg.DocumentVersionID,
+		arg.CaseReference,
+		arg.Reason,
+		arg.PlacedByUserID,
+		arg.PlacedAt,
+	)
+	var i LegalHold
+	err := row.Scan(
+		&i.LegalHoldID,
+		&i.DocumentID,
+		&i.DocumentVersionID,
+		&i.CaseReference,
+		&i.Reason,
+		&i.Status,
+		&i.PlacedByUserID,
+		&i.PlacedAt,
+		&i.ReleasedByUserID,
+		&i.ReleasedAt,
+		&i.ReleaseReason,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.RowVersion,
+	)
+	return &i, err
+}
+
 const insertRecycleItem = `-- name: InsertRecycleItem :one
 INSERT INTO recycle_items (
   recycle_item_id, namespace_entry_id, original_space_id, original_parent_folder_id,
@@ -508,6 +664,65 @@ func (q *Queries) ListExpiredActiveRecycleItems(ctx context.Context, arg *ListEx
 			&i.EntryType,
 			&i.CurrentName,
 			&i.LifecycleStatus,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPreservationHolds = `-- name: ListPreservationHolds :many
+SELECT legal_hold_id, document_id, document_version_id, case_reference, reason, status, placed_by_user_id, placed_at, released_by_user_id, released_at, release_reason, created_at, updated_at, row_version
+FROM legal_holds
+WHERE ($1::uuid IS NULL OR document_id = $1::uuid)
+  AND ($2::text IS NULL OR status = $2::text)
+  AND ($3::text IS NULL OR case_reference ILIKE '%' || $3::text || '%')
+ORDER BY placed_at DESC, legal_hold_id DESC
+LIMIT $5::integer OFFSET $4::bigint
+`
+
+type ListPreservationHoldsParams struct {
+	DocumentID    pgtype.UUID
+	Status        pgtype.Text
+	CaseReference pgtype.Text
+	PageOffset    int64
+	PageSize      int32
+}
+
+func (q *Queries) ListPreservationHolds(ctx context.Context, arg *ListPreservationHoldsParams) ([]*LegalHold, error) {
+	rows, err := q.db.Query(ctx, listPreservationHolds,
+		arg.DocumentID,
+		arg.Status,
+		arg.CaseReference,
+		arg.PageOffset,
+		arg.PageSize,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*LegalHold{}
+	for rows.Next() {
+		var i LegalHold
+		if err := rows.Scan(
+			&i.LegalHoldID,
+			&i.DocumentID,
+			&i.DocumentVersionID,
+			&i.CaseReference,
+			&i.Reason,
+			&i.Status,
+			&i.PlacedByUserID,
+			&i.PlacedAt,
+			&i.ReleasedByUserID,
+			&i.ReleasedAt,
+			&i.ReleaseReason,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.RowVersion,
 		); err != nil {
 			return nil, err
 		}
@@ -750,6 +965,56 @@ func (q *Queries) MoveRestoreLifecycleRoot(ctx context.Context, arg *MoveRestore
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+		&i.RowVersion,
+	)
+	return &i, err
+}
+
+const releasePreservationHold = `-- name: ReleasePreservationHold :one
+UPDATE legal_holds
+SET status = 'RELEASED',
+    released_by_user_id = $2,
+    released_at = $3,
+    release_reason = $4,
+    updated_at = $3,
+    row_version = row_version + 1
+WHERE legal_hold_id = $1
+  AND row_version = $5
+  AND status = 'ACTIVE'
+RETURNING legal_hold_id, document_id, document_version_id, case_reference, reason, status, placed_by_user_id, placed_at, released_by_user_id, released_at, release_reason, created_at, updated_at, row_version
+`
+
+type ReleasePreservationHoldParams struct {
+	LegalHoldID      pgtype.UUID
+	ReleasedByUserID pgtype.UUID
+	ReleasedAt       pgtype.Timestamptz
+	ReleaseReason    pgtype.Text
+	RowVersion       int64
+}
+
+func (q *Queries) ReleasePreservationHold(ctx context.Context, arg *ReleasePreservationHoldParams) (*LegalHold, error) {
+	row := q.db.QueryRow(ctx, releasePreservationHold,
+		arg.LegalHoldID,
+		arg.ReleasedByUserID,
+		arg.ReleasedAt,
+		arg.ReleaseReason,
+		arg.RowVersion,
+	)
+	var i LegalHold
+	err := row.Scan(
+		&i.LegalHoldID,
+		&i.DocumentID,
+		&i.DocumentVersionID,
+		&i.CaseReference,
+		&i.Reason,
+		&i.Status,
+		&i.PlacedByUserID,
+		&i.PlacedAt,
+		&i.ReleasedByUserID,
+		&i.ReleasedAt,
+		&i.ReleaseReason,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.RowVersion,
 	)
 	return &i, err

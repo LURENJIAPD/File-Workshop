@@ -21,6 +21,7 @@ type Repository interface {
 	MarkSharesSourceUnavailable(context.Context, uuid.UUID, time.Time) error
 	TouchSpaceSecurityEpoch(context.Context, uuid.UUID, time.Time) error
 	ActiveLegalHoldExists(context.Context, uuid.UUID) (bool, error)
+	GetDocumentRef(context.Context, uuid.UUID) (domain.DocumentRef, error)
 
 	InsertRecycleItem(context.Context, uuid.UUID, domain.Entry, uuid.UUID, time.Time, time.Time) (domain.RecycleItem, error)
 	GetRecycleItem(context.Context, uuid.UUID) (domain.RecycleItem, error)
@@ -30,6 +31,12 @@ type Repository interface {
 	ListExpiredActiveRecycleItems(context.Context, time.Time, int) ([]domain.RecycleItem, error)
 	RestoreRecycleItem(context.Context, uuid.UUID, uuid.UUID, int64, time.Time) (domain.RecycleItem, error)
 	MarkRecycleItemPurging(context.Context, uuid.UUID, int64, time.Time) (domain.RecycleItem, error)
+	InsertPreservationHold(context.Context, domain.PreservationHold) (domain.PreservationHold, error)
+	GetPreservationHold(context.Context, uuid.UUID) (domain.PreservationHold, error)
+	GetPreservationHoldForUpdate(context.Context, uuid.UUID) (domain.PreservationHold, error)
+	CountPreservationHolds(context.Context, domain.PreservationHoldListFilter) (int64, error)
+	ListPreservationHolds(context.Context, domain.PreservationHoldListFilter) ([]domain.PreservationHold, error)
+	ReleasePreservationHold(context.Context, uuid.UUID, uuid.UUID, string, int64, time.Time) (domain.PreservationHold, error)
 
 	TryCreateIdempotency(context.Context, uuid.UUID, uuid.UUID, string, string, []byte, time.Time, time.Time) (bool, error)
 	GetIdempotency(context.Context, uuid.UUID, string, string) (domain.IdempotencyRecord, error)

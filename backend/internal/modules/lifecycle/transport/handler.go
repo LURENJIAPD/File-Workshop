@@ -195,12 +195,132 @@ func (h *Handler) ScanExpiredRecycleItems(ctx context.Context, request api.ScanE
 		return nil, err
 	}
 	return api.ScanExpiredRecycleItems200JSONResponse(api.ScanExpiredRecycleItemsResponse{
-		Scanned:          result.Scanned,
-		Enqueued:         result.Enqueued,
-		SkippedLegalHold: result.SkippedLegalHold,
-		JobType:          api.ScanExpiredRecycleItemsResponseJobType(result.JobType),
-		RequestId:        requestID,
+		Scanned:                 result.Scanned,
+		Enqueued:                result.Enqueued,
+		SkippedPreservationHold: result.SkippedPreservationHold,
+		JobType:                 api.ScanExpiredRecycleItemsResponseJobType(result.JobType),
+		RequestId:               requestID,
 	}), nil
+}
+
+func (h *Handler) PlacePreservationHold(ctx context.Context, request api.PlacePreservationHoldRequestObject) (api.PlacePreservationHoldResponseObject, error) {
+	ginContext, actor, requestID, err := h.authenticate(ctx)
+	if err != nil {
+		return api.PlacePreservationHold401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	if !h.originAllowed(ginContext) {
+		return api.PlacePreservationHold403JSONResponse{ForbiddenJSONResponse: forbidden(requestID, true)}, nil
+	}
+	if request.Body == nil {
+		return api.PlacePreservationHold400JSONResponse{InvalidRequestJSONResponse: invalidRequest(requestID)}, nil
+	}
+	hold, err := h.service.PlacePreservationHold(ginContext.Request.Context(), actor, uuid.UUID(request.DocumentId), domain.PlacePreservationHoldInput{
+		DocumentVersionID: optionalAPIUUID(request.Body.DocumentVersionId),
+		CaseReference:     request.Body.CaseReference,
+		Reason:            request.Body.Reason,
+		IdempotencyKey:    string(request.Params.IdempotencyKey),
+		RequestID:         databaseRequestID(requestID),
+	})
+	if err != nil {
+		if bad, denied, _, conflictResponse, code := mapError(err, requestID); code != "" {
+			switch code {
+			case "400":
+				return api.PlacePreservationHold400JSONResponse{InvalidRequestJSONResponse: bad}, nil
+			case "403":
+				return api.PlacePreservationHold403JSONResponse{ForbiddenJSONResponse: denied}, nil
+			case "404":
+				return api.PlacePreservationHold404JSONResponse{NotFoundJSONResponse: preservationNotFound(requestID)}, nil
+			case "409":
+				return api.PlacePreservationHold409JSONResponse{ConflictJSONResponse: conflictResponse}, nil
+			}
+		}
+		return nil, err
+	}
+	return api.PlacePreservationHold201JSONResponse(api.PreservationHoldResponse{Hold: apiPreservationHold(hold), RequestId: requestID}), nil
+}
+
+func (h *Handler) ListPreservationHolds(ctx context.Context, request api.ListPreservationHoldsRequestObject) (api.ListPreservationHoldsResponseObject, error) {
+	_, actor, requestID, err := h.authenticate(ctx)
+	if err != nil {
+		return api.ListPreservationHolds401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	page, pageSize := pagination(request.Params.Page, request.Params.PageSize)
+	filter := domain.PreservationHoldListFilter{DocumentID: optionalAPIUUID(request.Params.DocumentId), Page: page, PageSize: pageSize}
+	if request.Params.Status != nil {
+		status := string(*request.Params.Status)
+		filter.Status = &status
+	}
+	if request.Params.CaseReference != nil {
+		value := *request.Params.CaseReference
+		filter.CaseReference = &value
+	}
+	result, err := h.service.ListPreservationHolds(ctx, actor, filter)
+	if err != nil {
+		if bad, denied, _, _, code := mapError(err, requestID); code != "" {
+			switch code {
+			case "400":
+				return api.ListPreservationHolds400JSONResponse{InvalidRequestJSONResponse: bad}, nil
+			case "403":
+				return api.ListPreservationHolds403JSONResponse{ForbiddenJSONResponse: denied}, nil
+			}
+		}
+		return nil, err
+	}
+	items := make([]api.PreservationHold, 0, len(result.Items))
+	for _, item := range result.Items {
+		items = append(items, apiPreservationHold(item))
+	}
+	return api.ListPreservationHolds200JSONResponse(api.PreservationHoldListResponse{Items: items, Page: result.Page, PageSize: result.PageSize, Total: result.Total, RequestId: requestID}), nil
+}
+
+func (h *Handler) GetPreservationHold(ctx context.Context, request api.GetPreservationHoldRequestObject) (api.GetPreservationHoldResponseObject, error) {
+	_, actor, requestID, err := h.authenticate(ctx)
+	if err != nil {
+		return api.GetPreservationHold401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	hold, err := h.service.GetPreservationHold(ctx, actor, uuid.UUID(request.PreservationHoldId))
+	if err != nil {
+		if _, denied, _, _, code := mapError(err, requestID); code != "" {
+			switch code {
+			case "403":
+				return api.GetPreservationHold403JSONResponse{ForbiddenJSONResponse: denied}, nil
+			case "404":
+				return api.GetPreservationHold404JSONResponse{NotFoundJSONResponse: preservationNotFound(requestID)}, nil
+			}
+		}
+		return nil, err
+	}
+	return api.GetPreservationHold200JSONResponse(api.PreservationHoldResponse{Hold: apiPreservationHold(hold), RequestId: requestID}), nil
+}
+
+func (h *Handler) ReleasePreservationHold(ctx context.Context, request api.ReleasePreservationHoldRequestObject) (api.ReleasePreservationHoldResponseObject, error) {
+	ginContext, actor, requestID, err := h.authenticate(ctx)
+	if err != nil {
+		return api.ReleasePreservationHold401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	if !h.originAllowed(ginContext) {
+		return api.ReleasePreservationHold403JSONResponse{ForbiddenJSONResponse: forbidden(requestID, true)}, nil
+	}
+	if request.Body == nil {
+		return api.ReleasePreservationHold400JSONResponse{InvalidRequestJSONResponse: invalidRequest(requestID)}, nil
+	}
+	hold, err := h.service.ReleasePreservationHold(ginContext.Request.Context(), actor, uuid.UUID(request.PreservationHoldId), domain.ReleasePreservationHoldInput{Reason: request.Body.Reason, RowVersion: request.Body.RowVersion, RequestID: databaseRequestID(requestID)})
+	if err != nil {
+		if bad, denied, _, conflictResponse, code := mapError(err, requestID); code != "" {
+			switch code {
+			case "400":
+				return api.ReleasePreservationHold400JSONResponse{InvalidRequestJSONResponse: bad}, nil
+			case "403":
+				return api.ReleasePreservationHold403JSONResponse{ForbiddenJSONResponse: denied}, nil
+			case "404":
+				return api.ReleasePreservationHold404JSONResponse{NotFoundJSONResponse: preservationNotFound(requestID)}, nil
+			case "409":
+				return api.ReleasePreservationHold409JSONResponse{ConflictJSONResponse: conflictResponse}, nil
+			}
+		}
+		return nil, err
+	}
+	return api.ReleasePreservationHold200JSONResponse(api.PreservationHoldResponse{Hold: apiPreservationHold(hold), RequestId: requestID}), nil
 }
 
 func (h *Handler) authenticate(ctx context.Context) (*gin.Context, domain.Actor, string, error) {
@@ -254,6 +374,10 @@ func notFound(requestID string) api.NotFoundJSONResponse {
 	return api.NotFoundJSONResponse{Body: api.ErrorResponse{Code: "RECYCLE_ITEM_NOT_FOUND", Message: "回收站项目不存在或不可见", RequestId: requestID}, Headers: api.NotFoundResponseHeaders{XRequestID: &requestID}}
 }
 
+func preservationNotFound(requestID string) api.NotFoundJSONResponse {
+	return api.NotFoundJSONResponse{Body: api.ErrorResponse{Code: "PRESERVATION_HOLD_NOT_FOUND", Message: "资料或资料保全记录不存在", RequestId: requestID}, Headers: api.NotFoundResponseHeaders{XRequestID: &requestID}}
+}
+
 func conflict(requestID string, err error) api.ConflictJSONResponse {
 	code, message := "RECYCLE_CONFLICT", "回收生命周期数据发生冲突"
 	switch {
@@ -265,8 +389,8 @@ func conflict(requestID string, err error) api.ConflictJSONResponse {
 		code, message = "RECYCLE_ROOT_OPERATION_FORBIDDEN", "根文件夹不允许执行该操作"
 	case errors.Is(err, domain.ErrNameConflict):
 		code, message = "RECYCLE_NAME_CONFLICT", "目标位置已存在同名文件或文件夹"
-	case errors.Is(err, domain.ErrLegalHoldActive):
-		code, message = "LEGAL_HOLD_ACTIVE", "资源存在有效法务保留，不能永久清理"
+	case errors.Is(err, domain.ErrPreservationHoldActive):
+		code, message = "PRESERVATION_HOLD_ACTIVE", "资源存在有效资料保全，不能永久清理"
 	}
 	return api.ConflictJSONResponse{Body: api.ErrorResponse{Code: code, Message: message, RequestId: requestID}, Headers: api.ConflictResponseHeaders{XRequestID: &requestID}}
 }
@@ -300,7 +424,7 @@ func mapError(err error, requestID string) (api.InvalidRequestJSONResponse, api.
 		return api.InvalidRequestJSONResponse{}, forbidden(requestID, false), api.NotFoundJSONResponse{}, api.ConflictJSONResponse{}, "403"
 	case errors.Is(err, domain.ErrNotFound):
 		return api.InvalidRequestJSONResponse{}, api.ForbiddenJSONResponse{}, notFound(requestID), api.ConflictJSONResponse{}, "404"
-	case errors.Is(err, domain.ErrConflict), errors.Is(err, domain.ErrVersionConflict), errors.Is(err, domain.ErrIdempotencyConflict), errors.Is(err, domain.ErrRootOperation), errors.Is(err, domain.ErrNameConflict), errors.Is(err, domain.ErrLegalHoldActive):
+	case errors.Is(err, domain.ErrConflict), errors.Is(err, domain.ErrVersionConflict), errors.Is(err, domain.ErrIdempotencyConflict), errors.Is(err, domain.ErrRootOperation), errors.Is(err, domain.ErrNameConflict), errors.Is(err, domain.ErrPreservationHoldActive):
 		return api.InvalidRequestJSONResponse{}, api.ForbiddenJSONResponse{}, api.NotFoundJSONResponse{}, conflict(requestID, err), "409"
 	default:
 		return api.InvalidRequestJSONResponse{}, api.ForbiddenJSONResponse{}, api.NotFoundJSONResponse{}, api.ConflictJSONResponse{}, ""
@@ -338,6 +462,32 @@ func apiRecycleItem(value domain.RecycleItem) api.RecycleItem {
 		result.RestoredToFolderId = &folderID
 	}
 	result.RestoredAt = value.RestoredAt
+	return result
+}
+
+func apiPreservationHold(value domain.PreservationHold) api.PreservationHold {
+	result := api.PreservationHold{
+		PreservationHoldId: openapi_types.UUID(value.ID),
+		DocumentId:         openapi_types.UUID(value.DocumentID),
+		CaseReference:      value.CaseReference,
+		Reason:             value.Reason,
+		Status:             api.PreservationHoldStatus(value.Status),
+		PlacedByUserId:     openapi_types.UUID(value.PlacedByUserID),
+		PlacedAt:           value.PlacedAt,
+		CreatedAt:          value.CreatedAt,
+		UpdatedAt:          value.UpdatedAt,
+		RowVersion:         value.RowVersion,
+	}
+	if value.DocumentVersionID != nil {
+		versionID := openapi_types.UUID(*value.DocumentVersionID)
+		result.DocumentVersionId = &versionID
+	}
+	if value.ReleasedByUserID != nil {
+		userID := openapi_types.UUID(*value.ReleasedByUserID)
+		result.ReleasedByUserId = &userID
+	}
+	result.ReleasedAt = value.ReleasedAt
+	result.ReleaseReason = value.ReleaseReason
 	return result
 }
 

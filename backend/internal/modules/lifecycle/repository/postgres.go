@@ -112,6 +112,17 @@ func (r *PostgreSQL) ActiveLegalHoldExists(ctx context.Context, rootID uuid.UUID
 	return value, mapDatabaseError(err)
 }
 
+func (r *PostgreSQL) GetDocumentRef(ctx context.Context, documentID uuid.UUID) (domain.DocumentRef, error) {
+	row, err := r.queries.GetLifecycleDocumentRef(ctx, pgUUID(documentID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.DocumentRef{}, domain.ErrNotFound
+	}
+	if err != nil {
+		return domain.DocumentRef{}, mapDatabaseError(err)
+	}
+	return domain.DocumentRef{ID: uuidValue(row.DocumentID), SpaceID: uuidValue(row.SpaceID), Name: row.Name, LifecycleStatus: row.LifecycleStatus, CurrentVersionID: optionalGoogleUUID(row.CurrentVersionID)}, nil
+}
+
 func (r *PostgreSQL) InsertRecycleItem(ctx context.Context, recycleID uuid.UUID, entry domain.Entry, deletedBy uuid.UUID, deletedAt, expiresAt time.Time) (domain.RecycleItem, error) {
 	row, err := r.queries.InsertRecycleItem(ctx, &dbgen.InsertRecycleItemParams{RecycleItemID: pgUUID(recycleID), NamespaceEntryID: pgUUID(entry.ID), OriginalSpaceID: pgUUID(entry.SpaceID), OriginalParentFolderID: optionalUUID(entry.ParentFolderID), OriginalName: entry.Name, DeletedByUserID: pgUUID(deletedBy), DeletedAt: timestamptz(deletedAt), ExpiresAt: timestamptz(expiresAt)})
 	if err != nil {
@@ -189,6 +200,64 @@ func (r *PostgreSQL) MarkRecycleItemPurging(ctx context.Context, recycleID uuid.
 	return r.GetRecycleItem(ctx, recycleID)
 }
 
+func (r *PostgreSQL) InsertPreservationHold(ctx context.Context, hold domain.PreservationHold) (domain.PreservationHold, error) {
+	row, err := r.queries.InsertPreservationHold(ctx, &dbgen.InsertPreservationHoldParams{LegalHoldID: pgUUID(hold.ID), DocumentID: pgUUID(hold.DocumentID), DocumentVersionID: optionalUUID(hold.DocumentVersionID), CaseReference: hold.CaseReference, Reason: hold.Reason, PlacedByUserID: pgUUID(hold.PlacedByUserID), PlacedAt: timestamptz(hold.PlacedAt)})
+	if err != nil {
+		return domain.PreservationHold{}, mapDatabaseError(err)
+	}
+	return preservationHold(row), nil
+}
+
+func (r *PostgreSQL) GetPreservationHold(ctx context.Context, id uuid.UUID) (domain.PreservationHold, error) {
+	row, err := r.queries.GetPreservationHold(ctx, pgUUID(id))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.PreservationHold{}, domain.ErrNotFound
+	}
+	if err != nil {
+		return domain.PreservationHold{}, mapDatabaseError(err)
+	}
+	return preservationHold(row), nil
+}
+
+func (r *PostgreSQL) GetPreservationHoldForUpdate(ctx context.Context, id uuid.UUID) (domain.PreservationHold, error) {
+	row, err := r.queries.GetPreservationHoldForUpdate(ctx, pgUUID(id))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.PreservationHold{}, domain.ErrNotFound
+	}
+	if err != nil {
+		return domain.PreservationHold{}, mapDatabaseError(err)
+	}
+	return preservationHold(row), nil
+}
+
+func (r *PostgreSQL) CountPreservationHolds(ctx context.Context, filter domain.PreservationHoldListFilter) (int64, error) {
+	total, err := r.queries.CountPreservationHolds(ctx, &dbgen.CountPreservationHoldsParams{DocumentID: optionalUUID(filter.DocumentID), Status: optionalText(filter.Status), CaseReference: optionalText(filter.CaseReference)})
+	return total, mapDatabaseError(err)
+}
+
+func (r *PostgreSQL) ListPreservationHolds(ctx context.Context, filter domain.PreservationHoldListFilter) ([]domain.PreservationHold, error) {
+	rows, err := r.queries.ListPreservationHolds(ctx, &dbgen.ListPreservationHoldsParams{DocumentID: optionalUUID(filter.DocumentID), Status: optionalText(filter.Status), CaseReference: optionalText(filter.CaseReference), PageSize: int32(filter.PageSize), PageOffset: pageOffset(filter.Page, filter.PageSize)})
+	if err != nil {
+		return nil, mapDatabaseError(err)
+	}
+	items := make([]domain.PreservationHold, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, preservationHold(row))
+	}
+	return items, nil
+}
+
+func (r *PostgreSQL) ReleasePreservationHold(ctx context.Context, id uuid.UUID, releasedBy uuid.UUID, reason string, rowVersion int64, at time.Time) (domain.PreservationHold, error) {
+	row, err := r.queries.ReleasePreservationHold(ctx, &dbgen.ReleasePreservationHoldParams{LegalHoldID: pgUUID(id), ReleasedByUserID: pgUUID(releasedBy), ReleasedAt: timestamptz(at), ReleaseReason: pgtype.Text{String: reason, Valid: true}, RowVersion: rowVersion})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.PreservationHold{}, domain.ErrVersionConflict
+	}
+	if err != nil {
+		return domain.PreservationHold{}, mapDatabaseError(err)
+	}
+	return preservationHold(row), nil
+}
+
 func (r *PostgreSQL) TryCreateIdempotency(ctx context.Context, recordID, actorID uuid.UUID, operation, key string, hash []byte, expiresAt, now time.Time) (bool, error) {
 	rows, err := r.queries.TryCreateLifecycleIdempotency(ctx, &dbgen.TryCreateLifecycleIdempotencyParams{IdempotencyRecordID: pgUUID(recordID), UserID: pgUUID(actorID), Operation: operation, IdempotencyKey: key, RequestHash: hash, ExpiresAt: timestamptz(expiresAt), CreatedAt: timestamptz(now)})
 	return rows == 1, mapDatabaseError(err)
@@ -244,6 +313,10 @@ func recycleFromFields(id, entryID pgtype.UUID, entryType string, spaceID, paren
 	return domain.RecycleItem{ID: uuidValue(id), EntryID: uuidValue(entryID), EntryType: entryType, OriginalSpaceID: uuidValue(spaceID), OriginalParentFolderID: optionalGoogleUUID(parentID), OriginalName: originalName, CurrentName: currentName, LifecycleStatus: lifecycle, DeletedByUserID: uuidValue(deletedBy), DeletedAt: deletedAt.Time, ExpiresAt: expiresAt.Time, Status: status, RestoredToFolderID: optionalGoogleUUID(restoredTo), RestoredAt: optionalTime(restoredAt), CreatedAt: createdAt.Time, UpdatedAt: updatedAt.Time, RowVersion: rowVersion}
 }
 
+func preservationHold(row *dbgen.LegalHold) domain.PreservationHold {
+	return domain.PreservationHold{ID: uuidValue(row.LegalHoldID), DocumentID: uuidValue(row.DocumentID), DocumentVersionID: optionalGoogleUUID(row.DocumentVersionID), CaseReference: row.CaseReference, Reason: row.Reason, Status: row.Status, PlacedByUserID: uuidValue(row.PlacedByUserID), PlacedAt: row.PlacedAt.Time, ReleasedByUserID: optionalGoogleUUID(row.ReleasedByUserID), ReleasedAt: optionalTime(row.ReleasedAt), ReleaseReason: optionalString(row.ReleaseReason), CreatedAt: row.CreatedAt.Time, UpdatedAt: row.UpdatedAt.Time, RowVersion: row.RowVersion}
+}
+
 func mapDatabaseError(err error) error {
 	if err == nil {
 		return nil
@@ -253,6 +326,8 @@ func mapDatabaseError(err error) error {
 		switch pgErr.Code {
 		case "23505":
 			return domain.ErrNameConflict
+		case "23503":
+			return domain.ErrNotFound
 		case "23514":
 			return domain.ErrConflict
 		}
