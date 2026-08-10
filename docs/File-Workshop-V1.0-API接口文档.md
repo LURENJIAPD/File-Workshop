@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.7
+> 文档版本：V0.8
 > 文档状态：按模块持续编制  
 > 最近更新：2026-08-10
-> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 16 后台任务基础调度与运维接口
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 16 后台任务基础调度与运维接口
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -23,7 +23,8 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 | 03 | 组织与空间 | 已完成当前模块边界 | 23 | 2026-08-05 |
 | 04 | 权限与管理委派 | 已完成当前模块边界 | 14 | 2026-08-05 |
 | 05 | 文件目录 | 已完成当前模块边界 | 6 | 2026-08-10 |
-| 06～15 | 后续系统模块 | 未收录 | 0 | — |
+| 06 | 文件传输与存储 | 已收录上传控制面当前边界 | 4 | 2026-08-10 |
+| 07～15 | 后续系统模块 | 未收录 | 0 | — |
 | 16 | 后台任务 | 已完成基础调度与管理员运维接口 | 4 | 2026-08-10 |
 
 ## 3. 全局接口约定
@@ -782,9 +783,148 @@ Space 授权只有在 `inheritToDescendants=true` 时才能作用于后代；Fol
 - `backend/tests/integration/files_http_test.go`
 - `backend/scripts/verify.ps1`
 
-## 10. 模块 16：后台任务
+## 10. 模块 06：文件传输与存储
 
 ### 10.1 当前边界
+
+本周期先完成上传控制面，不伪造完整上传闭环。对象存储仍通过项目内 Object Storage Interface 访问 S3 Compatible API，默认实现面向 SeaweedFS S3 Gateway；业务代码不依赖 SeaweedFS 私有路径、Volume/Filer 元数据或管理 API。
+
+当前能力：
+
+- 创建上传会话时先创建 S3 Multipart Upload，再在 PostgreSQL 事务内预留空间配额、写入 `quota_reservations/upload_sessions`、完成幂等记录和 Outbox 事件；
+- 对象存储未启用或不可用时返回稳定错误，不创建数据库上传会话；
+- 对象 Key 由系统生成，不使用用户文件名，也不在上传会话响应中暴露；
+- 支持获取上传会话详情；
+- 支持获取指定分片的短有效期 PUT 预签名 URL；
+- 支持按 `rowVersion` 取消上传会话，并释放配额预留；
+- `providerUploadId/temporaryObjectKey` 仅用于服务端内部和对象存储适配层，不进入 REST 响应。
+
+尚未完成：完成上传提交、`upload_parts` 分片登记、最终 Hash 校验、`storage_objects/document_versions` 写入、下载、Range、真实 SeaweedFS 兼容性测试和孤儿对象清理。这些继续属于模块 06 后续周期。
+
+### 10.2 接口清单
+
+| 接口 | Operation ID | 成功响应 | 关键约束 |
+|---|---|---:|---|
+| `POST /api/v1/uploads` | `createUploadSession` | `201/UploadSessionResponse` | 要求 `Idempotency-Key`；创建 S3 Multipart、预留配额并写入上传会话；对象存储未启用时返回 `409/STORAGE_UNAVAILABLE` |
+| `GET /api/v1/uploads/{uploadSessionId}` | `getUploadSession` | `200/UploadSessionResponse` | 仅会话创建者或 `SYSTEM_ADMIN` 可读；不返回对象 Key 和存储上传 ID |
+| `POST /api/v1/uploads/{uploadSessionId}/parts/{partNumber}/presign` | `presignUploadPart` | `200/PresignedUploadPartResponse` | `partNumber` 范围 `1..expectedPartCount`；会话状态必须为 `INITIATED/UPLOADING` 且未过期 |
+| `POST /api/v1/uploads/{uploadSessionId}/abort` | `abortUploadSession` | `200/UploadSessionResponse` | 请求体必须包含 `reason/rowVersion`；仅 `INITIATED/UPLOADING/FAILED` 可取消；取消后释放配额 |
+
+### 10.3 创建上传会话
+
+请求示例：
+
+```http
+POST /api/v1/uploads
+Idempotency-Key: upload-20260810-0001
+Content-Type: application/json
+```
+
+```json
+{
+  "spaceId": "0198a8e8-cb60-7c70-a4f6-3f011c89a021",
+  "folderId": "0198a8e8-d0b1-7c80-b83d-27d790e69a61",
+  "uploadIntent": "CREATE",
+  "fileName": "工艺图纸.pdf",
+  "declaredSizeBytes": 9437184,
+  "partSizeBytes": 5242880,
+  "declaredMimeType": "application/pdf"
+}
+```
+
+响应示例：
+
+```json
+{
+  "session": {
+    "uploadSessionId": "0198a8e9-0c8a-7d21-9ea9-e9e70d477eed",
+    "userId": "0198a8e7-9b6a-7f7f-b120-1d111ddca001",
+    "spaceId": "0198a8e8-cb60-7c70-a4f6-3f011c89a021",
+    "folderId": "0198a8e8-d0b1-7c80-b83d-27d790e69a61",
+    "quotaReservationId": "0198a8e9-0c8b-7465-95a3-fb83ef6ce101",
+    "uploadIntent": "CREATE",
+    "fileName": "工艺图纸.pdf",
+    "normalizedName": "工艺图纸.pdf",
+    "declaredSizeBytes": 9437184,
+    "declaredMimeType": "application/pdf",
+    "partSizeBytes": 5242880,
+    "expectedPartCount": 2,
+    "status": "INITIATED",
+    "expiresAt": "2026-08-11T02:00:00Z",
+    "createdAt": "2026-08-10T02:00:00Z",
+    "updatedAt": "2026-08-10T02:00:00Z",
+    "rowVersion": 1
+  },
+  "requestId": "019fcc32-0bc6-7d82-aa70-62d5324b1fbb"
+}
+```
+
+`NEW_VERSION` 上传必须传入 `targetDocumentId`，可选传入 `expectedCurrentVersionId/expectedLockFencingToken/lockTokenHashHex` 作为后续完成提交时的并发条件。当前周期只保存这些条件，不执行完成提交。
+
+### 10.4 分片预签名
+
+请求：
+
+```http
+POST /api/v1/uploads/0198a8e9-0c8a-7d21-9ea9-e9e70d477eed/parts/1/presign
+```
+
+响应：
+
+```json
+{
+  "part": {
+    "uploadSessionId": "0198a8e9-0c8a-7d21-9ea9-e9e70d477eed",
+    "partNumber": 1,
+    "method": "PUT",
+    "url": "https://s3.example.local/file-workshop?...",
+    "headers": {},
+    "expiresAt": "2026-08-10T02:15:00Z"
+  },
+  "requestId": "019fcc32-0bc6-7d82-aa70-62d5324b1fbb"
+}
+```
+
+客户端必须使用返回的 `method/url/headers` 上传该分片二进制内容。服务端不接收 Base64 文件内容，也不要求 API 进程整体读取大文件。
+
+### 10.5 取消上传会话
+
+请求：
+
+```json
+{
+  "rowVersion": 2,
+  "reason": "用户取消上传"
+}
+```
+
+成功后会话状态变为 `ABORTED`，`failureCode=USER_ABORTED`，配额预留标记为 `RELEASED`。
+
+### 10.6 错误码和接口测试依据
+
+除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN/AUTH_ORIGIN_REJECTED` 外，本模块使用：
+
+| HTTP | 错误码 | 含义 |
+|---:|---|---|
+| 404 | `UPLOAD_SESSION_NOT_FOUND` | 上传会话、目标文件夹、目标文档或空间不存在、非活动或不可见 |
+| 409 | `UPLOAD_CONFLICT` | 上传会话状态、分片范围、配额释放或数据库事实冲突 |
+| 409 | `ROW_VERSION_CONFLICT` | `rowVersion` 已过期 |
+| 409 | `IDEMPOTENCY_CONFLICT` | 同一幂等键对应不同请求体 |
+| 409 | `STORAGE_UNAVAILABLE` | 对象存储未启用或暂不可用 |
+| 409 | `SPACE_QUOTA_EXCEEDED` | 空间容量不足，无法预留本次上传声明大小 |
+
+正式接口测试至少覆盖：未登录拒绝；错误 Origin 拒绝；对象存储禁用时不创建数据库会话；创建会话成功后不暴露对象 Key；幂等重放和幂等冲突；空间配额不足；普通用户越权；`NEW_VERSION` 缺少目标文档拒绝；预签名分片号越界；过期/已取消会话拒绝预签名；按陈旧 `rowVersion` 取消失败；取消后释放配额。
+
+现有自动化证据：
+
+- `backend/internal/modules/uploads/application/service_test.go`
+- `backend/internal/platform/objectstorage/disabled_test.go`
+- `backend/internal/platform/objectstorage/s3_test.go`
+- `backend/scripts/verify.ps1`
+
+## 11. 模块 16：后台任务
+
+### 11.1 当前边界
 
 本周期完成后台任务模块的基础调度与管理员运维接口。模块仍不实现具体业务处理器，例如审计归档、文件 Hash、病毒扫描、预览、搜索索引、生命周期清理或 AI 任务；这些处理器由对应业务模块后续注册。当前 REST API 只面向 `SYSTEM_ADMIN`，用于查看 Outbox/Job 积压与失败项，并对 `FAILED/DEAD` 单项执行受控重试。
 
@@ -801,7 +941,7 @@ Space 授权只有在 `inheritToDescendants=true` 时才能作用于后代；Fol
 - 使用 `context.Context`、处理器超时和系统信号完成优雅停止；
 - Redis 不参与任务事实存储。
 
-### 10.2 配置项
+### 11.2 配置项
 
 | 环境变量 | 默认值 | 含义 |
 |---|---:|---|
@@ -824,7 +964,7 @@ go run ./cmd/worker
 
 注意：模块 11 审计消费者已注册用户、组织、权限和文件目录模块当前产生的 Outbox 事件；未注册事件类型和未注册 Job 类型仍会继续保留，不会被空消费。
 
-### 10.3 管理员运维接口
+### 11.3 管理员运维接口
 
 | 接口 | Operation ID | 成功响应 | 关键约束 |
 |---|---|---:|---|
@@ -858,7 +998,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 
 后台任务响应字段严格来自 `background_jobs`：`backgroundJobId/jobType/targetDocumentId/targetDocumentVersionId/targetStorageObjectId/payloadSchemaVersion/payload/deduplicationKey/priority/status/attemptCount/maxAttempts/availableAt/lockedBy/lockedAt/leaseUntil/heartbeatAt/startedAt/completedAt/lastErrorCode/lastErrorSummary/createdAt/updatedAt/rowVersion`。
 
-### 10.4 错误码和接口测试依据
+### 11.4 错误码和接口测试依据
 
 除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN` 外，本模块使用：
 
@@ -877,9 +1017,9 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 - `backend/tests/integration/background_admin_http_test.go`
 - `backend/scripts/verify.ps1`
 
-## 11. 模块 11：审计
+## 12. 模块 11：审计
 
-### 11.1 当前边界
+### 12.1 当前边界
 
 本周期完成审计模块的基础查询、详情、完整性状态和哈希链校验能力，并将用户、组织、权限、文件目录模块当前产生的 Outbox 事件注册为审计消费者。当前不实现审计导出、归档、WORM、批次锚定和安全告警；这些能力依赖后续对象存储与归档周期。
 
@@ -893,7 +1033,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 
 所有 REST 查询接口当前仅允许 `SYSTEM_ADMIN` 访问。分页统一使用 `page/pageSize`，默认 `1/50`，最大 `pageSize=200`。
 
-### 11.2 审计接口
+### 12.2 审计接口
 
 | 接口 | Operation ID | 成功响应 | 关键约束 |
 |---|---|---:|---|
@@ -923,7 +1063,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 }
 ```
 
-### 11.3 字段与映射
+### 12.3 字段与映射
 
 `AuditEvent` 字段严格来自 `audit_events` 和 OpenAPI：`auditEventId/eventType/riskLevel/actorType/actorId/actorDisplayName/actorEmployeeNo/effectiveRole/adminDelegationId/shareId/resourceType/resourceId/resourceName/spaceId/organizationId/documentId/documentVersionId/action/result/failureCode/sourceChannel/ipAddress/userAgent/requestId/traceId/correlationId/reason/metadataSchemaVersion/metadata/hashSchemaVersion/chainId/sequenceNumber/previousHash/eventHash/partitionDate/createdAt`。
 
@@ -937,7 +1077,7 @@ Outbox 审计消费者的映射规则：
 - `metadata` 保留 `outboxEventId/aggregateType/aggregateId/aggregateVersion/eventSchemaVersion/deduplicationKey/sourcePayload/mappedBy` 等追踪信息；
 - `USER_ROLE_CHANGED`、`AUTH_PASSWORD_CHANGED`、权限与管理委派变更等高风险事件进入哈希链；`AUTH_ACCOUNT_LOCKED` 视为 `CRITICAL`。
 
-### 11.4 错误码和接口测试依据
+### 12.4 错误码和接口测试依据
 
 除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN` 外，本模块使用：
 
@@ -955,7 +1095,7 @@ Outbox 审计消费者的映射规则：
 - `backend/scripts/verify.ps1`
 - `go test ./internal/modules/audit/... ./...`
 
-## 12. 文档维护与冻结规则
+## 13. 文档维护与冻结规则
 
 1. 新模块先更新 `backend/api/openapi.yaml`，再生成代码和实现。
 2. 模块开发完成时，在本文档追加对应模块章节和接口测试要点，并更新第 2 章状态。

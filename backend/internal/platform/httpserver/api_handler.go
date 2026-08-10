@@ -87,6 +87,13 @@ type FilesAPI interface {
 	MoveDirectoryEntry(context.Context, api.MoveDirectoryEntryRequestObject) (api.MoveDirectoryEntryResponseObject, error)
 }
 
+type UploadsAPI interface {
+	CreateUploadSession(context.Context, api.CreateUploadSessionRequestObject) (api.CreateUploadSessionResponseObject, error)
+	GetUploadSession(context.Context, api.GetUploadSessionRequestObject) (api.GetUploadSessionResponseObject, error)
+	PresignUploadPart(context.Context, api.PresignUploadPartRequestObject) (api.PresignUploadPartResponseObject, error)
+	AbortUploadSession(context.Context, api.AbortUploadSessionRequestObject) (api.AbortUploadSessionResponseObject, error)
+}
+
 type BackgroundAPI interface {
 	ListBackgroundOutboxEvents(context.Context, api.ListBackgroundOutboxEventsRequestObject) (api.ListBackgroundOutboxEventsResponseObject, error)
 	RetryBackgroundOutboxEvent(context.Context, api.RetryBackgroundOutboxEventRequestObject) (api.RetryBackgroundOutboxEventResponseObject, error)
@@ -108,6 +115,7 @@ type APIHandler struct {
 	organizations OrganizationsAPI
 	permissions   PermissionsAPI
 	files         FilesAPI
+	uploads       UploadsAPI
 	background    BackgroundAPI
 	audit         AuditAPI
 }
@@ -115,6 +123,7 @@ type APIHandler struct {
 func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organizations OrganizationsAPI, optionalHandlers ...any) *APIHandler {
 	var permissions PermissionsAPI
 	var files FilesAPI
+	var uploads UploadsAPI
 	var background BackgroundAPI
 	var audit AuditAPI
 	for _, optional := range optionalHandlers {
@@ -124,6 +133,9 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 		if handler, ok := optional.(FilesAPI); ok {
 			files = handler
 		}
+		if handler, ok := optional.(UploadsAPI); ok {
+			uploads = handler
+		}
 		if handler, ok := optional.(BackgroundAPI); ok {
 			background = handler
 		}
@@ -131,7 +143,7 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 			audit = handler
 		}
 	}
-	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions, files: files, background: background, audit: audit}
+	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions, files: files, uploads: uploads, background: background, audit: audit}
 }
 
 func (h *APIHandler) ListAuditEvents(ctx context.Context, request api.ListAuditEventsRequestObject) (api.ListAuditEventsResponseObject, error) {
@@ -177,6 +189,19 @@ func (h *APIHandler) RenameDirectoryEntry(ctx context.Context, request api.Renam
 }
 func (h *APIHandler) MoveDirectoryEntry(ctx context.Context, request api.MoveDirectoryEntryRequestObject) (api.MoveDirectoryEntryResponseObject, error) {
 	return h.files.MoveDirectoryEntry(ctx, request)
+}
+
+func (h *APIHandler) CreateUploadSession(ctx context.Context, request api.CreateUploadSessionRequestObject) (api.CreateUploadSessionResponseObject, error) {
+	return h.uploads.CreateUploadSession(ctx, request)
+}
+func (h *APIHandler) GetUploadSession(ctx context.Context, request api.GetUploadSessionRequestObject) (api.GetUploadSessionResponseObject, error) {
+	return h.uploads.GetUploadSession(ctx, request)
+}
+func (h *APIHandler) PresignUploadPart(ctx context.Context, request api.PresignUploadPartRequestObject) (api.PresignUploadPartResponseObject, error) {
+	return h.uploads.PresignUploadPart(ctx, request)
+}
+func (h *APIHandler) AbortUploadSession(ctx context.Context, request api.AbortUploadSessionRequestObject) (api.AbortUploadSessionResponseObject, error) {
+	return h.uploads.AbortUploadSession(ctx, request)
 }
 
 func (h *APIHandler) ListAdminDelegations(ctx context.Context, request api.ListAdminDelegationsRequestObject) (api.ListAdminDelegationsResponseObject, error) {

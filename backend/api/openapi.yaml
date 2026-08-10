@@ -28,6 +28,9 @@ tags:
   - name: FileDirectory
     description: 文件夹树、Document 稳定身份和统一目录命名空间；不处理对象存储上传下载数据面。
 
+  - name: FileTransfer
+    description: 上传会话、分片预签名和对象存储控制面；二进制数据默认直传 S3 兼容对象存储。
+
   - name: Audit
     description: Audit event query, integrity status and controlled verification.
   - name: BackgroundAdministration
@@ -207,6 +210,114 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DirectoryEntryResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/uploads:
+    post:
+      operationId: createUploadSession
+      tags: [FileTransfer]
+      summary: 创建上传会话
+      description: 创建 S3 Multipart 上传会话、预留 Space 配额并写入 upload_sessions；对象存储未启用时返回冲突错误，不创建会话。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUploadSessionRequest"
+      responses:
+        "201":
+          description: 上传会话已创建。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadSessionResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/uploads/{uploadSessionId}:
+    get:
+      operationId: getUploadSession
+      tags: [FileTransfer]
+      summary: 获取上传会话
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/UploadSessionIdPath"
+      responses:
+        "200":
+          description: 上传会话详情。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadSessionResponse"
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/uploads/{uploadSessionId}/parts/{partNumber}/presign:
+    post:
+      operationId: presignUploadPart
+      tags: [FileTransfer]
+      summary: 获取上传分片预签名 URL
+      description: 返回短有效期 PUT 预签名 URL；客户端直接向对象存储上传二进制分片。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/UploadSessionIdPath"
+        - name: partNumber
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1, maximum: 10000 }
+      responses:
+        "200":
+          description: 分片上传预签名信息。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresignedUploadPartResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/uploads/{uploadSessionId}/abort:
+    post:
+      operationId: abortUploadSession
+      tags: [FileTransfer]
+      summary: 取消上传会话
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/UploadSessionIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AbortUploadSessionRequest"
+      responses:
+        "200":
+          description: 上传会话已取消。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadSessionResponse"
         "400": { $ref: "#/components/responses/InvalidRequest" }
         "401": { $ref: "#/components/responses/AuthRequired" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -2041,6 +2152,11 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    UploadSessionIdPath:
+      name: uploadSessionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
     BackgroundJobIdPath:
       name: backgroundJobId
       in: path
@@ -2153,6 +2269,105 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
 
   schemas:
+
+    UploadIntent:
+      type: string
+      enum: [CREATE, NEW_VERSION]
+
+    UploadSessionStatus:
+      type: string
+      enum: [INITIATED, UPLOADING, COMPLETING, COMPLETED, ABORTED, EXPIRED, FAILED]
+
+    CreateUploadSessionRequest:
+      type: object
+      additionalProperties: false
+      required: [spaceId, folderId, uploadIntent, fileName, declaredSizeBytes, partSizeBytes]
+      properties:
+        spaceId: { type: string, format: uuid }
+        folderId: { type: string, format: uuid }
+        targetDocumentId: { type: string, format: uuid }
+        uploadIntent: { $ref: "#/components/schemas/UploadIntent" }
+        fileName: { type: string, minLength: 1, maxLength: 512 }
+        declaredSizeBytes: { type: integer, format: int64, minimum: 1 }
+        declaredSha256Hex:
+          type: string
+          pattern: "^[0-9a-fA-F]{64}$"
+        declaredMimeType: { type: string, minLength: 1, maxLength: 256 }
+        partSizeBytes: { type: integer, format: int64, minimum: 5242880 }
+        expectedCurrentVersionId: { type: string, format: uuid }
+        expectedLockFencingToken: { type: integer, format: int64, minimum: 1 }
+        lockTokenHashHex:
+          type: string
+          pattern: "^[0-9a-fA-F]{64}$"
+
+    UploadSession:
+      type: object
+      additionalProperties: false
+      required: [uploadSessionId, userId, spaceId, folderId, quotaReservationId, uploadIntent, fileName, normalizedName, declaredSizeBytes, partSizeBytes, expectedPartCount, status, expiresAt, createdAt, updatedAt, rowVersion]
+      properties:
+        uploadSessionId: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        spaceId: { type: string, format: uuid }
+        folderId: { type: string, format: uuid }
+        quotaReservationId: { type: string, format: uuid }
+        targetDocumentId: { type: string, format: uuid }
+        uploadIntent: { $ref: "#/components/schemas/UploadIntent" }
+        fileName: { type: string }
+        normalizedName: { type: string }
+        declaredSizeBytes: { type: integer, format: int64 }
+        declaredSha256Hex: { type: string }
+        declaredMimeType: { type: string }
+        partSizeBytes: { type: integer, format: int64 }
+        expectedPartCount: { type: integer }
+        expectedCurrentVersionId: { type: string, format: uuid }
+        expectedLockFencingToken: { type: integer, format: int64 }
+        status: { $ref: "#/components/schemas/UploadSessionStatus" }
+        expiresAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        completedAt: { type: string, format: date-time }
+        failureCode: { type: string }
+        resultDocumentId: { type: string, format: uuid }
+        resultVersionId: { type: string, format: uuid }
+        rowVersion: { type: integer, format: int64 }
+
+    UploadSessionResponse:
+      type: object
+      additionalProperties: false
+      required: [session, requestId]
+      properties:
+        session: { $ref: "#/components/schemas/UploadSession" }
+        requestId: { type: string }
+
+    PresignedUploadPart:
+      type: object
+      additionalProperties: false
+      required: [uploadSessionId, partNumber, method, url, expiresAt]
+      properties:
+        uploadSessionId: { type: string, format: uuid }
+        partNumber: { type: integer }
+        method: { type: string }
+        url: { type: string, format: uri }
+        headers:
+          type: object
+          additionalProperties: { type: string }
+        expiresAt: { type: string, format: date-time }
+
+    PresignedUploadPartResponse:
+      type: object
+      additionalProperties: false
+      required: [part, requestId]
+      properties:
+        part: { $ref: "#/components/schemas/PresignedUploadPart" }
+        requestId: { type: string }
+
+    AbortUploadSessionRequest:
+      type: object
+      additionalProperties: false
+      required: [reason, rowVersion]
+      properties:
+        reason: { type: string, minLength: 1, maxLength: 512 }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
 
     AuditRiskLevel:
       type: string

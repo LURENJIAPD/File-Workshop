@@ -245,6 +245,37 @@ type Space struct {
 	RowVersion          int64
 }
 
+type UploadSession struct {
+	UploadSessionID          pgtype.UUID
+	UserID                   pgtype.UUID
+	SpaceID                  pgtype.UUID
+	FolderID                 pgtype.UUID
+	QuotaReservationID       pgtype.UUID
+	TargetDocumentID         pgtype.UUID
+	UploadIntent             string
+	FileName                 string
+	NormalizedName           string
+	DeclaredSizeBytes        int64
+	DeclaredSha256           []byte
+	DeclaredMimeType         pgtype.Text
+	ProviderUploadID         pgtype.Text
+	TemporaryObjectKey       string
+	PartSizeBytes            int64
+	ExpectedPartCount        int32
+	ExpectedCurrentVersionID pgtype.UUID
+	ExpectedLockFencingToken pgtype.Int8
+	LockTokenHash            []byte
+	Status                   string
+	ExpiresAt                pgtype.Timestamptz
+	CreatedAt                pgtype.Timestamptz
+	UpdatedAt                pgtype.Timestamptz
+	CompletedAt              pgtype.Timestamptz
+	FailureCode              pgtype.Text
+	ResultDocumentID         pgtype.UUID
+	ResultVersionID          pgtype.UUID
+	RowVersion               int64
+}
+
 type UserOrganization struct {
 	UserOrganizationID pgtype.UUID
 	UserID             pgtype.UUID

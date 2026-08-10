@@ -29,6 +29,9 @@ import (
 	permissionscache "file-workshop/backend/internal/modules/permissions/cache"
 	permissionsrepository "file-workshop/backend/internal/modules/permissions/repository"
 	permissionstransport "file-workshop/backend/internal/modules/permissions/transport"
+	uploadsapplication "file-workshop/backend/internal/modules/uploads/application"
+	uploadsrepository "file-workshop/backend/internal/modules/uploads/repository"
+	uploadstransport "file-workshop/backend/internal/modules/uploads/transport"
 	usersapplication "file-workshop/backend/internal/modules/users/application"
 	usersrepository "file-workshop/backend/internal/modules/users/repository"
 	userstransport "file-workshop/backend/internal/modules/users/transport"
@@ -61,7 +64,6 @@ func RunServer(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 	}
 
 	objectStorageClient, objectStorageDependency := configureObjectStorage(ctx, cfg, logger)
-	_ = objectStorageClient
 
 	healthService, err := health.NewService(cfg.App.ServiceName, []health.Dependency{
 		{
@@ -113,13 +115,16 @@ func RunServer(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 	filesRepository := filesrepository.NewPostgreSQL(postgresPool)
 	filesService := filesapplication.NewService(filesRepository, filesRepository, permissionsService, time.Now)
 	filesHandler := filestransport.NewHandler(filesService, identityService, cfg.Auth)
+	uploadsRepository := uploadsrepository.NewPostgreSQL(postgresPool)
+	uploadsService := uploadsapplication.NewService(uploadsRepository, uploadsRepository, permissionsService, objectStorageClient, uploadsapplication.Config{Bucket: cfg.ObjectStorage.Bucket, PresignTTL: cfg.ObjectStorage.PresignTTL}, time.Now)
+	uploadsHandler := uploadstransport.NewHandler(uploadsService, identityService, cfg.Auth)
 	backgroundRepository := backgroundrepository.NewPostgreSQL(postgresPool)
 	backgroundService := backgroundapplication.NewService(backgroundRepository, backgroundRepository, time.Now)
 	backgroundHandler := backgroundtransport.NewHandler(backgroundService, identityService, cfg.Auth)
 	auditRepository := auditrepository.NewPostgreSQL(postgresPool)
 	auditService := auditapplication.NewService(auditRepository, time.Now)
 	auditHandler := audittransport.NewHandler(auditService, identityService, cfg.Auth)
-	router := httpserver.NewRouter(httpserver.NewAPIHandler(healthHandler, identityHandler, usersHandler, organizationsHandler, permissionsHandler, filesHandler, backgroundHandler, auditHandler), logger, cfg.Auth.AllowedOrigins)
+	router := httpserver.NewRouter(httpserver.NewAPIHandler(healthHandler, identityHandler, usersHandler, organizationsHandler, permissionsHandler, filesHandler, uploadsHandler, backgroundHandler, auditHandler), logger, cfg.Auth.AllowedOrigins)
 	server := httpserver.NewServer(cfg.HTTP, router)
 
 	serverErrors := make(chan error, 1)

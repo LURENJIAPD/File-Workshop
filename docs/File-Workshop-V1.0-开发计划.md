@@ -1,12 +1,12 @@
 # File Workshop V1.0 开发计划
 
 > 文档编号：FW-PLAN-V1.0  
-> 文档版本：V2.4
+> 文档版本：V2.5
 > 文档状态：执行中  
 > 编制日期：2026-08-05  
 > 最近修订：2026-08-10
 > 默认路径：`docs/File-Workshop-V1.0-开发计划.md`  
-> 本次修订：完成模块 16 后台任务基础调度与管理员运维接口周期
+> 本次修订：推进模块 06 上传控制面接口与实现周期
 
 ## 1. 如何阅读本计划
 
@@ -83,8 +83,8 @@
 | 顺序 | 阶段 | 状态 | 当前说明 |
 |---:|---|---|---|
 | 1 | 基础准备 | `[x]` | Go、PostgreSQL、Redis、Gin、Migration、sqlc、OpenAPI 和测试基线已完成 |
-| 2 | 后端系统模块开发 | `[~]` | 模块 01～04 已完成当前边界；下一模块为模块 05：文件目录 |
-| 3 | 累积 API 文档编制与最终冻结 | `[~]` | 公共、模块 01～04 接口已写入统一接口文档；后续按模块追加 |
+| 2 | 后端系统模块开发 | `[~]` | 模块 01～05 已完成当前边界；模块 06 文件传输与存储正在按可离线验证的控制面优先推进 |
+| 3 | 累积 API 文档编制与最终冻结 | `[~]` | 公共、模块 01～06 当前接口和模块 16 基础运维接口已写入统一接口文档；后续按模块追加 |
 | 4 | 按模块接口测试 | `[ ]` | 以冻结 API 文档为唯一依据 |
 | 5 | 按模块前端开发 | `[ ]` | 接口测试稳定后开始 |
 | 6 | 前后端联调与端到端测试 | `[ ]` | 核心用户流程完整验证 |
@@ -108,7 +108,7 @@
 | 公共工程能力 | `[x]` | UUIDv7 Request ID、结构化日志、错误映射、panic 恢复和超时边界可用 | 各模块持续复用并测试 |
 | 自动化测试 | `[x]` | Go Test、httptest、本地 PostgreSQL 临时库、Redis 唯一键隔离和统一脚本通过 | Testcontainers 仅为未来 Docker/CI 可选方案 |
 | Git 初始化 | `[x]` | `main`、`origin`、首次 README 提交和项目源码基线已建立 | 后续提交按规则同步推送至 `origin/main` |
-| SeaweedFS/S3 | `[-]` | 对象存储默认实现已由 MinIO 调整为 SeaweedFS，当前仍由项目负责人明确暂缓 | 必须在模块 06 文件传输与存储开始前搭建 SeaweedFS S3 Gateway，并完成 AWS SDK for Go v2 适配器基线 |
+| SeaweedFS/S3 | `[-]` | 对象存储默认实现已由 MinIO 调整为 SeaweedFS，当前仍由项目负责人明确暂缓；Windows 本地先完成可离线验证的控制面 | 真实上传闭环、Bucket、安全凭据、Multipart 兼容性、下载和 Range 必须在 SeaweedFS S3 Gateway 可用后验证 |
 
 ## 6. 后端系统模块开发
 
@@ -123,7 +123,7 @@
 | 03 | 组织与空间 | `[x]` | 组织树、成员、三类空间、并发配额和 MOVE 重组计划已完成；文件内容型重组执行由模块 05/16 接入 |
 | 04 | 权限与管理委派 | `[x]` | 唯一资源授权入口、管理委派、ACL 继承、最终复核和版本化缓存已完成 |
 | 05 | 文件目录 | `[x]` | 目录命名空间、Folder/Document 稳定身份、列表、详情、移动、重命名和权限复核已完成当前边界 |
-| 06 | 文件传输与存储 | `[~]` | Windows 本地先完成 Object Storage Interface、AWS SDK for Go v2 S3 适配器、禁用模式配置和健康检查；真实上传闭环待 SeaweedFS S3 Gateway 可用 |
+| 06 | 文件传输与存储 | `[~]` | 已完成 Object Storage Interface、AWS SDK for Go v2 S3 适配器、禁用模式配置、健康检查和上传控制面当前周期；完成提交、下载、Range 和真实 SeaweedFS 兼容性待后续 |
 | 07 | 版本与并发 | `[ ]` | 依赖文件目录和存储对象 |
 | 08 | 共享 | `[ ]` | 依赖用户、组织、权限和文件资源 |
 | 09 | 回收与生命周期 | `[ ]` | 依赖文件状态、版本、存储和审计 |
@@ -219,11 +219,11 @@
 | 工程任务 | 状态 | 具体内容 |
 |---|---|---|
 | SeaweedFS/S3 基线 | `[~]` | 已完成项目内 Object Storage Interface、AWS SDK for Go v2 S3 适配器、禁用实现、环境变量和健康检查接入；真实 SeaweedFS S3 Gateway 连接、Bucket、安全凭据、Multipart、预签名和 Range 兼容性待环境可用后验证 |
-| 传输契约 | `[ ]` | 定义上传会话、分片、完成确认、取消、下载和 Range 接口 |
-| 上传流程 | `[ ]` | 实现会话、分片凭证、分片状态、直传、完成校验、Hash 和幂等 |
+| 传输契约 | `[~]` | 已定义创建上传会话、获取上传会话、分片预签名和取消上传接口；完成确认、下载和 Range 接口待后续周期 |
+| 上传流程 | `[~]` | 已实现创建会话、S3 Multipart 初始化、配额预留、幂等、系统对象 Key、分片预签名和取消释放配额；`upload_parts` 登记、完成校验、Hash 与版本写入待后续 |
 | 下载流程 | `[ ]` | 实现授权下载、短期凭证、Range、内容头和流式处理 |
 | 存储对象管理 | `[ ]` | 实现系统生成对象 Key、对象事实、孤儿扫描和垃圾回收 |
-| 模块测试与文档 | `[~]` | 已补充对象存储禁用实现和预签名 URL 基础校验测试；伪造完成、重复提交、超时、断点、大文件、越权、签名过期和孤儿对象测试待上传 API 周期补齐 |
+| 模块测试与文档 | `[~]` | 已补充上传服务单元测试、对象存储禁用实现和预签名 URL 基础校验测试；已追加统一 API 文档；真实 SeaweedFS、HTTP 集成、重复提交、超时、断点、大文件、越权、签名过期和孤儿对象测试待后续周期补齐 |
 
 完成标准：二进制不经过 Base64；浏览器不获得长期存储凭据；大文件不被 API 进程整体读入内存；数据库事实与对象状态可恢复一致。
 
@@ -502,7 +502,7 @@
 | 本地 PostgreSQL 使用高权限 `root` 和默认 `postgres` 数据库 | 已接受，仅限本地开发 | 测试、预发布和生产必须重新评审最小权限 |
 | 当前 Navicat 手工导入 Schema 未登记 Goose 版本 | 部分解决 | 不自动修改现有库；重建或登记基线前必须先完成结构比对并获得授权 |
 | 当前项目源码尚未建立 Git 基线提交 | 待授权 | 不自动提交或推送；获得项目负责人明确授权后处理 |
-| SeaweedFS/S3 尚未搭建 | 暂缓 | 不影响模块 01～05；模块 06 开始前必须完成 |
+| SeaweedFS/S3 尚未搭建 | 暂缓 | 不影响模块 01～05 和模块 06 可离线验证的控制面；真实上传闭环、下载、Range 和兼容性验收前必须完成 |
 | Redis 6.2.6 不在当前 go-redis 官方主要支持矩阵 | 已验证，仍需升级规划 | 已固定 RESP2 并通过真实测试；生产前规划升级 |
 | 当前前端开源模板与冻结技术基线可能不一致 | 待评估 | 前端开发前完成许可证、安全和适配评估，必要时更新 ADR |
 | WebDAV、SMB、AI/Agent 范围较大 | 待逐模块确认 | 进入模块 13～15 前确认 V1.0 最小范围，不静默删减或扩张 |
@@ -541,17 +541,18 @@
 | 模块 16：后台任务基础调度与运维接口周期 | 2026-08-10 | `background_jobs` 通用入队/认领/执行/续租/成功/失败/死信框架，Outbox/Job 管理员分页查询，`FAILED/DEAD` 单项受控重试接口，OpenAPI、sqlc、统一 API 文档、模块说明和真实 HTTP 集成测试 | `go test ./internal/modules/background/... ./internal/app ./internal/platform/httpserver ./tests/integration` 与 `FILE_WORKSHOP_RUN_INTEGRATION=1 go test ./tests/integration -run TestBackgroundAdministrationHTTPWorkflow -count=1 -v` 通过；覆盖管理员查询/重试、普通用户拒绝、真实 PostgreSQL/Redis 连接 | 模块 16 尚未整体完成；业务处理器、取消/批量处理、积压指标、告警、审计消费者和崩溃恢复压力测试后续继续 |
 | 模块 11：审计基础查询与完整性周期 | 2026-08-10 | 审计模块 domain/application/repository/transport、OpenAPI 契约、sqlc 查询、Outbox 审计消费者、Worker 接入、`GET /audit/events`、`GET /audit/events/{auditEventId}`、`GET /audit/integrity`、`POST /audit/integrity/verify` 和统一 API 文档 | `go test ./internal/modules/audit/... ./...` 通过；覆盖 Outbox 到审计事件映射、Request ID 兜底、风险分级、哈希稳定性和篡改敏感性；全量后端测试通过 | 对象存储尚未搭建，审计导出、归档、WORM、批次锚定、告警和真实数据库篡改集成测试后续补充；当前仅系统管理员可查询/校验 |
 | 模块 06：对象存储适配基线周期 | 2026-08-10 | `internal/platform/objectstorage` 项目内接口、禁用实现、AWS SDK for Go v2 S3 适配器、对象存储环境变量、启用时健康检查和专项调研记录 | `go test ./internal/platform/objectstorage ./internal/platform/config ./internal/app` 通过；覆盖禁用实现返回 `ErrDisabled` 和预签名 URL 基础校验 | SeaweedFS S3 Gateway 尚未搭建，未验证真实 Bucket、Multipart、预签名上传/下载、Range、对象元数据和 S3 错误映射；上传 REST API 与 `upload_sessions` 事务下周期继续 |
+| 模块 06：上传控制面周期 | 2026-08-10 | OpenAPI 上传控制面契约、sqlc 上传会话查询、`internal/modules/uploads` 领域/应用/Repository/HTTP 适配、创建上传会话、获取会话、分片预签名、取消会话、配额预留释放、幂等记录、Outbox 事件和统一 API 文档 | `go test ./...` 通过；上传应用层测试覆盖对象存储禁用不落库、正常创建会话生成系统对象 Key 和预期分片数；全量后端测试通过 | 模块 06 尚未整体完成；SeaweedFS S3 Gateway 未搭建，未做真实 Multipart/预签名兼容性、`upload_parts` 登记、完成提交、Hash 校验、`storage_objects/document_versions` 写入、下载、Range 和孤儿对象清理 |
 
 ## 13. 下一步
 
-当前基础准备以及模块 01～05 已完成当前边界；模块 16 已完成后台任务基础调度与管理员运维接口周期。由于对象存储集群尚未搭建，模块 06 文件传输与存储继续暂缓。
+当前基础准备以及模块 01～05 已完成当前边界；模块 06 已完成对象存储适配基线和上传控制面当前周期；模块 16 已完成后台任务基础调度与管理员运维接口周期。由于对象存储集群尚未搭建，模块 06 的真实上传闭环仍不能最终验收。
 
 建议执行顺序：
 
-1. 继续跳过模块 06，直到 SeaweedFS S3 Gateway、Bucket、访问凭据和本地验证方式明确；
-2. 下一步建议继续模块 06 上传 REST 契约与 `upload_sessions/upload_parts` 控制面，实现创建上传会话、获取分片预签名、完成提交和取消；真实 SeaweedFS 兼容性测试待环境可用后执行；
+1. 若继续模块 06，下一步实现 `upload_parts` 分片登记、完成提交、Hash 校验、`storage_objects/document_versions` 写入和下载/Range 契约；真实 SeaweedFS 兼容性测试待环境可用后执行；
+2. 若继续绕开对象存储环境限制，可先推进模块 07 的锁与版本元数据契约，但任何需要真实对象内容的闭环必须回到模块 06；
 3. 模块 10 搜索、模块 12 预览和模块 09 回收涉及文件内容、版本或存储对象时必须等待模块 06/07 基线；
 4. 模块 16 接入 `USER_CREATED` 个人空间自动初始化时，先确认可配置的默认名称和配额策略；
 5. 后续每个模块完成时继续追加统一 API 接口文档。
 
-SeaweedFS/S3 继续暂缓，不影响模块 01～05；到模块 06 前再由项目负责人搭建 SeaweedFS S3 Gateway 并确认。
+SeaweedFS/S3 继续暂缓，不影响已完成的上传控制面代码编译和单元测试；真实上传、下载和兼容性验收前仍需项目负责人搭建 SeaweedFS S3 Gateway 并确认 Bucket 与凭据。

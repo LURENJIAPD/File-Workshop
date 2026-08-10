@@ -922,6 +922,57 @@ func (e SystemRole) Valid() bool {
 	}
 }
 
+// Defines values for UploadIntent.
+const (
+	CREATE     UploadIntent = "CREATE"
+	NEWVERSION UploadIntent = "NEW_VERSION"
+)
+
+// Valid indicates whether the value is a known member of the UploadIntent enum.
+func (e UploadIntent) Valid() bool {
+	switch e {
+	case CREATE:
+		return true
+	case NEWVERSION:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UploadSessionStatus.
+const (
+	UploadSessionStatusABORTED    UploadSessionStatus = "ABORTED"
+	UploadSessionStatusCOMPLETED  UploadSessionStatus = "COMPLETED"
+	UploadSessionStatusCOMPLETING UploadSessionStatus = "COMPLETING"
+	UploadSessionStatusEXPIRED    UploadSessionStatus = "EXPIRED"
+	UploadSessionStatusFAILED     UploadSessionStatus = "FAILED"
+	UploadSessionStatusINITIATED  UploadSessionStatus = "INITIATED"
+	UploadSessionStatusUPLOADING  UploadSessionStatus = "UPLOADING"
+)
+
+// Valid indicates whether the value is a known member of the UploadSessionStatus enum.
+func (e UploadSessionStatus) Valid() bool {
+	switch e {
+	case UploadSessionStatusABORTED:
+		return true
+	case UploadSessionStatusCOMPLETED:
+		return true
+	case UploadSessionStatusCOMPLETING:
+		return true
+	case UploadSessionStatusEXPIRED:
+		return true
+	case UploadSessionStatusFAILED:
+		return true
+	case UploadSessionStatusINITIATED:
+		return true
+	case UploadSessionStatusUPLOADING:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for UserSessionStatus.
 const (
 	UserSessionStatusACTIVE  UserSessionStatus = "ACTIVE"
@@ -965,6 +1016,12 @@ func (e UserStatus) Valid() bool {
 	default:
 		return false
 	}
+}
+
+// AbortUploadSessionRequest defines model for AbortUploadSessionRequest.
+type AbortUploadSessionRequest struct {
+	Reason     string `json:"reason"`
+	RowVersion int64  `json:"rowVersion"`
 }
 
 // AddOrganizationChangeOperationRequest defines model for AddOrganizationChangeOperationRequest.
@@ -1378,6 +1435,22 @@ type CreatePublicSpaceRequest struct {
 	QuotaBytes int64                   `json:"quotaBytes"`
 }
 
+// CreateUploadSessionRequest defines model for CreateUploadSessionRequest.
+type CreateUploadSessionRequest struct {
+	DeclaredMimeType         *string             `json:"declaredMimeType,omitempty"`
+	DeclaredSha256Hex        *string             `json:"declaredSha256Hex,omitempty"`
+	DeclaredSizeBytes        int64               `json:"declaredSizeBytes"`
+	ExpectedCurrentVersionId *openapi_types.UUID `json:"expectedCurrentVersionId,omitempty"`
+	ExpectedLockFencingToken *int64              `json:"expectedLockFencingToken,omitempty"`
+	FileName                 string              `json:"fileName"`
+	FolderId                 openapi_types.UUID  `json:"folderId"`
+	LockTokenHashHex         *string             `json:"lockTokenHashHex,omitempty"`
+	PartSizeBytes            int64               `json:"partSizeBytes"`
+	SpaceId                  openapi_types.UUID  `json:"spaceId"`
+	TargetDocumentId         *openapi_types.UUID `json:"targetDocumentId,omitempty"`
+	UploadIntent             UploadIntent        `json:"uploadIntent"`
+}
+
 // CreateUserRequest defines model for CreateUserRequest.
 type CreateUserRequest struct {
 	DisplayName string               `json:"displayName"`
@@ -1751,6 +1824,22 @@ type PermissionResourceType string
 // PermissionSubjectType defines model for PermissionSubjectType.
 type PermissionSubjectType string
 
+// PresignedUploadPart defines model for PresignedUploadPart.
+type PresignedUploadPart struct {
+	ExpiresAt       time.Time          `json:"expiresAt"`
+	Headers         *map[string]string `json:"headers,omitempty"`
+	Method          string             `json:"method"`
+	PartNumber      int                `json:"partNumber"`
+	UploadSessionId openapi_types.UUID `json:"uploadSessionId"`
+	Url             string             `json:"url"`
+}
+
+// PresignedUploadPartResponse defines model for PresignedUploadPartResponse.
+type PresignedUploadPartResponse struct {
+	Part      PresignedUploadPart `json:"part"`
+	RequestId string              `json:"requestId"`
+}
+
 // ProvisionPersonalSpaceRequest defines model for ProvisionPersonalSpaceRequest.
 type ProvisionPersonalSpaceRequest struct {
 	Config     *map[string]interface{} `json:"config,omitempty"`
@@ -1935,6 +2024,47 @@ type UpdateUserRequest struct {
 	Timezone   *string     `json:"timezone,omitempty"`
 }
 
+// UploadIntent defines model for UploadIntent.
+type UploadIntent string
+
+// UploadSession defines model for UploadSession.
+type UploadSession struct {
+	CompletedAt              *time.Time          `json:"completedAt,omitempty"`
+	CreatedAt                time.Time           `json:"createdAt"`
+	DeclaredMimeType         *string             `json:"declaredMimeType,omitempty"`
+	DeclaredSha256Hex        *string             `json:"declaredSha256Hex,omitempty"`
+	DeclaredSizeBytes        int64               `json:"declaredSizeBytes"`
+	ExpectedCurrentVersionId *openapi_types.UUID `json:"expectedCurrentVersionId,omitempty"`
+	ExpectedLockFencingToken *int64              `json:"expectedLockFencingToken,omitempty"`
+	ExpectedPartCount        int                 `json:"expectedPartCount"`
+	ExpiresAt                time.Time           `json:"expiresAt"`
+	FailureCode              *string             `json:"failureCode,omitempty"`
+	FileName                 string              `json:"fileName"`
+	FolderId                 openapi_types.UUID  `json:"folderId"`
+	NormalizedName           string              `json:"normalizedName"`
+	PartSizeBytes            int64               `json:"partSizeBytes"`
+	QuotaReservationId       openapi_types.UUID  `json:"quotaReservationId"`
+	ResultDocumentId         *openapi_types.UUID `json:"resultDocumentId,omitempty"`
+	ResultVersionId          *openapi_types.UUID `json:"resultVersionId,omitempty"`
+	RowVersion               int64               `json:"rowVersion"`
+	SpaceId                  openapi_types.UUID  `json:"spaceId"`
+	Status                   UploadSessionStatus `json:"status"`
+	TargetDocumentId         *openapi_types.UUID `json:"targetDocumentId,omitempty"`
+	UpdatedAt                time.Time           `json:"updatedAt"`
+	UploadIntent             UploadIntent        `json:"uploadIntent"`
+	UploadSessionId          openapi_types.UUID  `json:"uploadSessionId"`
+	UserId                   openapi_types.UUID  `json:"userId"`
+}
+
+// UploadSessionResponse defines model for UploadSessionResponse.
+type UploadSessionResponse struct {
+	RequestId string        `json:"requestId"`
+	Session   UploadSession `json:"session"`
+}
+
+// UploadSessionStatus defines model for UploadSessionStatus.
+type UploadSessionStatus string
+
 // User defines model for User.
 type User struct {
 	CreatedAt   time.Time            `json:"createdAt"`
@@ -2059,6 +2189,9 @@ type SessionIdPath = openapi_types.UUID
 
 // SpaceIdPath defines model for SpaceIdPath.
 type SpaceIdPath = openapi_types.UUID
+
+// UploadSessionIdPath defines model for UploadSessionIdPath.
+type UploadSessionIdPath = openapi_types.UUID
 
 // UserIdPath defines model for UserIdPath.
 type UserIdPath = openapi_types.UUID
@@ -2312,6 +2445,12 @@ type CreateFolderParams struct {
 	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
 }
 
+// CreateUploadSessionParams defines parameters for CreateUploadSession.
+type CreateUploadSessionParams struct {
+	// IdempotencyKey 可重试写请求的稳定幂等键。
+	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
+}
+
 // ListCurrentUserOrganizationsParams defines parameters for ListCurrentUserOrganizations.
 type ListCurrentUserOrganizationsParams struct {
 	// Page 从 1 开始的页码。
@@ -2446,6 +2585,12 @@ type CreateDocumentJSONRequestBody = CreateDocumentRequest
 
 // CreateFolderJSONRequestBody defines body for CreateFolder for application/json ContentType.
 type CreateFolderJSONRequestBody = CreateFolderRequest
+
+// CreateUploadSessionJSONRequestBody defines body for CreateUploadSession for application/json ContentType.
+type CreateUploadSessionJSONRequestBody = CreateUploadSessionRequest
+
+// AbortUploadSessionJSONRequestBody defines body for AbortUploadSession for application/json ContentType.
+type AbortUploadSessionJSONRequestBody = AbortUploadSessionRequest
 
 // UpdateCurrentUserJSONRequestBody defines body for UpdateCurrentUser for application/json ContentType.
 type UpdateCurrentUserJSONRequestBody = UpdateCurrentUserRequest
@@ -2638,6 +2783,18 @@ type ServerInterface interface {
 	// CreateFolder 创建文件夹
 	// (POST /api/v1/spaces/{spaceId}/folders)
 	CreateFolder(c *gin.Context, spaceId SpaceIdPath, params CreateFolderParams)
+	// CreateUploadSession 创建上传会话
+	// (POST /api/v1/uploads)
+	CreateUploadSession(c *gin.Context, params CreateUploadSessionParams)
+	// GetUploadSession 获取上传会话
+	// (GET /api/v1/uploads/{uploadSessionId})
+	GetUploadSession(c *gin.Context, uploadSessionId UploadSessionIdPath)
+	// AbortUploadSession 取消上传会话
+	// (POST /api/v1/uploads/{uploadSessionId}/abort)
+	AbortUploadSession(c *gin.Context, uploadSessionId UploadSessionIdPath)
+	// PresignUploadPart 获取上传分片预签名 URL
+	// (POST /api/v1/uploads/{uploadSessionId}/parts/{partNumber}/presign)
+	PresignUploadPart(c *gin.Context, uploadSessionId UploadSessionIdPath, partNumber int)
 	// GetCurrentUser 获取当前用户资料
 	// (GET /api/v1/users/me)
 	GetCurrentUser(c *gin.Context)
@@ -4848,6 +5005,133 @@ func (siw *ServerInterfaceWrapper) CreateFolder(c *gin.Context) {
 	siw.Handler.CreateFolder(c, spaceId, params)
 }
 
+// CreateUploadSession operation middleware
+func (siw *ServerInterfaceWrapper) CreateUploadSession(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateUploadSessionParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKeyHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreateUploadSession(c, params)
+}
+
+// GetUploadSession operation middleware
+func (siw *ServerInterfaceWrapper) GetUploadSession(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "uploadSessionId" -------------
+	var uploadSessionId UploadSessionIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "uploadSessionId", c.Param("uploadSessionId"), &uploadSessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter uploadSessionId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetUploadSession(c, uploadSessionId)
+}
+
+// AbortUploadSession operation middleware
+func (siw *ServerInterfaceWrapper) AbortUploadSession(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "uploadSessionId" -------------
+	var uploadSessionId UploadSessionIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "uploadSessionId", c.Param("uploadSessionId"), &uploadSessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter uploadSessionId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.AbortUploadSession(c, uploadSessionId)
+}
+
+// PresignUploadPart operation middleware
+func (siw *ServerInterfaceWrapper) PresignUploadPart(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "uploadSessionId" -------------
+	var uploadSessionId UploadSessionIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "uploadSessionId", c.Param("uploadSessionId"), &uploadSessionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter uploadSessionId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Path parameter "partNumber" -------------
+	var partNumber int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "partNumber", c.Param("partNumber"), &partNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter partNumber: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PresignUploadPart(c, uploadSessionId, partNumber)
+}
+
 // GetCurrentUser operation middleware
 func (siw *ServerInterfaceWrapper) GetCurrentUser(c *gin.Context) {
 
@@ -5041,6 +5325,10 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/api/v1/spaces/:spaceId/entries", wrapper.ListDirectoryEntries)
 	router.POST(options.BaseURL+"/api/v1/spaces/:spaceId/folders", wrapper.CreateFolder)
 	router.POST(options.BaseURL+"/api/v1/spaces/:spaceId/documents", wrapper.CreateDocument)
+	router.POST(options.BaseURL+"/api/v1/uploads", wrapper.CreateUploadSession)
+	router.GET(options.BaseURL+"/api/v1/uploads/:uploadSessionId", wrapper.GetUploadSession)
+	router.POST(options.BaseURL+"/api/v1/uploads/:uploadSessionId/parts/:partNumber/presign", wrapper.PresignUploadPart)
+	router.POST(options.BaseURL+"/api/v1/uploads/:uploadSessionId/abort", wrapper.AbortUploadSession)
 	router.GET(options.BaseURL+"/api/v1/entries/:entryId", wrapper.GetDirectoryEntry)
 	router.PATCH(options.BaseURL+"/api/v1/entries/:entryId", wrapper.RenameDirectoryEntry)
 	router.POST(options.BaseURL+"/api/v1/entries/:entryId/move", wrapper.MoveDirectoryEntry)
@@ -10914,6 +11202,403 @@ func (response CreateFolder409JSONResponse) VisitCreateFolderResponse(w http.Res
 	return err
 }
 
+type CreateUploadSessionRequestObject struct {
+	Params CreateUploadSessionParams
+	Body   *CreateUploadSessionJSONRequestBody
+}
+
+type CreateUploadSessionResponseObject interface {
+	VisitCreateUploadSessionResponse(w http.ResponseWriter) error
+}
+
+type CreateUploadSession201JSONResponse UploadSessionResponse
+
+func (response CreateUploadSession201JSONResponse) VisitCreateUploadSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateUploadSession400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response CreateUploadSession400JSONResponse) VisitCreateUploadSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateUploadSession401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response CreateUploadSession401JSONResponse) VisitCreateUploadSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateUploadSession403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response CreateUploadSession403JSONResponse) VisitCreateUploadSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateUploadSession404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response CreateUploadSession404JSONResponse) VisitCreateUploadSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateUploadSession409JSONResponse struct{ ConflictJSONResponse }
+
+func (response CreateUploadSession409JSONResponse) VisitCreateUploadSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUploadSessionRequestObject struct {
+	UploadSessionId UploadSessionIdPath `json:"uploadSessionId"`
+}
+
+type GetUploadSessionResponseObject interface {
+	VisitGetUploadSessionResponse(w http.ResponseWriter) error
+}
+
+type GetUploadSession200JSONResponse UploadSessionResponse
+
+func (response GetUploadSession200JSONResponse) VisitGetUploadSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUploadSession401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response GetUploadSession401JSONResponse) VisitGetUploadSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUploadSession403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetUploadSession403JSONResponse) VisitGetUploadSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUploadSession404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetUploadSession404JSONResponse) VisitGetUploadSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AbortUploadSessionRequestObject struct {
+	UploadSessionId UploadSessionIdPath `json:"uploadSessionId"`
+	Body            *AbortUploadSessionJSONRequestBody
+}
+
+type AbortUploadSessionResponseObject interface {
+	VisitAbortUploadSessionResponse(w http.ResponseWriter) error
+}
+
+type AbortUploadSession200JSONResponse UploadSessionResponse
+
+func (response AbortUploadSession200JSONResponse) VisitAbortUploadSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AbortUploadSession400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response AbortUploadSession400JSONResponse) VisitAbortUploadSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AbortUploadSession401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response AbortUploadSession401JSONResponse) VisitAbortUploadSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AbortUploadSession403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AbortUploadSession403JSONResponse) VisitAbortUploadSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AbortUploadSession404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AbortUploadSession404JSONResponse) VisitAbortUploadSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AbortUploadSession409JSONResponse struct{ ConflictJSONResponse }
+
+func (response AbortUploadSession409JSONResponse) VisitAbortUploadSessionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PresignUploadPartRequestObject struct {
+	UploadSessionId UploadSessionIdPath `json:"uploadSessionId"`
+	PartNumber      int                 `json:"partNumber"`
+}
+
+type PresignUploadPartResponseObject interface {
+	VisitPresignUploadPartResponse(w http.ResponseWriter) error
+}
+
+type PresignUploadPart200JSONResponse PresignedUploadPartResponse
+
+func (response PresignUploadPart200JSONResponse) VisitPresignUploadPartResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PresignUploadPart400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response PresignUploadPart400JSONResponse) VisitPresignUploadPartResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PresignUploadPart401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response PresignUploadPart401JSONResponse) VisitPresignUploadPartResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PresignUploadPart403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response PresignUploadPart403JSONResponse) VisitPresignUploadPartResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PresignUploadPart404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response PresignUploadPart404JSONResponse) VisitPresignUploadPartResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PresignUploadPart409JSONResponse struct{ ConflictJSONResponse }
+
+func (response PresignUploadPart409JSONResponse) VisitPresignUploadPartResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetCurrentUserRequestObject struct {
 }
 
@@ -11588,6 +12273,18 @@ type StrictServerInterface interface {
 	// CreateFolder 创建文件夹
 	// (POST /api/v1/spaces/{spaceId}/folders)
 	CreateFolder(ctx context.Context, request CreateFolderRequestObject) (CreateFolderResponseObject, error)
+	// CreateUploadSession 创建上传会话
+	// (POST /api/v1/uploads)
+	CreateUploadSession(ctx context.Context, request CreateUploadSessionRequestObject) (CreateUploadSessionResponseObject, error)
+	// GetUploadSession 获取上传会话
+	// (GET /api/v1/uploads/{uploadSessionId})
+	GetUploadSession(ctx context.Context, request GetUploadSessionRequestObject) (GetUploadSessionResponseObject, error)
+	// AbortUploadSession 取消上传会话
+	// (POST /api/v1/uploads/{uploadSessionId}/abort)
+	AbortUploadSession(ctx context.Context, request AbortUploadSessionRequestObject) (AbortUploadSessionResponseObject, error)
+	// PresignUploadPart 获取上传分片预签名 URL
+	// (POST /api/v1/uploads/{uploadSessionId}/parts/{partNumber}/presign)
+	PresignUploadPart(ctx context.Context, request PresignUploadPartRequestObject) (PresignUploadPartResponseObject, error)
 	// GetCurrentUser 获取当前用户资料
 	// (GET /api/v1/users/me)
 	GetCurrentUser(ctx context.Context, request GetCurrentUserRequestObject) (GetCurrentUserResponseObject, error)
@@ -13548,6 +14245,125 @@ func (sh *strictHandler) CreateFolder(ctx *gin.Context, spaceId SpaceIdPath, par
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(CreateFolderResponseObject); ok {
 		if err := validResponse.VisitCreateFolderResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateUploadSession operation middleware
+func (sh *strictHandler) CreateUploadSession(ctx *gin.Context, params CreateUploadSessionParams) {
+	var request CreateUploadSessionRequestObject
+
+	request.Params = params
+
+	var body CreateUploadSessionJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateUploadSession(ctx, request.(CreateUploadSessionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateUploadSession")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(CreateUploadSessionResponseObject); ok {
+		if err := validResponse.VisitCreateUploadSessionResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetUploadSession operation middleware
+func (sh *strictHandler) GetUploadSession(ctx *gin.Context, uploadSessionId UploadSessionIdPath) {
+	var request GetUploadSessionRequestObject
+
+	request.UploadSessionId = uploadSessionId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUploadSession(ctx, request.(GetUploadSessionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUploadSession")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetUploadSessionResponseObject); ok {
+		if err := validResponse.VisitGetUploadSessionResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AbortUploadSession operation middleware
+func (sh *strictHandler) AbortUploadSession(ctx *gin.Context, uploadSessionId UploadSessionIdPath) {
+	var request AbortUploadSessionRequestObject
+
+	request.UploadSessionId = uploadSessionId
+
+	var body AbortUploadSessionJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.AbortUploadSession(ctx, request.(AbortUploadSessionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AbortUploadSession")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(AbortUploadSessionResponseObject); ok {
+		if err := validResponse.VisitAbortUploadSessionResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PresignUploadPart operation middleware
+func (sh *strictHandler) PresignUploadPart(ctx *gin.Context, uploadSessionId UploadSessionIdPath, partNumber int) {
+	var request PresignUploadPartRequestObject
+
+	request.UploadSessionId = uploadSessionId
+	request.PartNumber = partNumber
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PresignUploadPart(ctx, request.(PresignUploadPartRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PresignUploadPart")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(PresignUploadPartResponseObject); ok {
+		if err := validResponse.VisitPresignUploadPartResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

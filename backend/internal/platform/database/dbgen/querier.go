@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	AbortUploadSession(ctx context.Context, arg *AbortUploadSessionParams) (*UploadSession, error)
 	AdminDelegationIsEffective(ctx context.Context, arg *AdminDelegationIsEffectiveParams) (bool, error)
 	ChangeDocumentInheritance(ctx context.Context, arg *ChangeDocumentInheritanceParams) (*ChangeDocumentInheritanceRow, error)
 	ChangeFolderInheritance(ctx context.Context, arg *ChangeFolderInheritanceParams) (*ChangeFolderInheritanceRow, error)
@@ -84,6 +85,10 @@ type Querier interface {
 	GetSpace(ctx context.Context, spaceID pgtype.UUID) (*Space, error)
 	GetSpaceAuthorizationResource(ctx context.Context, spaceID pgtype.UUID) (*GetSpaceAuthorizationResourceRow, error)
 	GetSpaceForUpdate(ctx context.Context, spaceID pgtype.UUID) (*Space, error)
+	GetUploadDocumentContext(ctx context.Context, arg *GetUploadDocumentContextParams) (*GetUploadDocumentContextRow, error)
+	GetUploadFolderContext(ctx context.Context, arg *GetUploadFolderContextParams) (*GetUploadFolderContextRow, error)
+	GetUploadSession(ctx context.Context, uploadSessionID pgtype.UUID) (*UploadSession, error)
+	GetUploadSessionForUpdate(ctx context.Context, uploadSessionID pgtype.UUID) (*UploadSession, error)
 	GetUserIdempotencyRecordForUpdate(ctx context.Context, arg *GetUserIdempotencyRecordForUpdateParams) (*GetUserIdempotencyRecordForUpdateRow, error)
 	IncrementDocumentACLVersion(ctx context.Context, arg *IncrementDocumentACLVersionParams) error
 	IncrementFolderACLVersion(ctx context.Context, arg *IncrementFolderACLVersionParams) error
@@ -122,6 +127,7 @@ type Querier interface {
 	InsertPrincipalSecurityVersions(ctx context.Context, arg *InsertPrincipalSecurityVersionsParams) error
 	InsertQuotaReservation(ctx context.Context, arg *InsertQuotaReservationParams) (*QuotaReservation, error)
 	InsertSpace(ctx context.Context, arg *InsertSpaceParams) (*Space, error)
+	InsertUploadSession(ctx context.Context, arg *InsertUploadSessionParams) (*UploadSession, error)
 	InsertUserOutboxEvent(ctx context.Context, arg *InsertUserOutboxEventParams) error
 	InvalidateDescendantAdminDelegations(ctx context.Context, arg *InvalidateDescendantAdminDelegationsParams) ([]pgtype.UUID, error)
 	ListActivePermissionUserOrganizations(ctx context.Context, arg *ListActivePermissionUserOrganizationsParams) ([]pgtype.UUID, error)
@@ -159,6 +165,7 @@ type Querier interface {
 	MarkQuotaReservationReleased(ctx context.Context, arg *MarkQuotaReservationReleasedParams) (*QuotaReservation, error)
 	MarkRefreshTokenReused(ctx context.Context, arg *MarkRefreshTokenReusedParams) error
 	MarkRefreshTokenUsed(ctx context.Context, arg *MarkRefreshTokenUsedParams) (int64, error)
+	MarkUploadSessionUploading(ctx context.Context, arg *MarkUploadSessionUploadingParams) (*UploadSession, error)
 	MoveFileNamespaceEntry(ctx context.Context, arg *MoveFileNamespaceEntryParams) (*NamespaceEntry, error)
 	OrganizationDeletionBlocked(ctx context.Context, arg *OrganizationDeletionBlockedParams) (bool, error)
 	OrganizationWouldCreateCycle(ctx context.Context, arg *OrganizationWouldCreateCycleParams) (bool, error)
