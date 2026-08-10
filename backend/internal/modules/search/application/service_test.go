@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	backgroundapplication "file-workshop/backend/internal/modules/background/application"
+	backgrounddomain "file-workshop/backend/internal/modules/background/domain"
 	permissiondomain "file-workshop/backend/internal/modules/permissions/domain"
 	"file-workshop/backend/internal/modules/search/domain"
 
@@ -13,13 +15,13 @@ import (
 )
 
 func TestSearchFiltersInvisibleCandidatesAndMarksDegraded(t *testing.T) {
-	visible := testEntry("工艺卡.docx", "工艺卡.docx")
-	invisible := testEntry("工资表.xlsx", "工资表.xlsx")
+	visible := testEntry("process-card.docx", "process-card.docx")
+	invisible := testEntry("salary.xlsx", "salary.xlsx")
 	repository := fakeRepository{results: []domain.Result{{Entry: visible}, {Entry: invisible}}}
 	authorizer := fakeAuthorizer{denied: map[uuid.UUID]bool{invisible.ID: true}}
-	service := NewService(repository, authorizer)
+	service := NewService(repository, authorizer, nil, time.Now)
 
-	result, err := service.Search(context.Background(), testActor(), domain.Filter{Query: ptr("工艺"), Page: 1, PageSize: 50})
+	result, err := service.Search(context.Background(), testActor(), domain.Filter{Query: ptr("process"), Page: 1, PageSize: 50})
 	if err != nil {
 		t.Fatalf("Search returned error: %v", err)
 	}
@@ -35,7 +37,7 @@ func TestSearchFiltersInvisibleCandidatesAndMarksDegraded(t *testing.T) {
 }
 
 func TestSearchRequiresAtLeastOneCondition(t *testing.T) {
-	service := NewService(fakeRepository{}, fakeAuthorizer{})
+	service := NewService(fakeRepository{}, fakeAuthorizer{}, nil, time.Now)
 
 	_, err := service.Search(context.Background(), testActor(), domain.Filter{Page: 1, PageSize: 50})
 	if !errors.Is(err, domain.ErrInvalidInput) {
@@ -44,7 +46,7 @@ func TestSearchRequiresAtLeastOneCondition(t *testing.T) {
 }
 
 func TestSearchRejectsIncompleteMetadataFilter(t *testing.T) {
-	service := NewService(fakeRepository{}, fakeAuthorizer{})
+	service := NewService(fakeRepository{}, fakeAuthorizer{}, nil, time.Now)
 
 	_, err := service.Search(context.Background(), testActor(), domain.Filter{MetadataKey: ptr("project"), Page: 1, PageSize: 50})
 	if !errors.Is(err, domain.ErrInvalidInput) {
@@ -53,7 +55,7 @@ func TestSearchRejectsIncompleteMetadataFilter(t *testing.T) {
 }
 
 func TestSearchMarksFilterMatchedFields(t *testing.T) {
-	entry := testEntry("安全规范.pdf", "安全规范.pdf")
+	entry := testEntry("safety-policy.pdf", "safety-policy.pdf")
 	extension := "pdf"
 	classification := "internal"
 	metadataKey := "project"
@@ -61,7 +63,7 @@ func TestSearchMarksFilterMatchedFields(t *testing.T) {
 	entry.ExtensionNormalized = &extension
 	entry.Classification = &classification
 	repository := fakeRepository{results: []domain.Result{{Entry: entry}}}
-	service := NewService(repository, fakeAuthorizer{})
+	service := NewService(repository, fakeAuthorizer{}, nil, time.Now)
 
 	result, err := service.Search(context.Background(), testActor(), domain.Filter{Extension: ptr("PDF"), Classification: ptr("Internal"), MetadataKey: &metadataKey, MetadataValue: &metadataValue, Page: 1, PageSize: 50})
 	if err != nil {
@@ -79,14 +81,89 @@ func TestSearchMarksFilterMatchedFields(t *testing.T) {
 	}
 }
 
-type fakeRepository struct {
-	results []domain.Result
-	filter  domain.Filter
+func TestEnqueueIndexRefreshJobsMarksPendingAndEnqueuesJobs(t *testing.T) {
+	now := time.Date(2026, 8, 10, 6, 0, 0, 0, time.UTC)
+	documentID := uuid.Must(uuid.NewV7())
+	versionID := uuid.Must(uuid.NewV7())
+	repository := fakeRepository{targets: map[uuid.UUID]domain.IndexRefreshTarget{
+		documentID: {DocumentID: documentID, CurrentVersionID: &versionID, ACLVersion: 7, SpaceSecurityEpoch: 9},
+	}}
+	enqueuer := &fakeJobEnqueuer{}
+	service := NewService(repository, fakeAuthorizer{}, enqueuer, func() time.Time { return now })
+
+	result, err := service.EnqueueIndexRefreshJobs(context.Background(), adminActor(), []uuid.UUID{documentID}, "manual refresh")
+	if err != nil {
+		t.Fatalf("EnqueueIndexRefreshJobs returned error: %v", err)
+	}
+	if result.Succeeded != 1 || result.Failed != 0 || len(result.Items) != 1 {
+		t.Fatalf("unexpected result: %#v", result)
+	}
+	if result.Items[0].IndexStatus == nil || *result.Items[0].IndexStatus != domain.IndexStatusPending {
+		t.Fatalf("index status=%v, want PENDING", result.Items[0].IndexStatus)
+	}
+	if len(enqueuer.commands) != 1 {
+		t.Fatalf("commands=%d, want 1", len(enqueuer.commands))
+	}
+	command := enqueuer.commands[0]
+	if command.JobType != domain.IndexJobType || command.TargetDocumentID == nil || *command.TargetDocumentID != documentID || command.TargetDocumentVersionID == nil || *command.TargetDocumentVersionID != versionID {
+		t.Fatalf("unexpected command: %#v", command)
+	}
+	if command.DeduplicationKey != "index:"+documentID.String() || !command.AvailableAt.Equal(now) {
+		t.Fatalf("unexpected dedupe/availableAt: %s %s", command.DeduplicationKey, command.AvailableAt)
+	}
 }
 
-func (r fakeRepository) SearchEntries(_ context.Context, filter domain.Filter) ([]domain.Result, error) {
-	r.filter = filter
+func TestEnqueueIndexRefreshJobsReturnsItemFailureForMissingDocument(t *testing.T) {
+	missingID := uuid.Must(uuid.NewV7())
+	service := NewService(fakeRepository{targets: map[uuid.UUID]domain.IndexRefreshTarget{}}, fakeAuthorizer{}, &fakeJobEnqueuer{}, time.Now)
+
+	result, err := service.EnqueueIndexRefreshJobs(context.Background(), adminActor(), []uuid.UUID{missingID}, "manual refresh")
+	if err != nil {
+		t.Fatalf("EnqueueIndexRefreshJobs returned error: %v", err)
+	}
+	if result.Succeeded != 0 || result.Failed != 1 || result.Items[0].ErrorCode == nil || *result.Items[0].ErrorCode != "SEARCH_INDEX_TARGET_NOT_FOUND" {
+		t.Fatalf("unexpected result: %#v", result)
+	}
+}
+
+func TestEnqueueIndexRefreshJobsRequiresAdmin(t *testing.T) {
+	service := NewService(fakeRepository{}, fakeAuthorizer{}, &fakeJobEnqueuer{}, time.Now)
+
+	_, err := service.EnqueueIndexRefreshJobs(context.Background(), testActor(), []uuid.UUID{uuid.Must(uuid.NewV7())}, "manual refresh")
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("error=%v, want ErrForbidden", err)
+	}
+}
+
+func TestEnqueueIndexRefreshJobsRejectsDuplicateDocuments(t *testing.T) {
+	service := NewService(fakeRepository{}, fakeAuthorizer{}, &fakeJobEnqueuer{}, time.Now)
+	documentID := uuid.Must(uuid.NewV7())
+
+	_, err := service.EnqueueIndexRefreshJobs(context.Background(), adminActor(), []uuid.UUID{documentID, documentID}, "manual refresh")
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Fatalf("error=%v, want ErrInvalidInput", err)
+	}
+}
+
+type fakeRepository struct {
+	results []domain.Result
+	targets map[uuid.UUID]domain.IndexRefreshTarget
+}
+
+func (r fakeRepository) SearchEntries(context.Context, domain.Filter) ([]domain.Result, error) {
 	return r.results, nil
+}
+
+func (r fakeRepository) GetIndexRefreshTarget(_ context.Context, documentID uuid.UUID) (domain.IndexRefreshTarget, error) {
+	target, ok := r.targets[documentID]
+	if !ok {
+		return domain.IndexRefreshTarget{}, domain.ErrNotFound
+	}
+	return target, nil
+}
+
+func (r fakeRepository) MarkIndexRefreshPending(context.Context, uuid.UUID, time.Time) (string, error) {
+	return domain.IndexStatusPending, nil
 }
 
 type fakeAuthorizer struct {
@@ -103,8 +180,21 @@ func (a fakeAuthorizer) EvaluatePermission(_ context.Context, _ permissiondomain
 	return permissiondomain.PermissionEvaluation{Allowed: true}, nil
 }
 
+type fakeJobEnqueuer struct {
+	commands []backgroundapplication.EnqueueJobCommand
+}
+
+func (e *fakeJobEnqueuer) EnqueueJob(_ context.Context, command backgroundapplication.EnqueueJobCommand) (backgrounddomain.BackgroundJob, error) {
+	e.commands = append(e.commands, command)
+	return backgrounddomain.BackgroundJob{ID: uuid.Must(uuid.NewV7()), JobType: command.JobType, TargetDocumentID: command.TargetDocumentID, TargetDocumentVersionID: command.TargetDocumentVersionID, Status: backgrounddomain.JobStatusPending, RowVersion: 1}, nil
+}
+
 func testActor() domain.Actor {
 	return domain.Actor{UserID: uuid.Must(uuid.NewV7()), SessionID: uuid.Must(uuid.NewV7()), Role: "USER"}
+}
+
+func adminActor() domain.Actor {
+	return domain.Actor{UserID: uuid.Must(uuid.NewV7()), SessionID: uuid.Must(uuid.NewV7()), Role: domain.SystemRoleAdmin}
 }
 
 func testEntry(name, normalizedName string) domain.Entry {

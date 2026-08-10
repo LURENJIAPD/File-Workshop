@@ -4,6 +4,8 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"github.com/google/uuid"
 )
 
 func NormalizePage(page, pageSize int) (int, int, error) {
@@ -88,4 +90,24 @@ func hasAnyCondition(value Filter) bool {
 	return value.Query != nil || value.SpaceID != nil || value.EntryType != nil || value.Extension != nil ||
 		value.Classification != nil || value.CreatedByUserID != nil || value.UpdatedFrom != nil ||
 		value.UpdatedTo != nil || value.MetadataKey != nil
+}
+
+func NormalizeIndexRefreshInput(documentIDs []uuid.UUID, reason string) ([]uuid.UUID, string, error) {
+	reason = strings.TrimSpace(reason)
+	if reason == "" || len(reason) > 256 || len(documentIDs) < 1 || len(documentIDs) > MaxBatchSize {
+		return nil, "", ErrInvalidInput
+	}
+	seen := make(map[uuid.UUID]struct{}, len(documentIDs))
+	result := make([]uuid.UUID, 0, len(documentIDs))
+	for _, documentID := range documentIDs {
+		if documentID == uuid.Nil {
+			return nil, "", ErrInvalidInput
+		}
+		if _, ok := seen[documentID]; ok {
+			return nil, "", ErrInvalidInput
+		}
+		seen[documentID] = struct{}{}
+		result = append(result, documentID)
+	}
+	return result, reason, nil
 }

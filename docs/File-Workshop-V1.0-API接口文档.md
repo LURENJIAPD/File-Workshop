@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.16
+> 文档版本：V0.17
 > 文档状态：按模块持续编制  
 > 最近更新：2026-08-10
-> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 09 回收与生命周期元数据闭环、过期扫描入队和资料保全管理接口、模块 10 PostgreSQL 元数据搜索基础接口、模块 16 后台任务基础调度、统计、重试、取消和批量运维接口
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 09 回收与生命周期元数据闭环、过期扫描入队和资料保全管理接口、模块 10 PostgreSQL 元数据搜索基础接口和索引刷新任务入队接口、模块 16 后台任务基础调度、统计、重试、取消和批量运维接口
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -27,7 +27,7 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 | 07 | 版本与并发 | 已收录版本与锁基础接口 | 7 | 2026-08-10 |
 | 08 | 共享 | 已收录用户/组织/LINK 基础接口 | 7 | 2026-08-10 |
 | 09 | 回收与生命周期 | 已收录元数据回收、恢复、清理发起、过期扫描入队和资料保全管理接口 | 9 | 2026-08-10 |
-| 10 | 搜索 | 已收录 PostgreSQL 元数据搜索基础接口 | 1 | 2026-08-10 |
+| 10 | 搜索 | 已收录 PostgreSQL 元数据搜索基础接口和索引刷新任务入队接口 | 2 | 2026-08-10 |
 | 11～15 | 后续系统模块 | 未收录 | 0 | — |
 | 16 | 后台任务 | 已完成基础调度、管理员统计、重试、取消和批量运维接口 | 8 | 2026-08-10 |
 
@@ -1304,7 +1304,7 @@ Content-Type: application/json
 
 ### 14.1 当前边界
 
-本周期完成 Windows 本地可验证的 PostgreSQL 元数据搜索基础能力。搜索不依赖对象存储、预览、OCR、AI、OpenSearch/Elasticsearch 或 pgvector；只从数据库事实和投影表生成候选，并在返回前调用权限模块执行 `READ_METADATA` 最终复核。
+本周期完成 Windows 本地可验证的 PostgreSQL 元数据搜索基础能力和索引刷新任务入队能力。搜索不依赖对象存储、预览、OCR、AI、OpenSearch/Elasticsearch 或 pgvector；只从数据库事实和投影表生成候选，并在返回前调用权限模块执行 `READ_METADATA` 最终复核。索引刷新入队接口只负责把指定文档标记为待索引并写入 `INDEX` 后台任务，不执行正文解析、OCR、外部搜索写入或语义索引。
 
 当前能力：
 
@@ -1314,15 +1314,17 @@ Content-Type: application/json
 - 只返回 `namespace_entries.lifecycle_status=ACTIVE` 的资源；
 - 返回结果复用 `DirectoryEntry` 结构，并附带 `matchedFields/indexStatus/source`；
 - 响应 `degraded=true`，明确当前为 PostgreSQL 元数据搜索，全文/OCR/语义搜索尚未启用；
-- 返回前逐项执行最终授权，权限拒绝的候选被过滤。
+- 返回前逐项执行最终授权，权限拒绝的候选被过滤；
+- `POST /api/v1/admin/search/index-refresh-jobs` 由系统管理员批量发起文档索引刷新任务入队，单次最多 50 个文档。
 
-尚未完成：全文内容索引、OCR、外部搜索服务、语义检索、索引刷新后台任务、权限安全的跨页精确 `total`、HTTP 集成测试和大数据量性能压测。
+尚未完成：真实 `INDEX` 后台任务处理器、全文内容索引、OCR、外部搜索服务、语义检索、权限安全的跨页精确 `total`、HTTP 集成测试和大数据量性能压测。
 
 ### 14.2 接口清单
 
 | 接口 | Operation ID | 成功响应 | 关键约束 |
 |---|---|---:|---|
 | `GET /api/v1/search?page=1&pageSize=50&query=工艺` | `searchDirectoryEntries` | `200/SearchResultListResponse` | 至少提供一个查询条件；统一使用 `page/pageSize`；仅搜索 ACTIVE 资源；返回前按资源 `READ_METADATA` 最终复核；当前 `total` 为本页可见数量 |
+| `POST /api/v1/admin/search/index-refresh-jobs` | `enqueueSearchIndexRefreshJobs` | `200/EnqueueSearchIndexRefreshJobsResponse` | 仅 `SYSTEM_ADMIN`；请求体 `documentIds` 为 1～50 个不重复文档 ID；先标记 `document_index_states.status=PENDING`，再写入 `INDEX` 后台任务；不存在的文档按单项失败返回；不改变搜索降级状态 |
 
 ### 14.3 查询参数和响应字段
 
@@ -1383,16 +1385,46 @@ Content-Type: application/json
 }
 ```
 
+索引刷新任务入队请求示例：
+
+```json
+{
+  "documentIds": [
+    "0198b100-0000-7000-8000-000000000101"
+  ],
+  "reason": "管理员手动刷新搜索索引"
+}
+```
+
+索引刷新任务入队响应示例：
+
+```json
+{
+  "items": [
+    {
+      "documentId": "0198b100-0000-7000-8000-000000000101",
+      "success": true,
+      "indexStatus": "PENDING",
+      "backgroundJobId": "019fd14d-c956-7f0e-a061-e5ee440d77a0"
+    }
+  ],
+  "succeeded": 1,
+  "failed": 0,
+  "requestId": "019fcc32-0bc6-7d82-aa70-62d5324b1fbb"
+}
+```
+
 ### 14.4 错误码和接口测试依据
 
 除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN` 外，本模块当前不新增专属错误码。
 
-正式接口测试至少覆盖：未登录拒绝；至少一个查询条件；非法 `page/pageSize`；非法 `entryType`；`metadataKey/metadataValue` 不成对拒绝；`updatedFrom > updatedTo` 拒绝；关键词搜索名称；扩展名、分类、空间和 metadata 筛选；TRASHED/PURGING/PURGED 不返回；权限拒绝候选被过滤；权限服务错误不能被吞掉；响应 `degraded=true`；`total` 为本页可见数量。
+正式接口测试至少覆盖：未登录拒绝；至少一个查询条件；非法 `page/pageSize`；非法 `entryType`；`metadataKey/metadataValue` 不成对拒绝；`updatedFrom > updatedTo` 拒绝；关键词搜索名称；扩展名、分类、空间和 metadata 筛选；TRASHED/PURGING/PURGED 不返回；权限拒绝候选被过滤；权限服务错误不能被吞掉；响应 `degraded=true`；`total` 为本页可见数量；索引刷新入队仅系统管理员可用；空 `documentIds`、重复文档、超过 50 个文档和缺少 `reason` 返回 400；不存在或非 ACTIVE 文档按单项失败返回；成功项必须把索引状态标记为 `PENDING` 并生成 `INDEX` 后台任务。
 
 现有自动化证据：
 
 - `backend/internal/modules/search/application/service_test.go`
 - `go test ./internal/modules/search/...`
+- `go test ./...`
 
 ## 15. 模块 16：后台任务
 

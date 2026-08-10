@@ -106,6 +106,7 @@ type Querier interface {
 	GetRecycleItemWithEntry(ctx context.Context, recycleItemID pgtype.UUID) (*GetRecycleItemWithEntryRow, error)
 	GetRecycleItemWithEntryForUpdate(ctx context.Context, recycleItemID pgtype.UUID) (*GetRecycleItemWithEntryForUpdateRow, error)
 	GetRefreshTokenForUpdate(ctx context.Context, tokenHash []byte) (*GetRefreshTokenForUpdateRow, error)
+	GetSearchIndexDocumentTarget(ctx context.Context, documentID pgtype.UUID) (*GetSearchIndexDocumentTargetRow, error)
 	GetSessionIDByRefreshTokenHash(ctx context.Context, tokenHash []byte) (pgtype.UUID, error)
 	GetShareIdempotency(ctx context.Context, arg *GetShareIdempotencyParams) (*GetShareIdempotencyRow, error)
 	GetShareSourceResource(ctx context.Context, arg *GetShareSourceResourceParams) (*GetShareSourceResourceRow, error)
@@ -281,6 +282,7 @@ type Querier interface {
 	UpdatePermissionGrant(ctx context.Context, arg *UpdatePermissionGrantParams) (*PermissionGrant, error)
 	UpdateShare(ctx context.Context, arg *UpdateShareParams) (*Share, error)
 	UpdateSpace(ctx context.Context, arg *UpdateSpaceParams) (*Space, error)
+	UpsertDocumentIndexPending(ctx context.Context, arg *UpsertDocumentIndexPendingParams) (*DocumentIndexState, error)
 	UserCanJoinOrganization(ctx context.Context, arg *UserCanJoinOrganizationParams) (pgtype.Bool, error)
 	UserExistsAndIsActive(ctx context.Context, userID pgtype.UUID) (bool, error)
 }

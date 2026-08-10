@@ -86,6 +86,18 @@ type Document struct {
 	RowVersion            int64
 }
 
+type DocumentIndexState struct {
+	DocumentID                pgtype.UUID
+	IndexedVersionID          pgtype.UUID
+	IndexedAclVersion         pgtype.Int8
+	IndexedSpaceSecurityEpoch pgtype.Int8
+	Status                    string
+	IndexedAt                 pgtype.Timestamptz
+	LastErrorCode             pgtype.Text
+	UpdatedAt                 pgtype.Timestamptz
+	RowVersion                int64
+}
+
 type DocumentLock struct {
 	DocumentLockID   pgtype.UUID
 	DocumentID       pgtype.UUID

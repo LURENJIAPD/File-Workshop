@@ -11,6 +11,7 @@ const (
 	DefaultPage     = 1
 	DefaultPageSize = 50
 	MaxPageSize     = 200
+	MaxBatchSize    = 50
 
 	ResourceFolder   = "FOLDER"
 	ResourceDocument = "DOCUMENT"
@@ -28,6 +29,11 @@ const (
 	MatchedMetadata       = "METADATA"
 
 	SourcePostgresMetadata = "POSTGRES_METADATA"
+
+	SystemRoleAdmin = "SYSTEM_ADMIN"
+
+	IndexStatusPending = "PENDING"
+	IndexJobType       = "INDEX"
 )
 
 type Actor struct {
@@ -91,4 +97,26 @@ type ListResult struct {
 	PageSize int
 	Total    int64
 	Degraded bool
+}
+
+type IndexRefreshTarget struct {
+	DocumentID         uuid.UUID
+	CurrentVersionID   *uuid.UUID
+	ACLVersion         int64
+	SpaceSecurityEpoch int64
+}
+
+type IndexRefreshItemResult struct {
+	DocumentID      uuid.UUID
+	Success         bool
+	IndexStatus     *string
+	BackgroundJobID *uuid.UUID
+	ErrorCode       *string
+	ErrorMessage    *string
+}
+
+type IndexRefreshResult struct {
+	Items     []IndexRefreshItemResult
+	Succeeded int
+	Failed    int
 }

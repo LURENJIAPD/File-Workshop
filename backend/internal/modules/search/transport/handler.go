@@ -25,13 +25,18 @@ type SessionAuthenticator interface {
 }
 
 type Handler struct {
-	service       *searchapplication.Service
-	authenticator SessionAuthenticator
-	config        config.AuthConfig
+	service        *searchapplication.Service
+	authenticator  SessionAuthenticator
+	config         config.AuthConfig
+	allowedOrigins map[string]struct{}
 }
 
 func NewHandler(service *searchapplication.Service, authenticator *identityapplication.Service, cfg config.AuthConfig) *Handler {
-	return &Handler{service: service, authenticator: authenticator, config: cfg}
+	origins := make(map[string]struct{}, len(cfg.AllowedOrigins))
+	for _, origin := range cfg.AllowedOrigins {
+		origins[origin] = struct{}{}
+	}
+	return &Handler{service: service, authenticator: authenticator, config: cfg, allowedOrigins: origins}
 }
 
 func (h *Handler) SearchDirectoryEntries(ctx context.Context, request api.SearchDirectoryEntriesRequestObject) (api.SearchDirectoryEntriesResponseObject, error) {
@@ -77,6 +82,32 @@ func (h *Handler) SearchDirectoryEntries(ctx context.Context, request api.Search
 	return api.SearchDirectoryEntries200JSONResponse(api.SearchResultListResponse{Items: items, Page: result.Page, PageSize: result.PageSize, Total: result.Total, Degraded: result.Degraded, RequestId: requestID}), nil
 }
 
+func (h *Handler) EnqueueSearchIndexRefreshJobs(ctx context.Context, request api.EnqueueSearchIndexRefreshJobsRequestObject) (api.EnqueueSearchIndexRefreshJobsResponseObject, error) {
+	ginContext, actor, requestID, authErr := h.authenticate(ctx)
+	if authErr != nil {
+		return api.EnqueueSearchIndexRefreshJobs401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	if !h.originAllowed(ginContext) {
+		return api.EnqueueSearchIndexRefreshJobs403JSONResponse{ForbiddenJSONResponse: forbidden(requestID)}, nil
+	}
+	if request.Body == nil {
+		return api.EnqueueSearchIndexRefreshJobs400JSONResponse{InvalidRequestJSONResponse: invalidRequest(requestID)}, nil
+	}
+	result, err := h.service.EnqueueIndexRefreshJobs(ginContext.Request.Context(), actor, apiUUIDs(request.Body.DocumentIds), request.Body.Reason)
+	if bad, denied, code := mapError(err, requestID); code != "" {
+		switch code {
+		case "400":
+			return api.EnqueueSearchIndexRefreshJobs400JSONResponse{InvalidRequestJSONResponse: bad}, nil
+		case "403":
+			return api.EnqueueSearchIndexRefreshJobs403JSONResponse{ForbiddenJSONResponse: denied}, nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	return api.EnqueueSearchIndexRefreshJobs200JSONResponse(apiIndexRefreshResult(result, requestID)), nil
+}
+
 func (h *Handler) authenticate(ctx context.Context) (*gin.Context, domain.Actor, string, error) {
 	ginContext, ok := ctx.(*gin.Context)
 	if !ok {
@@ -97,6 +128,15 @@ func (h *Handler) accessToken(ctx *gin.Context) string {
 	}
 	token, _ := ctx.Cookie(h.config.AccessCookieName)
 	return token
+}
+
+func (h *Handler) originAllowed(ctx *gin.Context) bool {
+	origin := strings.TrimSpace(ctx.GetHeader("Origin"))
+	if origin == "" {
+		return true
+	}
+	_, ok := h.allowedOrigins[origin]
+	return ok
 }
 
 func invalidRequest(requestID string) api.InvalidRequestJSONResponse {
@@ -141,6 +181,14 @@ func optionalAPIUUID(value *openapi_types.UUID) *uuid.UUID {
 	return &id
 }
 
+func apiUUIDs(values []openapi_types.UUID) []uuid.UUID {
+	result := make([]uuid.UUID, 0, len(values))
+	for _, value := range values {
+		result = append(result, uuid.UUID(value))
+	}
+	return result
+}
+
 func optionalEntryType(value *api.DirectoryEntryType) *string {
 	if value == nil {
 		return nil
@@ -164,6 +212,25 @@ func apiSearchResult(value domain.Result) (api.SearchResult, error) {
 		result.IndexStatus = &status
 	}
 	return result, nil
+}
+
+func apiIndexRefreshResult(value domain.IndexRefreshResult, requestID string) api.EnqueueSearchIndexRefreshJobsResponse {
+	items := make([]api.SearchIndexRefreshJobResult, 0, len(value.Items))
+	for _, item := range value.Items {
+		result := api.SearchIndexRefreshJobResult{DocumentId: openapi_types.UUID(item.DocumentID), Success: item.Success}
+		if item.IndexStatus != nil {
+			status := api.SearchIndexRefreshJobResultIndexStatus(*item.IndexStatus)
+			result.IndexStatus = &status
+		}
+		if item.BackgroundJobID != nil {
+			id := openapi_types.UUID(*item.BackgroundJobID)
+			result.BackgroundJobId = &id
+		}
+		result.ErrorCode = item.ErrorCode
+		result.ErrorMessage = item.ErrorMessage
+		items = append(items, result)
+	}
+	return api.EnqueueSearchIndexRefreshJobsResponse{Items: items, Succeeded: value.Succeeded, Failed: value.Failed, RequestId: requestID}
 }
 
 func apiEntry(value domain.Entry) (api.DirectoryEntry, error) {

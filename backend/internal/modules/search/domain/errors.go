@@ -5,6 +5,7 @@ import "errors"
 var (
 	ErrInvalidInput = errors.New("invalid search input")
 	ErrForbidden    = errors.New("search operation forbidden")
+	ErrNotFound     = errors.New("search target not found")
 )
 
 type ValidationError struct {

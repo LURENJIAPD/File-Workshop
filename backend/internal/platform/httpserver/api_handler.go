@@ -128,6 +128,7 @@ type LifecycleAPI interface {
 
 type SearchAPI interface {
 	SearchDirectoryEntries(context.Context, api.SearchDirectoryEntriesRequestObject) (api.SearchDirectoryEntriesResponseObject, error)
+	EnqueueSearchIndexRefreshJobs(context.Context, api.EnqueueSearchIndexRefreshJobsRequestObject) (api.EnqueueSearchIndexRefreshJobsResponseObject, error)
 }
 
 type BackgroundAPI interface {
@@ -208,6 +209,9 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 
 func (h *APIHandler) SearchDirectoryEntries(ctx context.Context, request api.SearchDirectoryEntriesRequestObject) (api.SearchDirectoryEntriesResponseObject, error) {
 	return h.search.SearchDirectoryEntries(ctx, request)
+}
+func (h *APIHandler) EnqueueSearchIndexRefreshJobs(ctx context.Context, request api.EnqueueSearchIndexRefreshJobsRequestObject) (api.EnqueueSearchIndexRefreshJobsResponseObject, error) {
+	return h.search.EnqueueSearchIndexRefreshJobs(ctx, request)
 }
 
 func (h *APIHandler) TrashDirectoryEntry(ctx context.Context, request api.TrashDirectoryEntryRequestObject) (api.TrashDirectoryEntryResponseObject, error) {

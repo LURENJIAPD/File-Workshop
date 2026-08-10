@@ -993,6 +993,30 @@ func (e ScanExpiredRecycleItemsResponseJobType) Valid() bool {
 	}
 }
 
+// Defines values for SearchIndexRefreshJobResultIndexStatus.
+const (
+	SearchIndexRefreshJobResultIndexStatusCURRENT SearchIndexRefreshJobResultIndexStatus = "CURRENT"
+	SearchIndexRefreshJobResultIndexStatusFAILED  SearchIndexRefreshJobResultIndexStatus = "FAILED"
+	SearchIndexRefreshJobResultIndexStatusPENDING SearchIndexRefreshJobResultIndexStatus = "PENDING"
+	SearchIndexRefreshJobResultIndexStatusSTALE   SearchIndexRefreshJobResultIndexStatus = "STALE"
+)
+
+// Valid indicates whether the value is a known member of the SearchIndexRefreshJobResultIndexStatus enum.
+func (e SearchIndexRefreshJobResultIndexStatus) Valid() bool {
+	switch e {
+	case SearchIndexRefreshJobResultIndexStatusCURRENT:
+		return true
+	case SearchIndexRefreshJobResultIndexStatusFAILED:
+		return true
+	case SearchIndexRefreshJobResultIndexStatusPENDING:
+		return true
+	case SearchIndexRefreshJobResultIndexStatusSTALE:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SearchResultIndexStatus.
 const (
 	SearchResultIndexStatusCURRENT SearchResultIndexStatus = "CURRENT"
@@ -1991,6 +2015,20 @@ type DocumentVersionResponse struct {
 // DocumentVersionSourceType defines model for DocumentVersionSourceType.
 type DocumentVersionSourceType string
 
+// EnqueueSearchIndexRefreshJobsRequest defines model for EnqueueSearchIndexRefreshJobsRequest.
+type EnqueueSearchIndexRefreshJobsRequest struct {
+	DocumentIds []openapi_types.UUID `json:"documentIds"`
+	Reason      string               `json:"reason"`
+}
+
+// EnqueueSearchIndexRefreshJobsResponse defines model for EnqueueSearchIndexRefreshJobsResponse.
+type EnqueueSearchIndexRefreshJobsResponse struct {
+	Failed    int                           `json:"failed"`
+	Items     []SearchIndexRefreshJobResult `json:"items"`
+	RequestId string                        `json:"requestId"`
+	Succeeded int                           `json:"succeeded"`
+}
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
 	Code      string                  `json:"code"`
@@ -2509,6 +2547,19 @@ type ScanExpiredRecycleItemsResponse struct {
 
 // ScanExpiredRecycleItemsResponseJobType defines model for ScanExpiredRecycleItemsResponse.JobType.
 type ScanExpiredRecycleItemsResponseJobType string
+
+// SearchIndexRefreshJobResult defines model for SearchIndexRefreshJobResult.
+type SearchIndexRefreshJobResult struct {
+	BackgroundJobId *openapi_types.UUID                     `json:"backgroundJobId,omitempty"`
+	DocumentId      openapi_types.UUID                      `json:"documentId"`
+	ErrorCode       *string                                 `json:"errorCode,omitempty"`
+	ErrorMessage    *string                                 `json:"errorMessage,omitempty"`
+	IndexStatus     *SearchIndexRefreshJobResultIndexStatus `json:"indexStatus,omitempty"`
+	Success         bool                                    `json:"success"`
+}
+
+// SearchIndexRefreshJobResultIndexStatus defines model for SearchIndexRefreshJobResult.IndexStatus.
+type SearchIndexRefreshJobResultIndexStatus string
 
 // SearchResult defines model for SearchResult.
 type SearchResult struct {
@@ -3365,6 +3416,9 @@ type MoveOrganizationJSONRequestBody = MoveOrganizationRequest
 // ChangeOrganizationStatusJSONRequestBody defines body for ChangeOrganizationStatus for application/json ContentType.
 type ChangeOrganizationStatusJSONRequestBody = ChangeOrganizationStatusRequest
 
+// EnqueueSearchIndexRefreshJobsJSONRequestBody defines body for EnqueueSearchIndexRefreshJobs for application/json ContentType.
+type EnqueueSearchIndexRefreshJobsJSONRequestBody = EnqueueSearchIndexRefreshJobsRequest
+
 // CreatePublicSpaceJSONRequestBody defines body for CreatePublicSpace for application/json ContentType.
 type CreatePublicSpaceJSONRequestBody = CreatePublicSpaceRequest
 
@@ -3577,6 +3631,9 @@ type ServerInterface interface {
 	// ChangeOrganizationStatus 改变组织状态
 	// (PUT /api/v1/admin/organizations/{organizationId}/status)
 	ChangeOrganizationStatus(c *gin.Context, organizationId OrganizationIdPath)
+	// EnqueueSearchIndexRefreshJobs Enqueue search index refresh jobs for documents.
+	// (POST /api/v1/admin/search/index-refresh-jobs)
+	EnqueueSearchIndexRefreshJobs(c *gin.Context)
 	// ListSpaces 分页查询空间
 	// (GET /api/v1/admin/spaces)
 	ListSpaces(c *gin.Context, params ListSpacesParams)
@@ -4745,6 +4802,19 @@ func (siw *ServerInterfaceWrapper) ChangeOrganizationStatus(c *gin.Context) {
 	}
 
 	siw.Handler.ChangeOrganizationStatus(c, organizationId)
+}
+
+// EnqueueSearchIndexRefreshJobs operation middleware
+func (siw *ServerInterfaceWrapper) EnqueueSearchIndexRefreshJobs(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.EnqueueSearchIndexRefreshJobs(c)
 }
 
 // ListSpaces operation middleware
@@ -7274,6 +7344,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/api/v1/preservation-holds/:preservationHoldId", wrapper.GetPreservationHold)
 	router.POST(options.BaseURL+"/api/v1/preservation-holds/:preservationHoldId/release", wrapper.ReleasePreservationHold)
 	router.GET(options.BaseURL+"/api/v1/search", wrapper.SearchDirectoryEntries)
+	router.POST(options.BaseURL+"/api/v1/admin/search/index-refresh-jobs", wrapper.EnqueueSearchIndexRefreshJobs)
 	router.POST(options.BaseURL+"/api/v1/auth/refresh", wrapper.RefreshSession)
 	router.POST(options.BaseURL+"/api/v1/auth/logout", wrapper.Logout)
 	router.GET(options.BaseURL+"/api/v1/auth/session", wrapper.GetCurrentSession)
@@ -10008,6 +10079,79 @@ func (response ChangeOrganizationStatus409JSONResponse) VisitChangeOrganizationS
 		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
 	}
 	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnqueueSearchIndexRefreshJobsRequestObject struct {
+	Body *EnqueueSearchIndexRefreshJobsJSONRequestBody
+}
+
+type EnqueueSearchIndexRefreshJobsResponseObject interface {
+	VisitEnqueueSearchIndexRefreshJobsResponse(w http.ResponseWriter) error
+}
+
+type EnqueueSearchIndexRefreshJobs200JSONResponse EnqueueSearchIndexRefreshJobsResponse
+
+func (response EnqueueSearchIndexRefreshJobs200JSONResponse) VisitEnqueueSearchIndexRefreshJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnqueueSearchIndexRefreshJobs400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response EnqueueSearchIndexRefreshJobs400JSONResponse) VisitEnqueueSearchIndexRefreshJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnqueueSearchIndexRefreshJobs401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response EnqueueSearchIndexRefreshJobs401JSONResponse) VisitEnqueueSearchIndexRefreshJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnqueueSearchIndexRefreshJobs403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response EnqueueSearchIndexRefreshJobs403JSONResponse) VisitEnqueueSearchIndexRefreshJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -16659,6 +16803,9 @@ type StrictServerInterface interface {
 	// ChangeOrganizationStatus 改变组织状态
 	// (PUT /api/v1/admin/organizations/{organizationId}/status)
 	ChangeOrganizationStatus(ctx context.Context, request ChangeOrganizationStatusRequestObject) (ChangeOrganizationStatusResponseObject, error)
+	// EnqueueSearchIndexRefreshJobs Enqueue search index refresh jobs for documents.
+	// (POST /api/v1/admin/search/index-refresh-jobs)
+	EnqueueSearchIndexRefreshJobs(ctx context.Context, request EnqueueSearchIndexRefreshJobsRequestObject) (EnqueueSearchIndexRefreshJobsResponseObject, error)
 	// ListSpaces 分页查询空间
 	// (GET /api/v1/admin/spaces)
 	ListSpaces(ctx context.Context, request ListSpacesRequestObject) (ListSpacesResponseObject, error)
@@ -17812,6 +17959,37 @@ func (sh *strictHandler) ChangeOrganizationStatus(ctx *gin.Context, organization
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(ChangeOrganizationStatusResponseObject); ok {
 		if err := validResponse.VisitChangeOrganizationStatusResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EnqueueSearchIndexRefreshJobs operation middleware
+func (sh *strictHandler) EnqueueSearchIndexRefreshJobs(ctx *gin.Context) {
+	var request EnqueueSearchIndexRefreshJobsRequestObject
+
+	var body EnqueueSearchIndexRefreshJobsJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.EnqueueSearchIndexRefreshJobs(ctx, request.(EnqueueSearchIndexRefreshJobsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EnqueueSearchIndexRefreshJobs")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(EnqueueSearchIndexRefreshJobsResponseObject); ok {
+		if err := validResponse.VisitEnqueueSearchIndexRefreshJobsResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

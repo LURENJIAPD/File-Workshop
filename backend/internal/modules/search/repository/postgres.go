@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"file-workshop/backend/internal/platform/database/dbgen"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -49,6 +51,30 @@ func (r *PostgreSQL) SearchEntries(ctx context.Context, filter domain.Filter) ([
 		results = append(results, domain.Result{Entry: entry, IndexStatus: optionalString(row.IndexStatus), Source: domain.SourcePostgresMetadata})
 	}
 	return results, nil
+}
+
+func (r *PostgreSQL) GetIndexRefreshTarget(ctx context.Context, documentID uuid.UUID) (domain.IndexRefreshTarget, error) {
+	row, err := r.queries.GetSearchIndexDocumentTarget(ctx, pgUUID(documentID))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.IndexRefreshTarget{}, domain.ErrNotFound
+		}
+		return domain.IndexRefreshTarget{}, err
+	}
+	return domain.IndexRefreshTarget{
+		DocumentID:         uuidValue(row.DocumentID),
+		CurrentVersionID:   optionalGoogleUUID(row.CurrentVersionID),
+		ACLVersion:         row.AclVersion,
+		SpaceSecurityEpoch: row.SpaceSecurityEpoch,
+	}, nil
+}
+
+func (r *PostgreSQL) MarkIndexRefreshPending(ctx context.Context, documentID uuid.UUID, now time.Time) (string, error) {
+	row, err := r.queries.UpsertDocumentIndexPending(ctx, &dbgen.UpsertDocumentIndexPendingParams{DocumentID: pgUUID(documentID), UpdatedAt: timestamptz(now)})
+	if err != nil {
+		return "", err
+	}
+	return row.Status, nil
 }
 
 func entryFromSearch(row *dbgen.SearchDirectoryEntriesRow) (domain.Entry, error) {
@@ -142,6 +168,10 @@ func optionalTime(value *time.Time) pgtype.Timestamptz {
 	if value == nil {
 		return pgtype.Timestamptz{}
 	}
+	return pgtype.Timestamptz{Time: value.UTC(), Valid: true}
+}
+
+func timestamptz(value time.Time) pgtype.Timestamptz {
 	return pgtype.Timestamptz{Time: value.UTC(), Valid: true}
 }
 

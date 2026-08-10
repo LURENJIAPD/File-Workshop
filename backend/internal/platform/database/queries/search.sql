@@ -48,3 +48,33 @@ ORDER BY
   e.updated_at DESC,
   e.namespace_entry_id DESC
 LIMIT sqlc.arg('page_size')::integer OFFSET sqlc.arg('page_offset')::bigint;
+
+-- name: GetSearchIndexDocumentTarget :one
+SELECT
+  d.document_id,
+  d.current_version_id,
+  d.acl_version,
+  sp.security_epoch AS space_security_epoch
+FROM documents d
+JOIN namespace_entries e ON e.namespace_entry_id = d.document_id
+JOIN spaces sp ON sp.space_id = e.space_id
+WHERE d.document_id = sqlc.arg('document_id')::uuid
+  AND e.lifecycle_status = 'ACTIVE'
+  AND sp.status <> 'DELETED';
+
+-- name: UpsertDocumentIndexPending :one
+INSERT INTO document_index_states (
+  document_id, status, last_error_code, updated_at
+) VALUES (
+  sqlc.arg('document_id')::uuid,
+  'PENDING',
+  NULL,
+  sqlc.arg('updated_at')::timestamptz
+)
+ON CONFLICT (document_id)
+DO UPDATE SET
+  status = 'PENDING',
+  last_error_code = NULL,
+  updated_at = EXCLUDED.updated_at,
+  row_version = document_index_states.row_version + 1
+RETURNING *;

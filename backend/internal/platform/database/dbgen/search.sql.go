@@ -11,6 +11,39 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getSearchIndexDocumentTarget = `-- name: GetSearchIndexDocumentTarget :one
+SELECT
+  d.document_id,
+  d.current_version_id,
+  d.acl_version,
+  sp.security_epoch AS space_security_epoch
+FROM documents d
+JOIN namespace_entries e ON e.namespace_entry_id = d.document_id
+JOIN spaces sp ON sp.space_id = e.space_id
+WHERE d.document_id = $1::uuid
+  AND e.lifecycle_status = 'ACTIVE'
+  AND sp.status <> 'DELETED'
+`
+
+type GetSearchIndexDocumentTargetRow struct {
+	DocumentID         pgtype.UUID
+	CurrentVersionID   pgtype.UUID
+	AclVersion         int64
+	SpaceSecurityEpoch int64
+}
+
+func (q *Queries) GetSearchIndexDocumentTarget(ctx context.Context, documentID pgtype.UUID) (*GetSearchIndexDocumentTargetRow, error) {
+	row := q.db.QueryRow(ctx, getSearchIndexDocumentTarget, documentID)
+	var i GetSearchIndexDocumentTargetRow
+	err := row.Scan(
+		&i.DocumentID,
+		&i.CurrentVersionID,
+		&i.AclVersion,
+		&i.SpaceSecurityEpoch,
+	)
+	return &i, err
+}
+
 const searchDirectoryEntries = `-- name: SearchDirectoryEntries :many
 SELECT
   e.namespace_entry_id, e.space_id, e.parent_folder_id, e.entry_type, e.name, e.normalized_name,
@@ -167,4 +200,44 @@ func (q *Queries) SearchDirectoryEntries(ctx context.Context, arg *SearchDirecto
 		return nil, err
 	}
 	return items, nil
+}
+
+const upsertDocumentIndexPending = `-- name: UpsertDocumentIndexPending :one
+INSERT INTO document_index_states (
+  document_id, status, last_error_code, updated_at
+) VALUES (
+  $1::uuid,
+  'PENDING',
+  NULL,
+  $2::timestamptz
+)
+ON CONFLICT (document_id)
+DO UPDATE SET
+  status = 'PENDING',
+  last_error_code = NULL,
+  updated_at = EXCLUDED.updated_at,
+  row_version = document_index_states.row_version + 1
+RETURNING document_id, indexed_version_id, indexed_acl_version, indexed_space_security_epoch, status, indexed_at, last_error_code, updated_at, row_version
+`
+
+type UpsertDocumentIndexPendingParams struct {
+	DocumentID pgtype.UUID
+	UpdatedAt  pgtype.Timestamptz
+}
+
+func (q *Queries) UpsertDocumentIndexPending(ctx context.Context, arg *UpsertDocumentIndexPendingParams) (*DocumentIndexState, error) {
+	row := q.db.QueryRow(ctx, upsertDocumentIndexPending, arg.DocumentID, arg.UpdatedAt)
+	var i DocumentIndexState
+	err := row.Scan(
+		&i.DocumentID,
+		&i.IndexedVersionID,
+		&i.IndexedAclVersion,
+		&i.IndexedSpaceSecurityEpoch,
+		&i.Status,
+		&i.IndexedAt,
+		&i.LastErrorCode,
+		&i.UpdatedAt,
+		&i.RowVersion,
+	)
+	return &i, err
 }
