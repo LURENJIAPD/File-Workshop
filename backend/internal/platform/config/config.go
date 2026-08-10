@@ -28,6 +28,7 @@ type Config struct {
 	Worker          WorkerConfig
 	PostgreSQL      PostgreSQLConfig
 	Redis           RedisConfig
+	ObjectStorage   ObjectStorageConfig
 }
 
 type AppConfig struct {
@@ -136,6 +137,19 @@ type RedisConfig struct {
 
 func (c RedisConfig) Address() string {
 	return net.JoinHostPort(c.Host, strconv.Itoa(c.Port))
+}
+
+type ObjectStorageConfig struct {
+	Enabled         bool
+	Provider        string
+	Endpoint        string
+	Region          string
+	Bucket          string
+	AccessKeyID     string
+	SecretAccessKey string
+	ForcePathStyle  bool
+	PresignTTL      time.Duration
+	HealthTimeout   time.Duration
 }
 
 func Load() (Config, error) {
@@ -278,6 +292,18 @@ func loadFromEnvironment() (Config, error) {
 			ConnMaxIdleTime: durationValue(envPrefix+"REDIS_CONN_MAX_IDLE_TIME", 30*time.Minute, &validationErrors),
 			ConnMaxLifetime: durationValue(envPrefix+"REDIS_CONN_MAX_LIFETIME", time.Hour, &validationErrors),
 		},
+		ObjectStorage: ObjectStorageConfig{
+			Enabled:         boolValue(envPrefix+"OBJECT_STORAGE_ENABLED", false, &validationErrors),
+			Provider:        stringValue(envPrefix+"OBJECT_STORAGE_PROVIDER", "seaweedfs-s3"),
+			Endpoint:        strings.TrimSpace(os.Getenv(envPrefix + "OBJECT_STORAGE_ENDPOINT")),
+			Region:          stringValue(envPrefix+"OBJECT_STORAGE_REGION", "us-east-1"),
+			Bucket:          strings.TrimSpace(os.Getenv(envPrefix + "OBJECT_STORAGE_BUCKET")),
+			AccessKeyID:     strings.TrimSpace(os.Getenv(envPrefix + "OBJECT_STORAGE_ACCESS_KEY_ID")),
+			SecretAccessKey: strings.TrimSpace(os.Getenv(envPrefix + "OBJECT_STORAGE_SECRET_ACCESS_KEY")),
+			ForcePathStyle:  boolValue(envPrefix+"OBJECT_STORAGE_FORCE_PATH_STYLE", true, &validationErrors),
+			PresignTTL:      durationValue(envPrefix+"OBJECT_STORAGE_PRESIGN_TTL", 15*time.Minute, &validationErrors),
+			HealthTimeout:   durationValue(envPrefix+"OBJECT_STORAGE_HEALTH_TIMEOUT", 3*time.Second, &validationErrors),
+		},
 	}
 
 	validateConfig(cfg, &validationErrors)
@@ -351,6 +377,20 @@ func validateConfig(cfg Config, validationErrors *[]error) {
 	}
 	if cfg.Worker.RetryMaxBackoff < cfg.Worker.RetryInitialBackoff {
 		*validationErrors = append(*validationErrors, fmt.Errorf("%sWORKER_RETRY_MAX_BACKOFF must not be shorter than %sWORKER_RETRY_INITIAL_BACKOFF", envPrefix, envPrefix))
+	}
+	if cfg.ObjectStorage.Enabled {
+		if strings.TrimSpace(cfg.ObjectStorage.Provider) == "" {
+			*validationErrors = append(*validationErrors, fmt.Errorf("%sOBJECT_STORAGE_PROVIDER is required when object storage is enabled", envPrefix))
+		}
+		if strings.TrimSpace(cfg.ObjectStorage.Endpoint) == "" {
+			*validationErrors = append(*validationErrors, fmt.Errorf("%sOBJECT_STORAGE_ENDPOINT is required when object storage is enabled", envPrefix))
+		}
+		if strings.TrimSpace(cfg.ObjectStorage.Bucket) == "" {
+			*validationErrors = append(*validationErrors, fmt.Errorf("%sOBJECT_STORAGE_BUCKET is required when object storage is enabled", envPrefix))
+		}
+		if strings.TrimSpace(cfg.ObjectStorage.AccessKeyID) == "" || strings.TrimSpace(cfg.ObjectStorage.SecretAccessKey) == "" {
+			*validationErrors = append(*validationErrors, fmt.Errorf("%sOBJECT_STORAGE_ACCESS_KEY_ID and %sOBJECT_STORAGE_SECRET_ACCESS_KEY are required when object storage is enabled", envPrefix, envPrefix))
+		}
 	}
 }
 

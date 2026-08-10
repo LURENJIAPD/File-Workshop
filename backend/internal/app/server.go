@@ -37,6 +37,7 @@ import (
 	"file-workshop/backend/internal/platform/database"
 	"file-workshop/backend/internal/platform/health"
 	"file-workshop/backend/internal/platform/httpserver"
+	"file-workshop/backend/internal/platform/objectstorage"
 )
 
 func RunServer(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
@@ -59,6 +60,9 @@ func RunServer(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 		logger.Info("Redis connection pool is ready", "address", cfg.Redis.Address(), "poolSize", cfg.Redis.PoolSize)
 	}
 
+	objectStorageClient, objectStorageDependency := configureObjectStorage(ctx, cfg, logger)
+	_ = objectStorageClient
+
 	healthService, err := health.NewService(cfg.App.ServiceName, []health.Dependency{
 		{
 			Name:     "postgresql",
@@ -76,11 +80,7 @@ func RunServer(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 				return redisClient.Ping(checkContext).Err()
 			},
 		},
-		{
-			Name:     "objectStorage",
-			Required: false,
-			Enabled:  false,
-		},
+		objectStorageDependency,
 	}, time.Now)
 	if err != nil {
 		return fmt.Errorf("configure health service: %w", err)
@@ -165,4 +165,23 @@ func RunServer(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 	}
 	logger.Info("HTTP server stopped")
 	return nil
+}
+
+func configureObjectStorage(ctx context.Context, cfg config.Config, logger *slog.Logger) (objectstorage.Client, health.Dependency) {
+	if !cfg.ObjectStorage.Enabled {
+		return objectstorage.NewDisabledClient(), health.Dependency{Name: "objectStorage", Required: false, Enabled: false}
+	}
+	client, err := objectstorage.NewS3Client(ctx, objectstorage.S3Config{
+		Region:          cfg.ObjectStorage.Region,
+		Endpoint:        cfg.ObjectStorage.Endpoint,
+		AccessKeyID:     cfg.ObjectStorage.AccessKeyID,
+		SecretAccessKey: cfg.ObjectStorage.SecretAccessKey,
+		ForcePathStyle:  cfg.ObjectStorage.ForcePathStyle,
+		DefaultBucket:   cfg.ObjectStorage.Bucket,
+	}, time.Now)
+	if err != nil {
+		logger.Error("configure object storage failed", "error", err)
+		return objectstorage.NewDisabledClient(), health.Dependency{Name: "objectStorage", Required: false, Enabled: true, Check: func(context.Context) error { return err }}
+	}
+	return client, health.Dependency{Name: "objectStorage", Required: false, Enabled: true, Timeout: cfg.ObjectStorage.HealthTimeout, Check: client.Check}
 }
