@@ -1667,6 +1667,12 @@ type BatchPermissionEvaluationResponse struct {
 	RequestId string                       `json:"requestId"`
 }
 
+// CancelBackgroundJobRequest defines model for CancelBackgroundJobRequest.
+type CancelBackgroundJobRequest struct {
+	Reason     string `json:"reason"`
+	RowVersion int64  `json:"rowVersion"`
+}
+
 // ChangeOrganizationStatusRequest defines model for ChangeOrganizationStatusRequest.
 type ChangeOrganizationStatusRequest struct {
 	Reason     string             `json:"reason"`
@@ -3263,6 +3269,9 @@ type EvaluateAdminDelegationJSONRequestBody = AdminDelegationEvaluationRequest
 // RevokeAdminDelegationJSONRequestBody defines body for RevokeAdminDelegation for application/json ContentType.
 type RevokeAdminDelegationJSONRequestBody = RevokeAdminDelegationRequest
 
+// CancelBackgroundJobJSONRequestBody defines body for CancelBackgroundJob for application/json ContentType.
+type CancelBackgroundJobJSONRequestBody = CancelBackgroundJobRequest
+
 // RetryBackgroundJobJSONRequestBody defines body for RetryBackgroundJob for application/json ContentType.
 type RetryBackgroundJobJSONRequestBody = RetryBackgroundItemRequest
 
@@ -3445,6 +3454,9 @@ type ServerInterface interface {
 	// ListBackgroundJobs List background jobs for operations.
 	// (GET /api/v1/admin/background/jobs)
 	ListBackgroundJobs(c *gin.Context, params ListBackgroundJobsParams)
+	// CancelBackgroundJob Cancel a pending, failed, or dead background job.
+	// (POST /api/v1/admin/background/jobs/{backgroundJobId}/cancel)
+	CancelBackgroundJob(c *gin.Context, backgroundJobId BackgroundJobIdPath)
 	// RetryBackgroundJob Retry a failed or dead background job.
 	// (POST /api/v1/admin/background/jobs/{backgroundJobId}/retry)
 	RetryBackgroundJob(c *gin.Context, backgroundJobId BackgroundJobIdPath)
@@ -3938,6 +3950,31 @@ func (siw *ServerInterfaceWrapper) ListBackgroundJobs(c *gin.Context) {
 	}
 
 	siw.Handler.ListBackgroundJobs(c, params)
+}
+
+// CancelBackgroundJob operation middleware
+func (siw *ServerInterfaceWrapper) CancelBackgroundJob(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "backgroundJobId" -------------
+	var backgroundJobId BackgroundJobIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "backgroundJobId", c.Param("backgroundJobId"), &backgroundJobId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter backgroundJobId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CancelBackgroundJob(c, backgroundJobId)
 }
 
 // RetryBackgroundJob operation middleware
@@ -7196,6 +7233,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/api/v1/admin/background/outbox-events/:outboxEventId/retry", wrapper.RetryBackgroundOutboxEvent)
 	router.GET(options.BaseURL+"/api/v1/admin/background/jobs", wrapper.ListBackgroundJobs)
 	router.POST(options.BaseURL+"/api/v1/admin/background/jobs/:backgroundJobId/retry", wrapper.RetryBackgroundJob)
+	router.POST(options.BaseURL+"/api/v1/admin/background/jobs/:backgroundJobId/cancel", wrapper.CancelBackgroundJob)
 }
 
 type AccountLockedResponseHeaders struct {
@@ -7733,6 +7771,114 @@ func (response ListBackgroundJobs403JSONResponse) VisitListBackgroundJobsRespons
 		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
 	}
 	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelBackgroundJobRequestObject struct {
+	BackgroundJobId BackgroundJobIdPath `json:"backgroundJobId"`
+	Body            *CancelBackgroundJobJSONRequestBody
+}
+
+type CancelBackgroundJobResponseObject interface {
+	VisitCancelBackgroundJobResponse(w http.ResponseWriter) error
+}
+
+type CancelBackgroundJob200JSONResponse BackgroundJobResponse
+
+func (response CancelBackgroundJob200JSONResponse) VisitCancelBackgroundJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelBackgroundJob400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response CancelBackgroundJob400JSONResponse) VisitCancelBackgroundJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelBackgroundJob401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response CancelBackgroundJob401JSONResponse) VisitCancelBackgroundJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelBackgroundJob403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response CancelBackgroundJob403JSONResponse) VisitCancelBackgroundJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelBackgroundJob404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response CancelBackgroundJob404JSONResponse) VisitCancelBackgroundJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CancelBackgroundJob409JSONResponse struct{ ConflictJSONResponse }
+
+func (response CancelBackgroundJob409JSONResponse) VisitCancelBackgroundJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -16138,6 +16284,9 @@ type StrictServerInterface interface {
 	// ListBackgroundJobs List background jobs for operations.
 	// (GET /api/v1/admin/background/jobs)
 	ListBackgroundJobs(ctx context.Context, request ListBackgroundJobsRequestObject) (ListBackgroundJobsResponseObject, error)
+	// CancelBackgroundJob Cancel a pending, failed, or dead background job.
+	// (POST /api/v1/admin/background/jobs/{backgroundJobId}/cancel)
+	CancelBackgroundJob(ctx context.Context, request CancelBackgroundJobRequestObject) (CancelBackgroundJobResponseObject, error)
 	// RetryBackgroundJob Retry a failed or dead background job.
 	// (POST /api/v1/admin/background/jobs/{backgroundJobId}/retry)
 	RetryBackgroundJob(ctx context.Context, request RetryBackgroundJobRequestObject) (RetryBackgroundJobResponseObject, error)
@@ -16641,6 +16790,39 @@ func (sh *strictHandler) ListBackgroundJobs(ctx *gin.Context, params ListBackgro
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(ListBackgroundJobsResponseObject); ok {
 		if err := validResponse.VisitListBackgroundJobsResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CancelBackgroundJob operation middleware
+func (sh *strictHandler) CancelBackgroundJob(ctx *gin.Context, backgroundJobId BackgroundJobIdPath) {
+	var request CancelBackgroundJobRequestObject
+
+	request.BackgroundJobId = backgroundJobId
+
+	var body CancelBackgroundJobJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CancelBackgroundJob(ctx, request.(CancelBackgroundJobRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CancelBackgroundJob")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(CancelBackgroundJobResponseObject); ok {
+		if err := validResponse.VisitCancelBackgroundJobResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

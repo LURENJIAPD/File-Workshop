@@ -181,6 +181,40 @@ func (h *Handler) RetryBackgroundJob(ctx context.Context, request api.RetryBackg
 	return api.RetryBackgroundJob200JSONResponse(api.BackgroundJobResponse{Job: body, RequestId: requestID}), nil
 }
 
+func (h *Handler) CancelBackgroundJob(ctx context.Context, request api.CancelBackgroundJobRequestObject) (api.CancelBackgroundJobResponseObject, error) {
+	ginContext, actor, requestID, authErr := h.authenticate(ctx)
+	if authErr != nil {
+		return api.CancelBackgroundJob401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	if !h.originAllowed(ginContext) {
+		return api.CancelBackgroundJob403JSONResponse{ForbiddenJSONResponse: forbidden(requestID)}, nil
+	}
+	if request.Body == nil {
+		return api.CancelBackgroundJob400JSONResponse{InvalidRequestJSONResponse: invalidRequest(requestID)}, nil
+	}
+	result, err := h.service.CancelBackgroundJob(ginContext.Request.Context(), actor, uuid.UUID(request.BackgroundJobId), request.Body.RowVersion, request.Body.Reason)
+	if bad, denied, missing, conflict, code := mapError(err, requestID); code != "" {
+		switch code {
+		case "400":
+			return api.CancelBackgroundJob400JSONResponse{InvalidRequestJSONResponse: bad}, nil
+		case "403":
+			return api.CancelBackgroundJob403JSONResponse{ForbiddenJSONResponse: denied}, nil
+		case "404":
+			return api.CancelBackgroundJob404JSONResponse{NotFoundJSONResponse: missing}, nil
+		case "409":
+			return api.CancelBackgroundJob409JSONResponse{ConflictJSONResponse: conflict}, nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	body, err := apiJob(result)
+	if err != nil {
+		return nil, err
+	}
+	return api.CancelBackgroundJob200JSONResponse(api.BackgroundJobResponse{Job: body, RequestId: requestID}), nil
+}
+
 func (h *Handler) authenticate(ctx context.Context) (*gin.Context, domain.Actor, string, error) {
 	ginContext, ok := ctx.(*gin.Context)
 	if !ok {

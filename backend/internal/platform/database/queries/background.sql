@@ -289,3 +289,20 @@ WHERE background_job_id = sqlc.arg('background_job_id')::uuid
   AND row_version = sqlc.arg('row_version')::bigint
   AND status IN ('FAILED', 'DEAD')
 RETURNING *;
+
+-- name: CancelBackgroundJob :one
+UPDATE background_jobs
+SET status = 'CANCELLED',
+    locked_by = NULL,
+    locked_at = NULL,
+    lease_until = NULL,
+    heartbeat_at = NULL,
+    completed_at = sqlc.arg('completed_at')::timestamptz,
+    last_error_code = 'MANUAL_CANCEL',
+    last_error_summary = sqlc.arg('reason')::text,
+    updated_at = sqlc.arg('completed_at')::timestamptz,
+    row_version = row_version + 1
+WHERE background_job_id = sqlc.arg('background_job_id')::uuid
+  AND row_version = sqlc.arg('row_version')::bigint
+  AND status IN ('PENDING', 'FAILED', 'DEAD')
+RETURNING *;

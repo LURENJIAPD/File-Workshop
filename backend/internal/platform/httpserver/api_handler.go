@@ -135,6 +135,7 @@ type BackgroundAPI interface {
 	RetryBackgroundOutboxEvent(context.Context, api.RetryBackgroundOutboxEventRequestObject) (api.RetryBackgroundOutboxEventResponseObject, error)
 	ListBackgroundJobs(context.Context, api.ListBackgroundJobsRequestObject) (api.ListBackgroundJobsResponseObject, error)
 	RetryBackgroundJob(context.Context, api.RetryBackgroundJobRequestObject) (api.RetryBackgroundJobResponseObject, error)
+	CancelBackgroundJob(context.Context, api.CancelBackgroundJobRequestObject) (api.CancelBackgroundJobResponseObject, error)
 }
 
 type AuditAPI interface {
@@ -280,6 +281,9 @@ func (h *APIHandler) ListBackgroundJobs(ctx context.Context, request api.ListBac
 }
 func (h *APIHandler) RetryBackgroundJob(ctx context.Context, request api.RetryBackgroundJobRequestObject) (api.RetryBackgroundJobResponseObject, error) {
 	return h.background.RetryBackgroundJob(ctx, request)
+}
+func (h *APIHandler) CancelBackgroundJob(ctx context.Context, request api.CancelBackgroundJobRequestObject) (api.CancelBackgroundJobResponseObject, error) {
+	return h.background.CancelBackgroundJob(ctx, request)
 }
 
 func (h *APIHandler) ListDirectoryEntries(ctx context.Context, request api.ListDirectoryEntriesRequestObject) (api.ListDirectoryEntriesResponseObject, error) {

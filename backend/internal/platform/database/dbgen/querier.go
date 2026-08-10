@@ -14,6 +14,7 @@ type Querier interface {
 	AbortUploadSession(ctx context.Context, arg *AbortUploadSessionParams) (*UploadSession, error)
 	ActiveLegalHoldExistsForEntrySubtree(ctx context.Context, namespaceEntryID pgtype.UUID) (bool, error)
 	AdminDelegationIsEffective(ctx context.Context, arg *AdminDelegationIsEffectiveParams) (bool, error)
+	CancelBackgroundJob(ctx context.Context, arg *CancelBackgroundJobParams) (*BackgroundJob, error)
 	ChangeDocumentInheritance(ctx context.Context, arg *ChangeDocumentInheritanceParams) (*ChangeDocumentInheritanceRow, error)
 	ChangeFolderInheritance(ctx context.Context, arg *ChangeFolderInheritanceParams) (*ChangeFolderInheritanceRow, error)
 	ClaimBackgroundJobsByType(ctx context.Context, arg *ClaimBackgroundJobsByTypeParams) ([]*BackgroundJob, error)

@@ -16,6 +16,7 @@ type OperationsRepository interface {
 	RetryOutboxEvent(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.OutboxEvent, error)
 	ListBackgroundJobs(ctx context.Context, filter domain.JobListFilter) (domain.JobListResult, error)
 	RetryBackgroundJob(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error)
+	CancelBackgroundJob(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error)
 }
 
 type Service struct {
@@ -91,6 +92,17 @@ func (s *Service) RetryBackgroundJob(ctx context.Context, actor domain.Actor, id
 		return domain.BackgroundJob{}, domain.ErrInvalidInput
 	}
 	return s.repository.RetryBackgroundJob(ctx, id, rowVersion, "manual retry: "+reason, s.now().UTC())
+}
+
+func (s *Service) CancelBackgroundJob(ctx context.Context, actor domain.Actor, id uuid.UUID, rowVersion int64, reason string) (domain.BackgroundJob, error) {
+	if err := requireAdmin(actor); err != nil {
+		return domain.BackgroundJob{}, err
+	}
+	reason = strings.TrimSpace(reason)
+	if rowVersion < 1 || reason == "" || len(reason) > 256 {
+		return domain.BackgroundJob{}, domain.ErrInvalidInput
+	}
+	return s.repository.CancelBackgroundJob(ctx, id, rowVersion, "manual cancel: "+reason, s.now().UTC())
 }
 
 func (s *Service) EnqueueJob(ctx context.Context, command EnqueueJobCommand) (domain.BackgroundJob, error) {

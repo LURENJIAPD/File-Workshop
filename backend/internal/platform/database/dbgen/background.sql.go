@@ -11,6 +11,68 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const cancelBackgroundJob = `-- name: CancelBackgroundJob :one
+UPDATE background_jobs
+SET status = 'CANCELLED',
+    locked_by = NULL,
+    locked_at = NULL,
+    lease_until = NULL,
+    heartbeat_at = NULL,
+    completed_at = $1::timestamptz,
+    last_error_code = 'MANUAL_CANCEL',
+    last_error_summary = $2::text,
+    updated_at = $1::timestamptz,
+    row_version = row_version + 1
+WHERE background_job_id = $3::uuid
+  AND row_version = $4::bigint
+  AND status IN ('PENDING', 'FAILED', 'DEAD')
+RETURNING background_job_id, job_type, target_document_id, target_document_version_id, target_storage_object_id, payload_schema_version, payload_json, deduplication_key, priority, status, attempt_count, max_attempts, available_at, locked_by, locked_at, lease_until, heartbeat_at, created_at, updated_at, started_at, completed_at, last_error_code, last_error_summary, row_version
+`
+
+type CancelBackgroundJobParams struct {
+	CompletedAt     pgtype.Timestamptz
+	Reason          string
+	BackgroundJobID pgtype.UUID
+	RowVersion      int64
+}
+
+func (q *Queries) CancelBackgroundJob(ctx context.Context, arg *CancelBackgroundJobParams) (*BackgroundJob, error) {
+	row := q.db.QueryRow(ctx, cancelBackgroundJob,
+		arg.CompletedAt,
+		arg.Reason,
+		arg.BackgroundJobID,
+		arg.RowVersion,
+	)
+	var i BackgroundJob
+	err := row.Scan(
+		&i.BackgroundJobID,
+		&i.JobType,
+		&i.TargetDocumentID,
+		&i.TargetDocumentVersionID,
+		&i.TargetStorageObjectID,
+		&i.PayloadSchemaVersion,
+		&i.PayloadJson,
+		&i.DeduplicationKey,
+		&i.Priority,
+		&i.Status,
+		&i.AttemptCount,
+		&i.MaxAttempts,
+		&i.AvailableAt,
+		&i.LockedBy,
+		&i.LockedAt,
+		&i.LeaseUntil,
+		&i.HeartbeatAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.StartedAt,
+		&i.CompletedAt,
+		&i.LastErrorCode,
+		&i.LastErrorSummary,
+		&i.RowVersion,
+	)
+	return &i, err
+}
+
 const claimBackgroundJobsByType = `-- name: ClaimBackgroundJobsByType :many
 WITH candidates AS (
   SELECT background_job_id

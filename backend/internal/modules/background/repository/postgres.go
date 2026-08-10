@@ -197,6 +197,14 @@ func (r *PostgreSQL) RetryBackgroundJob(ctx context.Context, id uuid.UUID, rowVe
 	return backgroundJob(row)
 }
 
+func (r *PostgreSQL) CancelBackgroundJob(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error) {
+	row, err := r.queries.CancelBackgroundJob(ctx, &dbgen.CancelBackgroundJobParams{BackgroundJobID: pgUUID(id), RowVersion: rowVersion, Reason: reason, CompletedAt: timestamptz(now)})
+	if err != nil {
+		return domain.BackgroundJob{}, r.classifyBackgroundJobRetryError(ctx, id, err)
+	}
+	return backgroundJob(row)
+}
+
 func outboxEvent(row *dbgen.OutboxEvent) (domain.OutboxEvent, error) {
 	if row == nil {
 		return domain.OutboxEvent{}, fmt.Errorf("outbox event row is nil")

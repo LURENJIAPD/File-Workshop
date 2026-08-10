@@ -2734,6 +2734,35 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
 
+  /api/v1/admin/background/jobs/{backgroundJobId}/cancel:
+    post:
+      operationId: cancelBackgroundJob
+      tags: [BackgroundAdministration]
+      summary: Cancel a pending, failed, or dead background job.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/BackgroundJobIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancelBackgroundJobRequest"
+      responses:
+        "200":
+          description: Background job moved to CANCELLED.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackgroundJobResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -3647,6 +3676,14 @@ components:
         requestId: { type: string, minLength: 1, maxLength: 128 }
 
     RetryBackgroundItemRequest:
+      type: object
+      additionalProperties: false
+      required: [rowVersion, reason]
+      properties:
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+        reason: { type: string, minLength: 1, maxLength: 256 }
+
+    CancelBackgroundJobRequest:
       type: object
       additionalProperties: false
       required: [rowVersion, reason]
