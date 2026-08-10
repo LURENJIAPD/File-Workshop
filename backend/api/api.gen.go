@@ -7,7 +7,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -340,6 +342,27 @@ func (e ComponentStatus) Valid() bool {
 	case ComponentStatusOk:
 		return true
 	case ComponentStatusUnavailable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateShareTargetKind.
+const (
+	CreateShareTargetKindLINK         CreateShareTargetKind = "LINK"
+	CreateShareTargetKindORGANIZATION CreateShareTargetKind = "ORGANIZATION"
+	CreateShareTargetKindUSER         CreateShareTargetKind = "USER"
+)
+
+// Valid indicates whether the value is a known member of the CreateShareTargetKind enum.
+func (e CreateShareTargetKind) Valid() bool {
+	switch e {
+	case CreateShareTargetKindLINK:
+		return true
+	case CreateShareTargetKindORGANIZATION:
+		return true
+	case CreateShareTargetKindUSER:
 		return true
 	default:
 		return false
@@ -928,6 +951,99 @@ func (e SessionSummaryStatus) Valid() bool {
 	case SessionSummaryStatusEXPIRED:
 		return true
 	case SessionSummaryStatusREVOKED:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ShareAction.
+const (
+	ShareActionDOWNLOAD     ShareAction = "DOWNLOAD"
+	ShareActionPREVIEW      ShareAction = "PREVIEW"
+	ShareActionREADMETADATA ShareAction = "READ_METADATA"
+	ShareActionWRITECONTENT ShareAction = "WRITE_CONTENT"
+)
+
+// Valid indicates whether the value is a known member of the ShareAction enum.
+func (e ShareAction) Valid() bool {
+	switch e {
+	case ShareActionDOWNLOAD:
+		return true
+	case ShareActionPREVIEW:
+		return true
+	case ShareActionREADMETADATA:
+		return true
+	case ShareActionWRITECONTENT:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ShareResourceType.
+const (
+	ShareResourceTypeDOCUMENT ShareResourceType = "DOCUMENT"
+	ShareResourceTypeFOLDER   ShareResourceType = "FOLDER"
+)
+
+// Valid indicates whether the value is a known member of the ShareResourceType enum.
+func (e ShareResourceType) Valid() bool {
+	switch e {
+	case ShareResourceTypeDOCUMENT:
+		return true
+	case ShareResourceTypeFOLDER:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ShareStatus.
+const (
+	ShareStatusACTIVE            ShareStatus = "ACTIVE"
+	ShareStatusEXPIRED           ShareStatus = "EXPIRED"
+	ShareStatusREVOKED           ShareStatus = "REVOKED"
+	ShareStatusSOURCEUNAVAILABLE ShareStatus = "SOURCE_UNAVAILABLE"
+	ShareStatusSUSPENDED         ShareStatus = "SUSPENDED"
+)
+
+// Valid indicates whether the value is a known member of the ShareStatus enum.
+func (e ShareStatus) Valid() bool {
+	switch e {
+	case ShareStatusACTIVE:
+		return true
+	case ShareStatusEXPIRED:
+		return true
+	case ShareStatusREVOKED:
+		return true
+	case ShareStatusSOURCEUNAVAILABLE:
+		return true
+	case ShareStatusSUSPENDED:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ShareTargetKind.
+const (
+	ShareTargetKindLINK         ShareTargetKind = "LINK"
+	ShareTargetKindORGANIZATION ShareTargetKind = "ORGANIZATION"
+	ShareTargetKindSPACE        ShareTargetKind = "SPACE"
+	ShareTargetKindUSER         ShareTargetKind = "USER"
+)
+
+// Valid indicates whether the value is a known member of the ShareTargetKind enum.
+func (e ShareTargetKind) Valid() bool {
+	switch e {
+	case ShareTargetKindLINK:
+		return true
+	case ShareTargetKindORGANIZATION:
+		return true
+	case ShareTargetKindSPACE:
+		return true
+	case ShareTargetKindUSER:
 		return true
 	default:
 		return false
@@ -1525,6 +1641,23 @@ type CreatePublicSpaceRequest struct {
 	QuotaBytes int64                   `json:"quotaBytes"`
 }
 
+// CreateShareRequest defines model for CreateShareRequest.
+type CreateShareRequest struct {
+	Actions              []ShareAction         `json:"actions"`
+	AllowReshare         *bool                 `json:"allowReshare,omitempty"`
+	Note                 *string               `json:"note,omitempty"`
+	SourceId             openapi_types.UUID    `json:"sourceId"`
+	SourceType           ShareResourceType     `json:"sourceType"`
+	TargetKind           CreateShareTargetKind `json:"targetKind"`
+	TargetOrganizationId *openapi_types.UUID   `json:"targetOrganizationId,omitempty"`
+	TargetSpaceId        *openapi_types.UUID   `json:"targetSpaceId,omitempty"`
+	TargetUserId         *openapi_types.UUID   `json:"targetUserId,omitempty"`
+	ValidUntil           *time.Time            `json:"validUntil,omitempty"`
+}
+
+// CreateShareTargetKind defines model for CreateShareTargetKind.
+type CreateShareTargetKind string
+
 // CreateUploadSessionRequest defines model for CreateUploadSessionRequest.
 type CreateUploadSessionRequest struct {
 	DeclaredMimeType         *string             `json:"declaredMimeType,omitempty"`
@@ -1736,6 +1869,20 @@ type MoveOrganizationRequest struct {
 	NewParentOrganizationId *openapi_types.UUID `json:"newParentOrganizationId,omitempty"`
 	Reason                  *string             `json:"reason,omitempty"`
 	RowVersion              int64               `json:"rowVersion"`
+}
+
+// OpenShareRequest defines model for OpenShareRequest.
+type OpenShareRequest struct {
+	ShareToken *string `json:"shareToken,omitempty"`
+}
+
+// OpenShareResponse defines model for OpenShareResponse.
+type OpenShareResponse struct {
+	Actions    []ShareAction      `json:"actions"`
+	RequestId  string             `json:"requestId"`
+	Share      Share              `json:"share"`
+	SourceId   openapi_types.UUID `json:"sourceId"`
+	SourceType ShareResourceType  `json:"sourceType"`
 }
 
 // Organization defines model for Organization.
@@ -2064,6 +2211,12 @@ type RevokePermissionGrantRequest struct {
 	RowVersion int64  `json:"rowVersion"`
 }
 
+// RevokeShareRequest defines model for RevokeShareRequest.
+type RevokeShareRequest struct {
+	Reason     string `json:"reason"`
+	RowVersion int64  `json:"rowVersion"`
+}
+
 // SessionSummary defines model for SessionSummary.
 type SessionSummary struct {
 	CreatedAt  time.Time            `json:"createdAt"`
@@ -2076,6 +2229,59 @@ type SessionSummary struct {
 
 // SessionSummaryStatus defines model for SessionSummary.Status.
 type SessionSummaryStatus string
+
+// Share defines model for Share.
+type Share struct {
+	Actions              []ShareAction       `json:"actions"`
+	AllowReshare         bool                `json:"allowReshare"`
+	CreatedAt            time.Time           `json:"createdAt"`
+	CreatorUserId        openapi_types.UUID  `json:"creatorUserId"`
+	RevokeReason         *string             `json:"revokeReason,omitempty"`
+	RevokedAt            *time.Time          `json:"revokedAt,omitempty"`
+	RevokedByUserId      *openapi_types.UUID `json:"revokedByUserId,omitempty"`
+	RowVersion           int64               `json:"rowVersion"`
+	ShareId              openapi_types.UUID  `json:"shareId"`
+	SourceId             openapi_types.UUID  `json:"sourceId"`
+	SourceType           ShareResourceType   `json:"sourceType"`
+	Status               ShareStatus         `json:"status"`
+	TargetKind           ShareTargetKind     `json:"targetKind"`
+	TargetOrganizationId *openapi_types.UUID `json:"targetOrganizationId,omitempty"`
+	TargetSpaceId        *openapi_types.UUID `json:"targetSpaceId,omitempty"`
+	TargetUserId         *openapi_types.UUID `json:"targetUserId,omitempty"`
+	UpdatedAt            time.Time           `json:"updatedAt"`
+	ValidFrom            time.Time           `json:"validFrom"`
+	ValidUntil           *time.Time          `json:"validUntil,omitempty"`
+}
+
+// ShareAction defines model for ShareAction.
+type ShareAction string
+
+// ShareListResponse defines model for ShareListResponse.
+type ShareListResponse struct {
+	Items     []Share  `json:"items"`
+	Page      Page     `json:"page"`
+	PageSize  PageSize `json:"pageSize"`
+	RequestId string   `json:"requestId"`
+	Total     int64    `json:"total"`
+}
+
+// ShareResourceType defines model for ShareResourceType.
+type ShareResourceType string
+
+// ShareResponse defines model for ShareResponse.
+type ShareResponse struct {
+	RequestId string `json:"requestId"`
+	Share     Share  `json:"share"`
+
+	// ShareToken 仅 LINK 共享创建成功时返回一次的明文内部链接令牌；服务端只保存 SHA-256 摘要。
+	ShareToken *string `json:"shareToken,omitempty"`
+}
+
+// ShareStatus defines model for ShareStatus.
+type ShareStatus string
+
+// ShareTargetKind defines model for ShareTargetKind.
+type ShareTargetKind string
 
 // Space defines model for Space.
 type Space struct {
@@ -2176,6 +2382,16 @@ type UpdatePermissionGrantRequest struct {
 	InheritToDescendants bool               `json:"inheritToDescendants"`
 	RowVersion           int64              `json:"rowVersion"`
 	ValidUntil           *time.Time         `json:"validUntil,omitempty"`
+}
+
+// UpdateShareRequest defines model for UpdateShareRequest.
+type UpdateShareRequest struct {
+	Actions      *[]ShareAction `json:"actions,omitempty"`
+	AllowReshare *bool          `json:"allowReshare,omitempty"`
+	RowVersion   int64          `json:"rowVersion"`
+
+	// ValidUntil 设置新的到期时间；当前周期暂不支持通过 null 清空到期时间。
+	ValidUntil *time.Time `json:"validUntil,omitempty"`
 }
 
 // UpdateSpaceRequest defines model for UpdateSpaceRequest.
@@ -2373,6 +2589,9 @@ type PlanIdPath = openapi_types.UUID
 
 // SessionIdPath defines model for SessionIdPath.
 type SessionIdPath = openapi_types.UUID
+
+// ShareIdPath defines model for ShareIdPath.
+type ShareIdPath = openapi_types.UUID
 
 // SpaceIdPath defines model for SpaceIdPath.
 type SpaceIdPath = openapi_types.UUID
@@ -2623,6 +2842,30 @@ type ListResourcePermissionGrantsParams struct {
 	PageSize *PageSizeQuery `form:"pageSize,omitempty" json:"pageSize,omitempty"`
 }
 
+// CreateShareParams defines parameters for CreateShare.
+type CreateShareParams struct {
+	// IdempotencyKey 可重试写请求的稳定幂等键。
+	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
+}
+
+// ListCreatedSharesParams defines parameters for ListCreatedShares.
+type ListCreatedSharesParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize *PageSizeQuery `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+}
+
+// ListReceivedSharesParams defines parameters for ListReceivedShares.
+type ListReceivedSharesParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize *PageSizeQuery `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+}
+
 // CreateDocumentParams defines parameters for CreateDocument.
 type CreateDocumentParams struct {
 	// IdempotencyKey 可重试写请求的稳定幂等键。
@@ -2796,6 +3039,18 @@ type BreakPermissionInheritanceJSONRequestBody = ChangePermissionInheritanceRequ
 
 // RestorePermissionInheritanceJSONRequestBody defines body for RestorePermissionInheritance for application/json ContentType.
 type RestorePermissionInheritanceJSONRequestBody = ChangePermissionInheritanceRequest
+
+// CreateShareJSONRequestBody defines body for CreateShare for application/json ContentType.
+type CreateShareJSONRequestBody = CreateShareRequest
+
+// UpdateShareJSONRequestBody defines body for UpdateShare for application/json ContentType.
+type UpdateShareJSONRequestBody = UpdateShareRequest
+
+// OpenShareJSONRequestBody defines body for OpenShare for application/json ContentType.
+type OpenShareJSONRequestBody = OpenShareRequest
+
+// RevokeShareJSONRequestBody defines body for RevokeShare for application/json ContentType.
+type RevokeShareJSONRequestBody = RevokeShareRequest
 
 // CreateDocumentJSONRequestBody defines body for CreateDocument for application/json ContentType.
 type CreateDocumentJSONRequestBody = CreateDocumentRequest
@@ -3012,6 +3267,27 @@ type ServerInterface interface {
 	// RestorePermissionInheritance 恢复文件夹或文档的 ACL 继承
 	// (POST /api/v1/permissions/resources/{resourceType}/{resourceId}/restore-inheritance)
 	RestorePermissionInheritance(c *gin.Context, resourceType PermissionResourceTypePath, resourceId PermissionResourceIdPath)
+	// CreateShare 创建内部共享
+	// (POST /api/v1/shares)
+	CreateShare(c *gin.Context, params CreateShareParams)
+	// ListCreatedShares 分页查询我创建的共享
+	// (GET /api/v1/shares/created)
+	ListCreatedShares(c *gin.Context, params ListCreatedSharesParams)
+	// ListReceivedShares 分页查询共享给我的资源
+	// (GET /api/v1/shares/received)
+	ListReceivedShares(c *gin.Context, params ListReceivedSharesParams)
+	// GetShare 获取共享详情
+	// (GET /api/v1/shares/{shareId})
+	GetShare(c *gin.Context, shareId ShareIdPath)
+	// UpdateShare 修改共享动作和有效期
+	// (PATCH /api/v1/shares/{shareId})
+	UpdateShare(c *gin.Context, shareId ShareIdPath)
+	// OpenShare 打开共享并记录访问事件
+	// (POST /api/v1/shares/{shareId}/open)
+	OpenShare(c *gin.Context, shareId ShareIdPath)
+	// RevokeShare 撤销共享
+	// (POST /api/v1/shares/{shareId}/revoke)
+	RevokeShare(c *gin.Context, shareId ShareIdPath)
 	// CreateDocument 创建 Document 稳定身份
 	// (POST /api/v1/spaces/{spaceId}/documents)
 	CreateDocument(c *gin.Context, spaceId SpaceIdPath, params CreateDocumentParams)
@@ -5301,6 +5577,219 @@ func (siw *ServerInterfaceWrapper) RestorePermissionInheritance(c *gin.Context) 
 	siw.Handler.RestorePermissionInheritance(c, resourceType, resourceId)
 }
 
+// CreateShare operation middleware
+func (siw *ServerInterfaceWrapper) CreateShare(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateShareParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKeyHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreateShare(c, params)
+}
+
+// ListCreatedShares operation middleware
+func (siw *ServerInterfaceWrapper) ListCreatedShares(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCreatedSharesParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListCreatedShares(c, params)
+}
+
+// ListReceivedShares operation middleware
+func (siw *ServerInterfaceWrapper) ListReceivedShares(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListReceivedSharesParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListReceivedShares(c, params)
+}
+
+// GetShare operation middleware
+func (siw *ServerInterfaceWrapper) GetShare(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "shareId" -------------
+	var shareId ShareIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "shareId", c.Param("shareId"), &shareId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter shareId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetShare(c, shareId)
+}
+
+// UpdateShare operation middleware
+func (siw *ServerInterfaceWrapper) UpdateShare(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "shareId" -------------
+	var shareId ShareIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "shareId", c.Param("shareId"), &shareId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter shareId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateShare(c, shareId)
+}
+
+// OpenShare operation middleware
+func (siw *ServerInterfaceWrapper) OpenShare(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "shareId" -------------
+	var shareId ShareIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "shareId", c.Param("shareId"), &shareId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter shareId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.OpenShare(c, shareId)
+}
+
+// RevokeShare operation middleware
+func (siw *ServerInterfaceWrapper) RevokeShare(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "shareId" -------------
+	var shareId ShareIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "shareId", c.Param("shareId"), &shareId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter shareId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.RevokeShare(c, shareId)
+}
+
 // CreateDocument operation middleware
 func (siw *ServerInterfaceWrapper) CreateDocument(c *gin.Context) {
 
@@ -5804,6 +6293,13 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/api/v1/documents/:documentId/lock", wrapper.AcquireDocumentLock)
 	router.POST(options.BaseURL+"/api/v1/documents/:documentId/lock/heartbeat", wrapper.HeartbeatDocumentLock)
 	router.POST(options.BaseURL+"/api/v1/documents/:documentId/lock/force-release", wrapper.ForceReleaseDocumentLock)
+	router.POST(options.BaseURL+"/api/v1/shares", wrapper.CreateShare)
+	router.GET(options.BaseURL+"/api/v1/shares/created", wrapper.ListCreatedShares)
+	router.GET(options.BaseURL+"/api/v1/shares/received", wrapper.ListReceivedShares)
+	router.GET(options.BaseURL+"/api/v1/shares/:shareId", wrapper.GetShare)
+	router.PATCH(options.BaseURL+"/api/v1/shares/:shareId", wrapper.UpdateShare)
+	router.POST(options.BaseURL+"/api/v1/shares/:shareId/revoke", wrapper.RevokeShare)
+	router.POST(options.BaseURL+"/api/v1/shares/:shareId/open", wrapper.OpenShare)
 	router.GET(options.BaseURL+"/api/v1/entries/:entryId", wrapper.GetDirectoryEntry)
 	router.PATCH(options.BaseURL+"/api/v1/entries/:entryId", wrapper.RenameDirectoryEntry)
 	router.POST(options.BaseURL+"/api/v1/entries/:entryId/move", wrapper.MoveDirectoryEntry)
@@ -12074,6 +12570,606 @@ func (response RestorePermissionInheritance409JSONResponse) VisitRestorePermissi
 	return err
 }
 
+type CreateShareRequestObject struct {
+	Params CreateShareParams
+	Body   *CreateShareJSONRequestBody
+}
+
+type CreateShareResponseObject interface {
+	VisitCreateShareResponse(w http.ResponseWriter) error
+}
+
+type CreateShare201JSONResponse ShareResponse
+
+func (response CreateShare201JSONResponse) VisitCreateShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateShare400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response CreateShare400JSONResponse) VisitCreateShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateShare401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response CreateShare401JSONResponse) VisitCreateShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateShare403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response CreateShare403JSONResponse) VisitCreateShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateShare404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response CreateShare404JSONResponse) VisitCreateShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateShare409JSONResponse struct{ ConflictJSONResponse }
+
+func (response CreateShare409JSONResponse) VisitCreateShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCreatedSharesRequestObject struct {
+	Params ListCreatedSharesParams
+}
+
+type ListCreatedSharesResponseObject interface {
+	VisitListCreatedSharesResponse(w http.ResponseWriter) error
+}
+
+type ListCreatedShares200JSONResponse ShareListResponse
+
+func (response ListCreatedShares200JSONResponse) VisitListCreatedSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCreatedShares400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListCreatedShares400JSONResponse) VisitListCreatedSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCreatedShares401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListCreatedShares401JSONResponse) VisitListCreatedSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListReceivedSharesRequestObject struct {
+	Params ListReceivedSharesParams
+}
+
+type ListReceivedSharesResponseObject interface {
+	VisitListReceivedSharesResponse(w http.ResponseWriter) error
+}
+
+type ListReceivedShares200JSONResponse ShareListResponse
+
+func (response ListReceivedShares200JSONResponse) VisitListReceivedSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListReceivedShares400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListReceivedShares400JSONResponse) VisitListReceivedSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListReceivedShares401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListReceivedShares401JSONResponse) VisitListReceivedSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetShareRequestObject struct {
+	ShareId ShareIdPath `json:"shareId"`
+}
+
+type GetShareResponseObject interface {
+	VisitGetShareResponse(w http.ResponseWriter) error
+}
+
+type GetShare200JSONResponse ShareResponse
+
+func (response GetShare200JSONResponse) VisitGetShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetShare401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response GetShare401JSONResponse) VisitGetShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetShare403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetShare403JSONResponse) VisitGetShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetShare404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetShare404JSONResponse) VisitGetShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateShareRequestObject struct {
+	ShareId ShareIdPath `json:"shareId"`
+	Body    *UpdateShareJSONRequestBody
+}
+
+type UpdateShareResponseObject interface {
+	VisitUpdateShareResponse(w http.ResponseWriter) error
+}
+
+type UpdateShare200JSONResponse ShareResponse
+
+func (response UpdateShare200JSONResponse) VisitUpdateShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateShare400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response UpdateShare400JSONResponse) VisitUpdateShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateShare401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response UpdateShare401JSONResponse) VisitUpdateShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateShare403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UpdateShare403JSONResponse) VisitUpdateShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateShare404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UpdateShare404JSONResponse) VisitUpdateShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateShare409JSONResponse struct{ ConflictJSONResponse }
+
+func (response UpdateShare409JSONResponse) VisitUpdateShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type OpenShareRequestObject struct {
+	ShareId ShareIdPath `json:"shareId"`
+	Body    *OpenShareJSONRequestBody
+}
+
+type OpenShareResponseObject interface {
+	VisitOpenShareResponse(w http.ResponseWriter) error
+}
+
+type OpenShare200JSONResponse OpenShareResponse
+
+func (response OpenShare200JSONResponse) VisitOpenShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type OpenShare401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response OpenShare401JSONResponse) VisitOpenShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type OpenShare403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response OpenShare403JSONResponse) VisitOpenShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type OpenShare404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response OpenShare404JSONResponse) VisitOpenShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type OpenShare409JSONResponse struct{ ConflictJSONResponse }
+
+func (response OpenShare409JSONResponse) VisitOpenShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeShareRequestObject struct {
+	ShareId ShareIdPath `json:"shareId"`
+	Body    *RevokeShareJSONRequestBody
+}
+
+type RevokeShareResponseObject interface {
+	VisitRevokeShareResponse(w http.ResponseWriter) error
+}
+
+type RevokeShare200JSONResponse ShareResponse
+
+func (response RevokeShare200JSONResponse) VisitRevokeShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeShare400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response RevokeShare400JSONResponse) VisitRevokeShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeShare401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response RevokeShare401JSONResponse) VisitRevokeShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeShare403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RevokeShare403JSONResponse) VisitRevokeShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeShare404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response RevokeShare404JSONResponse) VisitRevokeShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeShare409JSONResponse struct{ ConflictJSONResponse }
+
+func (response RevokeShare409JSONResponse) VisitRevokeShareResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type CreateDocumentRequestObject struct {
 	SpaceId SpaceIdPath `json:"spaceId"`
 	Params  CreateDocumentParams
@@ -13466,6 +14562,27 @@ type StrictServerInterface interface {
 	// RestorePermissionInheritance 恢复文件夹或文档的 ACL 继承
 	// (POST /api/v1/permissions/resources/{resourceType}/{resourceId}/restore-inheritance)
 	RestorePermissionInheritance(ctx context.Context, request RestorePermissionInheritanceRequestObject) (RestorePermissionInheritanceResponseObject, error)
+	// CreateShare 创建内部共享
+	// (POST /api/v1/shares)
+	CreateShare(ctx context.Context, request CreateShareRequestObject) (CreateShareResponseObject, error)
+	// ListCreatedShares 分页查询我创建的共享
+	// (GET /api/v1/shares/created)
+	ListCreatedShares(ctx context.Context, request ListCreatedSharesRequestObject) (ListCreatedSharesResponseObject, error)
+	// ListReceivedShares 分页查询共享给我的资源
+	// (GET /api/v1/shares/received)
+	ListReceivedShares(ctx context.Context, request ListReceivedSharesRequestObject) (ListReceivedSharesResponseObject, error)
+	// GetShare 获取共享详情
+	// (GET /api/v1/shares/{shareId})
+	GetShare(ctx context.Context, request GetShareRequestObject) (GetShareResponseObject, error)
+	// UpdateShare 修改共享动作和有效期
+	// (PATCH /api/v1/shares/{shareId})
+	UpdateShare(ctx context.Context, request UpdateShareRequestObject) (UpdateShareResponseObject, error)
+	// OpenShare 打开共享并记录访问事件
+	// (POST /api/v1/shares/{shareId}/open)
+	OpenShare(ctx context.Context, request OpenShareRequestObject) (OpenShareResponseObject, error)
+	// RevokeShare 撤销共享
+	// (POST /api/v1/shares/{shareId}/revoke)
+	RevokeShare(ctx context.Context, request RevokeShareRequestObject) (RevokeShareResponseObject, error)
 	// CreateDocument 创建 Document 稳定身份
 	// (POST /api/v1/spaces/{spaceId}/documents)
 	CreateDocument(ctx context.Context, request CreateDocumentRequestObject) (CreateDocumentResponseObject, error)
@@ -15572,6 +16689,219 @@ func (sh *strictHandler) RestorePermissionInheritance(ctx *gin.Context, resource
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(RestorePermissionInheritanceResponseObject); ok {
 		if err := validResponse.VisitRestorePermissionInheritanceResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateShare operation middleware
+func (sh *strictHandler) CreateShare(ctx *gin.Context, params CreateShareParams) {
+	var request CreateShareRequestObject
+
+	request.Params = params
+
+	var body CreateShareJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateShare(ctx, request.(CreateShareRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateShare")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(CreateShareResponseObject); ok {
+		if err := validResponse.VisitCreateShareResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListCreatedShares operation middleware
+func (sh *strictHandler) ListCreatedShares(ctx *gin.Context, params ListCreatedSharesParams) {
+	var request ListCreatedSharesRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListCreatedShares(ctx, request.(ListCreatedSharesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListCreatedShares")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListCreatedSharesResponseObject); ok {
+		if err := validResponse.VisitListCreatedSharesResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListReceivedShares operation middleware
+func (sh *strictHandler) ListReceivedShares(ctx *gin.Context, params ListReceivedSharesParams) {
+	var request ListReceivedSharesRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListReceivedShares(ctx, request.(ListReceivedSharesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListReceivedShares")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListReceivedSharesResponseObject); ok {
+		if err := validResponse.VisitListReceivedSharesResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetShare operation middleware
+func (sh *strictHandler) GetShare(ctx *gin.Context, shareId ShareIdPath) {
+	var request GetShareRequestObject
+
+	request.ShareId = shareId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetShare(ctx, request.(GetShareRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetShare")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetShareResponseObject); ok {
+		if err := validResponse.VisitGetShareResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateShare operation middleware
+func (sh *strictHandler) UpdateShare(ctx *gin.Context, shareId ShareIdPath) {
+	var request UpdateShareRequestObject
+
+	request.ShareId = shareId
+
+	var body UpdateShareJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateShare(ctx, request.(UpdateShareRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateShare")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(UpdateShareResponseObject); ok {
+		if err := validResponse.VisitUpdateShareResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// OpenShare operation middleware
+func (sh *strictHandler) OpenShare(ctx *gin.Context, shareId ShareIdPath) {
+	var request OpenShareRequestObject
+
+	request.ShareId = shareId
+
+	var body OpenShareJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(ctx, err)
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.OpenShare(ctx, request.(OpenShareRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "OpenShare")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(OpenShareResponseObject); ok {
+		if err := validResponse.VisitOpenShareResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeShare operation middleware
+func (sh *strictHandler) RevokeShare(ctx *gin.Context, shareId ShareIdPath) {
+	var request RevokeShareRequestObject
+
+	request.ShareId = shareId
+
+	var body RevokeShareJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeShare(ctx, request.(RevokeShareRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeShare")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(RevokeShareResponseObject); ok {
+		if err := validResponse.VisitRevokeShareResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

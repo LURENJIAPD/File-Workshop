@@ -293,6 +293,33 @@ func (r *PostgreSQL) ListCandidatePermissionGrants(ctx context.Context, userID u
 	return items, nil
 }
 
+func (r *PostgreSQL) ListCandidateShareGrants(ctx context.Context, userID uuid.UUID, organizationIDs []uuid.UUID, resource domain.Resource, at time.Time) ([]domain.ShareGrant, error) {
+	organizations := make([]pgtype.UUID, 0, len(organizationIDs))
+	for _, id := range organizationIDs {
+		organizations = append(organizations, pgUUID(id))
+	}
+	folders := make([]pgtype.UUID, 0, len(resource.FolderAncestors)+1)
+	if resource.Type == domain.ResourceFolder {
+		folders = append(folders, pgUUID(resource.ID))
+	}
+	for _, ancestor := range resource.FolderAncestors {
+		folders = append(folders, pgUUID(ancestor.ID))
+	}
+	var documentID pgtype.UUID
+	if resource.Type == domain.ResourceDocument {
+		documentID = pgUUID(resource.ID)
+	}
+	rows, err := r.queries.ListCandidateShareGrants(ctx, &dbgen.ListCandidateShareGrantsParams{EffectiveAt: timestamp(at), UserID: pgUUID(userID), OrganizationIds: organizations, DocumentID: documentID, FolderIds: folders})
+	if err != nil {
+		return nil, mapDatabaseError(err)
+	}
+	items := make([]domain.ShareGrant, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, domain.ShareGrant{ID: uuidValue(row.ShareID), Actions: row.Actions})
+	}
+	return items, nil
+}
+
 func (r *PostgreSQL) ListActiveUserOrganizations(ctx context.Context, userID uuid.UUID, at time.Time) ([]uuid.UUID, error) {
 	rows, err := r.queries.ListActivePermissionUserOrganizations(ctx, &dbgen.ListActivePermissionUserOrganizationsParams{UserID: pgUUID(userID), EffectiveFrom: timestamp(at)})
 	if err != nil {

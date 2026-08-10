@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.9
+> 文档版本：V0.10
 > 文档状态：按模块持续编制  
 > 最近更新：2026-08-10
-> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 16 后台任务基础调度与运维接口
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 16 后台任务基础调度与运维接口
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -25,7 +25,8 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 | 05 | 文件目录 | 已完成当前模块边界 | 6 | 2026-08-10 |
 | 06 | 文件传输与存储 | 已收录上传控制面当前边界 | 4 | 2026-08-10 |
 | 07 | 版本与并发 | 已收录版本与锁基础接口 | 7 | 2026-08-10 |
-| 08～15 | 后续系统模块 | 未收录 | 0 | — |
+| 08 | 共享 | 已收录用户/组织/LINK 基础接口 | 7 | 2026-08-10 |
+| 09～15 | 后续系统模块 | 未收录 | 0 | — |
 | 16 | 后台任务 | 已完成基础调度与管理员运维接口 | 4 | 2026-08-10 |
 
 ## 3. 全局接口约定
@@ -1008,9 +1009,108 @@ POST /api/v1/uploads/0198a8e9-0c8a-7d21-9ea9-e9e70d477eed/parts/1/presign
 - `backend/internal/modules/versions/application/service_test.go`
 - `backend/scripts/verify.ps1`
 
-## 12. 模块 16：后台任务
+## 12. 模块 08：共享
 
 ### 12.1 当前边界
+
+本周期完成不依赖对象存储集群的内部共享基础能力。共享事实写入 `shares/share_actions`，共享不复制源 Document/Folder，也不写入普通 ACL。权限模块已接入有效 `USER/ORGANIZATION` 共享作为最终授权允许来源；`LINK` 共享必须通过共享打开接口校验一次性明文 `shareToken`，不会在普通文件 API 中让所有登录用户自动获得权限。
+
+当前能力：
+
+- 创建 `USER`、`ORGANIZATION`、`LINK` 内部共享；
+- 查询我创建的共享；
+- 查询共享给我的用户/组织共享；
+- 查询共享详情；
+- 修改共享动作、到期时间和 `allowReshare`；
+- 撤销共享；
+- 打开共享并写入 Outbox 事件；
+- 共享动作仅允许 `READ_METADATA/PREVIEW/DOWNLOAD/WRITE_CONTENT`，且 `READ_METADATA` 必选。
+
+尚未完成：`SPACE` 目标共享和 `shared_entries` 命名空间引用、外部匿名链接、链接密码、共享下载/预览数据面、共享访问 HTTP 集成测试和大规模共享性能压测。
+
+### 12.2 接口清单
+
+| 接口 | Operation ID | 成功响应 | 关键约束 |
+|---|---|---:|---|
+| `POST /api/v1/shares` | `createShare` | `201/ShareResponse` | 要求 `Idempotency-Key`；创建者必须具备源资源 `SHARE` 和所授予动作权限；`LINK` 创建成功时返回一次性 `shareToken` |
+| `GET /api/v1/shares/created?page=1&pageSize=50` | `listCreatedShares` | `200/ShareListResponse` | 查询当前用户创建的共享；分页统一使用 `page/pageSize` |
+| `GET /api/v1/shares/received?page=1&pageSize=50` | `listReceivedShares` | `200/ShareListResponse` | 查询共享给当前用户或其所属组织的有效共享；不枚举 LINK |
+| `GET /api/v1/shares/{shareId}` | `getShare` | `200/ShareResponse` | 创建者、接收者或系统管理员可见 |
+| `PATCH /api/v1/shares/{shareId}` | `updateShare` | `200/ShareResponse` | 创建者、系统管理员或具备源资源 `MANAGE_PERMISSION` 的主体可修改；要求 `rowVersion` |
+| `POST /api/v1/shares/{shareId}/revoke` | `revokeShare` | `200/ShareResponse` | 创建者、系统管理员或具备源资源 `MANAGE_PERMISSION` 的主体可撤销；要求 `reason/rowVersion` |
+| `POST /api/v1/shares/{shareId}/open` | `openShare` | `200/OpenShareResponse` | 打开共享并审计；LINK 共享必须在请求体提交正确 `shareToken` |
+
+### 12.3 字段和示例
+
+`Share` 字段严格来自 `shares/share_actions`：`shareId/sourceType/sourceId/creatorUserId/targetKind/targetUserId/targetOrganizationId/targetSpaceId/allowReshare/actions/validFrom/validUntil/status/createdAt/updatedAt/revokedAt/revokedByUserId/revokeReason/rowVersion`。`token_hash/password_hash` 不对外返回。
+
+创建用户共享示例：
+
+```json
+{
+  "sourceType": "DOCUMENT",
+  "sourceId": "0198b100-0000-7000-8000-000000000001",
+  "targetKind": "USER",
+  "targetUserId": "0198b100-0000-7000-8000-000000000010",
+  "actions": ["READ_METADATA", "PREVIEW", "DOWNLOAD"],
+  "allowReshare": false,
+  "validUntil": "2026-12-31T15:59:59Z"
+}
+```
+
+创建 LINK 共享成功响应会额外包含一次性 `shareToken`：
+
+```json
+{
+  "share": {
+    "shareId": "0198b100-0000-7000-8000-000000000080",
+    "sourceType": "DOCUMENT",
+    "sourceId": "0198b100-0000-7000-8000-000000000001",
+    "creatorUserId": "0198b100-0000-7000-8000-000000000020",
+    "targetKind": "LINK",
+    "allowReshare": false,
+    "actions": ["READ_METADATA"],
+    "validFrom": "2026-08-10T04:00:00Z",
+    "status": "ACTIVE",
+    "createdAt": "2026-08-10T04:00:00Z",
+    "updatedAt": "2026-08-10T04:00:00Z",
+    "rowVersion": 1
+  },
+  "shareToken": "仅本次响应返回的明文内部链接令牌",
+  "requestId": "019fcc32-0bc6-7d82-aa70-62d5324b1fbb"
+}
+```
+
+打开 LINK 共享请求示例：
+
+```json
+{
+  "shareToken": "创建 LINK 共享时返回的一次性明文令牌"
+}
+```
+
+### 12.4 错误码和接口测试依据
+
+除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN/AUTH_ORIGIN_REJECTED` 外，本模块使用：
+
+| HTTP | 错误码 | 含义 |
+|---:|---|---|
+| 404 | `SHARE_NOT_FOUND` | 共享不存在或不可见 |
+| 409 | `SHARE_CONFLICT` | 共享状态冲突 |
+| 409 | `ROW_VERSION_CONFLICT` | `rowVersion` 已过期 |
+| 409 | `IDEMPOTENCY_CONFLICT` | 同一幂等键对应不同请求 |
+| 409 | `SHARE_TOKEN_INVALID` | LINK 共享令牌缺失或无效 |
+
+正式接口测试至少覆盖：未登录拒绝；创建者没有 `SHARE` 拒绝；创建者授予自身没有的动作拒绝；共享动作缺少 `READ_METADATA` 拒绝；重复幂等键重放和冲突；用户共享接收者可见；组织共享成员可见；LINK 不进入共享给我的列表；LINK 打开必须提交正确 `shareToken`；撤销后不可打开；过期共享不可打开；非创建者修改/撤销拒绝；`page/pageSize` 非法值拒绝。
+
+现有自动化证据：
+
+- `backend/internal/modules/shares/application/service_test.go`
+- `backend/internal/modules/permissions/application` 已覆盖权限判定编译与单元测试回归
+
+## 13. 模块 16：后台任务
+
+### 13.1 当前边界
 
 本周期完成后台任务模块的基础调度与管理员运维接口。模块仍不实现具体业务处理器，例如审计归档、文件 Hash、病毒扫描、预览、搜索索引、生命周期清理或 AI 任务；这些处理器由对应业务模块后续注册。当前 REST API 只面向 `SYSTEM_ADMIN`，用于查看 Outbox/Job 积压与失败项，并对 `FAILED/DEAD` 单项执行受控重试。
 
@@ -1027,7 +1127,7 @@ POST /api/v1/uploads/0198a8e9-0c8a-7d21-9ea9-e9e70d477eed/parts/1/presign
 - 使用 `context.Context`、处理器超时和系统信号完成优雅停止；
 - Redis 不参与任务事实存储。
 
-### 12.2 配置项
+### 13.2 配置项
 
 | 环境变量 | 默认值 | 含义 |
 |---|---:|---|
@@ -1050,7 +1150,7 @@ go run ./cmd/worker
 
 注意：模块 11 审计消费者已注册用户、组织、权限和文件目录模块当前产生的 Outbox 事件；未注册事件类型和未注册 Job 类型仍会继续保留，不会被空消费。
 
-### 12.3 管理员运维接口
+### 13.3 管理员运维接口
 
 | 接口 | Operation ID | 成功响应 | 关键约束 |
 |---|---|---:|---|
@@ -1084,7 +1184,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 
 后台任务响应字段严格来自 `background_jobs`：`backgroundJobId/jobType/targetDocumentId/targetDocumentVersionId/targetStorageObjectId/payloadSchemaVersion/payload/deduplicationKey/priority/status/attemptCount/maxAttempts/availableAt/lockedBy/lockedAt/leaseUntil/heartbeatAt/startedAt/completedAt/lastErrorCode/lastErrorSummary/createdAt/updatedAt/rowVersion`。
 
-### 12.4 错误码和接口测试依据
+### 13.4 错误码和接口测试依据
 
 除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN` 外，本模块使用：
 
@@ -1103,9 +1203,9 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 - `backend/tests/integration/background_admin_http_test.go`
 - `backend/scripts/verify.ps1`
 
-## 13. 模块 11：审计
+## 14. 模块 11：审计
 
-### 13.1 当前边界
+### 14.1 当前边界
 
 本周期完成审计模块的基础查询、详情、完整性状态和哈希链校验能力，并将用户、组织、权限、文件目录模块当前产生的 Outbox 事件注册为审计消费者。当前不实现审计导出、归档、WORM、批次锚定和安全告警；这些能力依赖后续对象存储与归档周期。
 
@@ -1119,7 +1219,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 
 所有 REST 查询接口当前仅允许 `SYSTEM_ADMIN` 访问。分页统一使用 `page/pageSize`，默认 `1/50`，最大 `pageSize=200`。
 
-### 13.2 审计接口
+### 14.2 审计接口
 
 | 接口 | Operation ID | 成功响应 | 关键约束 |
 |---|---|---:|---|
@@ -1149,7 +1249,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 }
 ```
 
-### 13.3 字段与映射
+### 14.3 字段与映射
 
 `AuditEvent` 字段严格来自 `audit_events` 和 OpenAPI：`auditEventId/eventType/riskLevel/actorType/actorId/actorDisplayName/actorEmployeeNo/effectiveRole/adminDelegationId/shareId/resourceType/resourceId/resourceName/spaceId/organizationId/documentId/documentVersionId/action/result/failureCode/sourceChannel/ipAddress/userAgent/requestId/traceId/correlationId/reason/metadataSchemaVersion/metadata/hashSchemaVersion/chainId/sequenceNumber/previousHash/eventHash/partitionDate/createdAt`。
 
@@ -1163,7 +1263,7 @@ Outbox 审计消费者的映射规则：
 - `metadata` 保留 `outboxEventId/aggregateType/aggregateId/aggregateVersion/eventSchemaVersion/deduplicationKey/sourcePayload/mappedBy` 等追踪信息；
 - `USER_ROLE_CHANGED`、`AUTH_PASSWORD_CHANGED`、权限与管理委派变更等高风险事件进入哈希链；`AUTH_ACCOUNT_LOCKED` 视为 `CRITICAL`。
 
-### 13.4 错误码和接口测试依据
+### 14.4 错误码和接口测试依据
 
 除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN` 外，本模块使用：
 
@@ -1181,7 +1281,7 @@ Outbox 审计消费者的映射规则：
 - `backend/scripts/verify.ps1`
 - `go test ./internal/modules/audit/... ./...`
 
-## 14. 文档维护与冻结规则
+## 15. 文档维护与冻结规则
 
 1. 新模块先更新 `backend/api/openapi.yaml`，再生成代码和实现。
 2. 模块开发完成时，在本文档追加对应模块章节和接口测试要点，并更新第 2 章状态。

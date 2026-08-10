@@ -127,6 +127,11 @@ type PermissionGrant struct {
 	RowVersion            int64
 }
 
+type ShareGrant struct {
+	ID      uuid.UUID
+	Actions []string
+}
+
 func (g PermissionGrant) Subject() (string, uuid.UUID) {
 	if g.SubjectUserID != nil {
 		return SubjectUser, *g.SubjectUserID

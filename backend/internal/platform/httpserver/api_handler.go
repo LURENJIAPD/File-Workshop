@@ -104,6 +104,16 @@ type VersionsAPI interface {
 	ForceReleaseDocumentLock(context.Context, api.ForceReleaseDocumentLockRequestObject) (api.ForceReleaseDocumentLockResponseObject, error)
 }
 
+type SharesAPI interface {
+	CreateShare(context.Context, api.CreateShareRequestObject) (api.CreateShareResponseObject, error)
+	ListCreatedShares(context.Context, api.ListCreatedSharesRequestObject) (api.ListCreatedSharesResponseObject, error)
+	ListReceivedShares(context.Context, api.ListReceivedSharesRequestObject) (api.ListReceivedSharesResponseObject, error)
+	GetShare(context.Context, api.GetShareRequestObject) (api.GetShareResponseObject, error)
+	UpdateShare(context.Context, api.UpdateShareRequestObject) (api.UpdateShareResponseObject, error)
+	RevokeShare(context.Context, api.RevokeShareRequestObject) (api.RevokeShareResponseObject, error)
+	OpenShare(context.Context, api.OpenShareRequestObject) (api.OpenShareResponseObject, error)
+}
+
 type BackgroundAPI interface {
 	ListBackgroundOutboxEvents(context.Context, api.ListBackgroundOutboxEventsRequestObject) (api.ListBackgroundOutboxEventsResponseObject, error)
 	RetryBackgroundOutboxEvent(context.Context, api.RetryBackgroundOutboxEventRequestObject) (api.RetryBackgroundOutboxEventResponseObject, error)
@@ -127,6 +137,7 @@ type APIHandler struct {
 	files         FilesAPI
 	uploads       UploadsAPI
 	versions      VersionsAPI
+	shares        SharesAPI
 	background    BackgroundAPI
 	audit         AuditAPI
 }
@@ -136,6 +147,7 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 	var files FilesAPI
 	var uploads UploadsAPI
 	var versions VersionsAPI
+	var shares SharesAPI
 	var background BackgroundAPI
 	var audit AuditAPI
 	for _, optional := range optionalHandlers {
@@ -151,6 +163,9 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 		if handler, ok := optional.(VersionsAPI); ok {
 			versions = handler
 		}
+		if handler, ok := optional.(SharesAPI); ok {
+			shares = handler
+		}
 		if handler, ok := optional.(BackgroundAPI); ok {
 			background = handler
 		}
@@ -158,7 +173,29 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 			audit = handler
 		}
 	}
-	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions, files: files, uploads: uploads, versions: versions, background: background, audit: audit}
+	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions, files: files, uploads: uploads, versions: versions, shares: shares, background: background, audit: audit}
+}
+
+func (h *APIHandler) CreateShare(ctx context.Context, request api.CreateShareRequestObject) (api.CreateShareResponseObject, error) {
+	return h.shares.CreateShare(ctx, request)
+}
+func (h *APIHandler) ListCreatedShares(ctx context.Context, request api.ListCreatedSharesRequestObject) (api.ListCreatedSharesResponseObject, error) {
+	return h.shares.ListCreatedShares(ctx, request)
+}
+func (h *APIHandler) ListReceivedShares(ctx context.Context, request api.ListReceivedSharesRequestObject) (api.ListReceivedSharesResponseObject, error) {
+	return h.shares.ListReceivedShares(ctx, request)
+}
+func (h *APIHandler) GetShare(ctx context.Context, request api.GetShareRequestObject) (api.GetShareResponseObject, error) {
+	return h.shares.GetShare(ctx, request)
+}
+func (h *APIHandler) UpdateShare(ctx context.Context, request api.UpdateShareRequestObject) (api.UpdateShareResponseObject, error) {
+	return h.shares.UpdateShare(ctx, request)
+}
+func (h *APIHandler) RevokeShare(ctx context.Context, request api.RevokeShareRequestObject) (api.RevokeShareResponseObject, error) {
+	return h.shares.RevokeShare(ctx, request)
+}
+func (h *APIHandler) OpenShare(ctx context.Context, request api.OpenShareRequestObject) (api.OpenShareResponseObject, error) {
+	return h.shares.OpenShare(ctx, request)
 }
 
 func (h *APIHandler) ListAuditEvents(ctx context.Context, request api.ListAuditEventsRequestObject) (api.ListAuditEventsResponseObject, error) {

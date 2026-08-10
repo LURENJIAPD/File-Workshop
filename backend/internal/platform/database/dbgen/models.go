@@ -256,6 +256,29 @@ type QuotaReservation struct {
 	RowVersion         int64
 }
 
+type Share struct {
+	ShareID              pgtype.UUID
+	SourceDocumentID     pgtype.UUID
+	SourceFolderID       pgtype.UUID
+	CreatorUserID        pgtype.UUID
+	TargetKind           string
+	TargetUserID         pgtype.UUID
+	TargetOrganizationID pgtype.UUID
+	TargetSpaceID        pgtype.UUID
+	TokenHash            []byte
+	PasswordHash         pgtype.Text
+	AllowReshare         bool
+	ValidFrom            pgtype.Timestamptz
+	ValidUntil           pgtype.Timestamptz
+	Status               string
+	CreatedAt            pgtype.Timestamptz
+	UpdatedAt            pgtype.Timestamptz
+	RevokedAt            pgtype.Timestamptz
+	RevokedByUserID      pgtype.UUID
+	RevokeReason         pgtype.Text
+	RowVersion           int64
+}
+
 type Space struct {
 	SpaceID             pgtype.UUID
 	SpaceType           string

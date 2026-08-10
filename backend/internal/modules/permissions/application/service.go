@@ -533,10 +533,32 @@ func (s *Service) evaluateResource(ctx context.Context, repository Repository, a
 			result.Source = "DIRECT_GRANT"
 		}
 	}
+	if !result.Allowed && isShareAction(action) {
+		shares, err := repository.ListCandidateShareGrants(ctx, actor.UserID, organizations, resource, now)
+		if err != nil {
+			return domain.PermissionEvaluation{}, err
+		}
+		for _, share := range shares {
+			if slices.Contains(share.Actions, action) {
+				result.Allowed = true
+				result.Source = "SHARE"
+				result.MatchedGrantIDs = append(result.MatchedGrantIDs, share.ID)
+			}
+		}
+	}
 	if cacheKey != "" {
 		s.cache.Set(ctx, cacheKey, result)
 	}
 	return result, nil
+}
+
+func isShareAction(action string) bool {
+	switch action {
+	case "READ_METADATA", "PREVIEW", "DOWNLOAD", "WRITE_CONTENT":
+		return true
+	default:
+		return false
+	}
 }
 
 func grantApplies(grant domain.PermissionGrant, resource domain.Resource) bool {

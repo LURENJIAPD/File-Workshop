@@ -34,6 +34,9 @@ tags:
   - name: VersionConcurrency
     description: 不可变文件版本、历史版本恢复和文件级租约锁；恢复创建新版本，不覆盖历史。
 
+  - name: Sharing
+    description: 内部用户、组织、空间和登录态链接共享；共享是独立允许来源，不写入普通 ACL。
+
   - name: Audit
     description: Audit event query, integrity status and controlled verification.
   - name: BackgroundAdministration
@@ -512,6 +515,185 @@ paths:
               schema:
                 $ref: "#/components/schemas/DocumentLockResponse"
         "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/shares:
+    post:
+      operationId: createShare
+      tags: [Sharing]
+      summary: 创建内部共享
+      description: 共享不复制文件内容；创建者必须对源资源具备 SHARE 权限，且共享动作只能是 READ_METADATA/PREVIEW/DOWNLOAD/WRITE_CONTENT 的子集。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateShareRequest"
+      responses:
+        "201":
+          description: 共享已创建。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/shares/created:
+    get:
+      operationId: listCreatedShares
+      tags: [Sharing]
+      summary: 分页查询我创建的共享
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+      responses:
+        "200":
+          description: 我创建的共享列表。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareListResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+
+  /api/v1/shares/received:
+    get:
+      operationId: listReceivedShares
+      tags: [Sharing]
+      summary: 分页查询共享给我的资源
+      description: 包含直接共享给当前用户、当前用户所属组织以及登录态内部链接共享。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+      responses:
+        "200":
+          description: 共享给我的列表。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareListResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+
+  /api/v1/shares/{shareId}:
+    get:
+      operationId: getShare
+      tags: [Sharing]
+      summary: 获取共享详情
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/ShareIdPath"
+      responses:
+        "200":
+          description: 共享详情。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareResponse"
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      operationId: updateShare
+      tags: [Sharing]
+      summary: 修改共享动作和有效期
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/ShareIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateShareRequest"
+      responses:
+        "200":
+          description: 共享已更新。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/shares/{shareId}/revoke:
+    post:
+      operationId: revokeShare
+      tags: [Sharing]
+      summary: 撤销共享
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/ShareIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RevokeShareRequest"
+      responses:
+        "200":
+          description: 共享已撤销。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShareResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/shares/{shareId}/open:
+    post:
+      operationId: openShare
+      tags: [Sharing]
+      summary: 打开共享并记录访问事件
+      description: 打开共享只返回可访问的源资源定位和允许动作，不返回对象存储地址或下载签名。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/ShareIdPath"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenShareRequest"
+      responses:
+        "200":
+          description: 共享可访问。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenShareResponse"
         "401": { $ref: "#/components/responses/AuthRequired" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
@@ -2322,6 +2504,13 @@ components:
       schema:
         type: string
         format: uuid
+    ShareIdPath:
+      name: shareId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     PlanIdPath:
       name: planId
       in: path
@@ -2614,6 +2803,151 @@ components:
       properties:
         reason: { type: string, minLength: 1, maxLength: 512 }
         rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    ShareResourceType:
+      type: string
+      enum: [DOCUMENT, FOLDER]
+
+    ShareTargetKind:
+      type: string
+      enum: [USER, ORGANIZATION, SPACE, LINK]
+
+    CreateShareTargetKind:
+      type: string
+      enum: [USER, ORGANIZATION, LINK]
+
+    ShareStatus:
+      type: string
+      enum: [ACTIVE, EXPIRED, REVOKED, SUSPENDED, SOURCE_UNAVAILABLE]
+
+    ShareAction:
+      type: string
+      enum: [READ_METADATA, PREVIEW, DOWNLOAD, WRITE_CONTENT]
+
+    Share:
+      type: object
+      additionalProperties: false
+      required: [shareId, sourceType, sourceId, creatorUserId, targetKind, allowReshare, actions, validFrom, status, createdAt, updatedAt, rowVersion]
+      properties:
+        shareId: { type: string, format: uuid }
+        sourceType: { $ref: "#/components/schemas/ShareResourceType" }
+        sourceId: { type: string, format: uuid }
+        creatorUserId: { type: string, format: uuid }
+        targetKind: { $ref: "#/components/schemas/ShareTargetKind" }
+        targetUserId: { type: string, format: uuid }
+        targetOrganizationId: { type: string, format: uuid }
+        targetSpaceId: { type: string, format: uuid }
+        allowReshare: { type: boolean }
+        actions:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/ShareAction" }
+        validFrom: { type: string, format: date-time }
+        validUntil: { type: string, format: date-time }
+        status: { $ref: "#/components/schemas/ShareStatus" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        revokedAt: { type: string, format: date-time }
+        revokedByUserId: { type: string, format: uuid }
+        revokeReason: { type: string }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    CreateShareRequest:
+      type: object
+      additionalProperties: false
+      required: [sourceType, sourceId, targetKind, actions]
+      properties:
+        sourceType: { $ref: "#/components/schemas/ShareResourceType" }
+        sourceId: { type: string, format: uuid }
+        targetKind: { $ref: "#/components/schemas/CreateShareTargetKind" }
+        targetUserId: { type: string, format: uuid }
+        targetOrganizationId: { type: string, format: uuid }
+        targetSpaceId: { type: string, format: uuid }
+        allowReshare: { type: boolean, default: false }
+        actions:
+          type: array
+          minItems: 1
+          maxItems: 4
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/ShareAction" }
+        validUntil: { type: string, format: date-time }
+        note:
+          type: string
+          minLength: 1
+          maxLength: 512
+
+    UpdateShareRequest:
+      type: object
+      additionalProperties: false
+      required: [rowVersion]
+      properties:
+        actions:
+          type: array
+          minItems: 1
+          maxItems: 4
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/ShareAction" }
+        validUntil:
+          type: string
+          format: date-time
+          description: 设置新的到期时间；当前周期暂不支持通过 null 清空到期时间。
+        allowReshare: { type: boolean }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    RevokeShareRequest:
+      type: object
+      additionalProperties: false
+      required: [reason, rowVersion]
+      properties:
+        reason: { type: string, minLength: 1, maxLength: 512 }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    ShareListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Share" }
+        page: { $ref: "#/components/schemas/Page" }
+        pageSize: { $ref: "#/components/schemas/PageSize" }
+        total: { type: integer, format: int64, minimum: 0 }
+        requestId: { type: string }
+
+    ShareResponse:
+      type: object
+      additionalProperties: false
+      required: [share, requestId]
+      properties:
+        share: { $ref: "#/components/schemas/Share" }
+        shareToken:
+          type: string
+          description: 仅 LINK 共享创建成功时返回一次的明文内部链接令牌；服务端只保存 SHA-256 摘要。
+        requestId: { type: string }
+
+    OpenShareRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        shareToken:
+          type: string
+          minLength: 32
+          maxLength: 512
+
+    OpenShareResponse:
+      type: object
+      additionalProperties: false
+      required: [share, sourceType, sourceId, actions, requestId]
+      properties:
+        share: { $ref: "#/components/schemas/Share" }
+        sourceType: { $ref: "#/components/schemas/ShareResourceType" }
+        sourceId: { type: string, format: uuid }
+        actions:
+          type: array
+          items: { $ref: "#/components/schemas/ShareAction" }
+        requestId: { type: string }
 
     UploadIntent:
       type: string

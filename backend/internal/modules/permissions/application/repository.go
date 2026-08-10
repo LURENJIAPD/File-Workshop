@@ -27,6 +27,7 @@ type Repository interface {
 	GetPermissionGrantForUpdate(context.Context, uuid.UUID) (domain.PermissionGrant, error)
 	ListDirectPermissionGrants(context.Context, string, uuid.UUID, int, int) (domain.PermissionGrantListResult, error)
 	ListCandidatePermissionGrants(context.Context, uuid.UUID, []uuid.UUID, domain.Resource, time.Time) ([]domain.PermissionGrant, error)
+	ListCandidateShareGrants(context.Context, uuid.UUID, []uuid.UUID, domain.Resource, time.Time) ([]domain.ShareGrant, error)
 	ListActiveUserOrganizations(context.Context, uuid.UUID, time.Time) ([]uuid.UUID, error)
 	InsertPermissionGrant(context.Context, domain.NewPermissionGrant) (domain.PermissionGrant, error)
 	UpdatePermissionGrant(context.Context, uuid.UUID, []string, bool, *time.Time, *string, int64, time.Time) (domain.PermissionGrant, error)
