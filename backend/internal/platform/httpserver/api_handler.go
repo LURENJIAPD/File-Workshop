@@ -133,8 +133,11 @@ type SearchAPI interface {
 type BackgroundAPI interface {
 	ListBackgroundOutboxEvents(context.Context, api.ListBackgroundOutboxEventsRequestObject) (api.ListBackgroundOutboxEventsResponseObject, error)
 	RetryBackgroundOutboxEvent(context.Context, api.RetryBackgroundOutboxEventRequestObject) (api.RetryBackgroundOutboxEventResponseObject, error)
+	GetBackgroundAdministrationSummary(context.Context, api.GetBackgroundAdministrationSummaryRequestObject) (api.GetBackgroundAdministrationSummaryResponseObject, error)
 	ListBackgroundJobs(context.Context, api.ListBackgroundJobsRequestObject) (api.ListBackgroundJobsResponseObject, error)
 	RetryBackgroundJob(context.Context, api.RetryBackgroundJobRequestObject) (api.RetryBackgroundJobResponseObject, error)
+	BatchRetryBackgroundJobs(context.Context, api.BatchRetryBackgroundJobsRequestObject) (api.BatchRetryBackgroundJobsResponseObject, error)
+	BatchCancelBackgroundJobs(context.Context, api.BatchCancelBackgroundJobsRequestObject) (api.BatchCancelBackgroundJobsResponseObject, error)
 	CancelBackgroundJob(context.Context, api.CancelBackgroundJobRequestObject) (api.CancelBackgroundJobResponseObject, error)
 }
 
@@ -276,11 +279,20 @@ func (h *APIHandler) ListBackgroundOutboxEvents(ctx context.Context, request api
 func (h *APIHandler) RetryBackgroundOutboxEvent(ctx context.Context, request api.RetryBackgroundOutboxEventRequestObject) (api.RetryBackgroundOutboxEventResponseObject, error) {
 	return h.background.RetryBackgroundOutboxEvent(ctx, request)
 }
+func (h *APIHandler) GetBackgroundAdministrationSummary(ctx context.Context, request api.GetBackgroundAdministrationSummaryRequestObject) (api.GetBackgroundAdministrationSummaryResponseObject, error) {
+	return h.background.GetBackgroundAdministrationSummary(ctx, request)
+}
 func (h *APIHandler) ListBackgroundJobs(ctx context.Context, request api.ListBackgroundJobsRequestObject) (api.ListBackgroundJobsResponseObject, error) {
 	return h.background.ListBackgroundJobs(ctx, request)
 }
 func (h *APIHandler) RetryBackgroundJob(ctx context.Context, request api.RetryBackgroundJobRequestObject) (api.RetryBackgroundJobResponseObject, error) {
 	return h.background.RetryBackgroundJob(ctx, request)
+}
+func (h *APIHandler) BatchRetryBackgroundJobs(ctx context.Context, request api.BatchRetryBackgroundJobsRequestObject) (api.BatchRetryBackgroundJobsResponseObject, error) {
+	return h.background.BatchRetryBackgroundJobs(ctx, request)
+}
+func (h *APIHandler) BatchCancelBackgroundJobs(ctx context.Context, request api.BatchCancelBackgroundJobsRequestObject) (api.BatchCancelBackgroundJobsResponseObject, error) {
+	return h.background.BatchCancelBackgroundJobs(ctx, request)
 }
 func (h *APIHandler) CancelBackgroundJob(ctx context.Context, request api.CancelBackgroundJobRequestObject) (api.CancelBackgroundJobResponseObject, error) {
 	return h.background.CancelBackgroundJob(ctx, request)

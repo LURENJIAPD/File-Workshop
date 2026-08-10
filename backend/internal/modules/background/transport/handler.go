@@ -147,6 +147,23 @@ func (h *Handler) ListBackgroundJobs(ctx context.Context, request api.ListBackgr
 	return api.ListBackgroundJobs200JSONResponse(api.BackgroundJobListResponse{Items: items, Page: result.Page, PageSize: result.PageSize, Total: result.Total, RequestId: requestID}), nil
 }
 
+func (h *Handler) GetBackgroundAdministrationSummary(ctx context.Context, request api.GetBackgroundAdministrationSummaryRequestObject) (api.GetBackgroundAdministrationSummaryResponseObject, error) {
+	ginContext, actor, requestID, authErr := h.authenticate(ctx)
+	if authErr != nil {
+		return api.GetBackgroundAdministrationSummary401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	result, err := h.service.GetSummary(ginContext.Request.Context(), actor)
+	if _, denied, _, _, code := mapError(err, requestID); code != "" {
+		if code == "403" {
+			return api.GetBackgroundAdministrationSummary403JSONResponse{ForbiddenJSONResponse: denied}, nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	return api.GetBackgroundAdministrationSummary200JSONResponse(apiSummary(result, requestID)), nil
+}
+
 func (h *Handler) RetryBackgroundJob(ctx context.Context, request api.RetryBackgroundJobRequestObject) (api.RetryBackgroundJobResponseObject, error) {
 	ginContext, actor, requestID, authErr := h.authenticate(ctx)
 	if authErr != nil {
@@ -179,6 +196,66 @@ func (h *Handler) RetryBackgroundJob(ctx context.Context, request api.RetryBackg
 		return nil, err
 	}
 	return api.RetryBackgroundJob200JSONResponse(api.BackgroundJobResponse{Job: body, RequestId: requestID}), nil
+}
+
+func (h *Handler) BatchRetryBackgroundJobs(ctx context.Context, request api.BatchRetryBackgroundJobsRequestObject) (api.BatchRetryBackgroundJobsResponseObject, error) {
+	ginContext, actor, requestID, authErr := h.authenticate(ctx)
+	if authErr != nil {
+		return api.BatchRetryBackgroundJobs401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	if !h.originAllowed(ginContext) {
+		return api.BatchRetryBackgroundJobs403JSONResponse{ForbiddenJSONResponse: forbidden(requestID)}, nil
+	}
+	if request.Body == nil {
+		return api.BatchRetryBackgroundJobs400JSONResponse{InvalidRequestJSONResponse: invalidRequest(requestID)}, nil
+	}
+	result, err := h.service.BatchRetryBackgroundJobs(ginContext.Request.Context(), actor, batchRequestItems(request.Body.Items), request.Body.Reason)
+	if bad, denied, _, _, code := mapError(err, requestID); code != "" {
+		switch code {
+		case "400":
+			return api.BatchRetryBackgroundJobs400JSONResponse{InvalidRequestJSONResponse: bad}, nil
+		case "403":
+			return api.BatchRetryBackgroundJobs403JSONResponse{ForbiddenJSONResponse: denied}, nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	body, err := apiBatchResult(result, requestID)
+	if err != nil {
+		return nil, err
+	}
+	return api.BatchRetryBackgroundJobs200JSONResponse(body), nil
+}
+
+func (h *Handler) BatchCancelBackgroundJobs(ctx context.Context, request api.BatchCancelBackgroundJobsRequestObject) (api.BatchCancelBackgroundJobsResponseObject, error) {
+	ginContext, actor, requestID, authErr := h.authenticate(ctx)
+	if authErr != nil {
+		return api.BatchCancelBackgroundJobs401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	if !h.originAllowed(ginContext) {
+		return api.BatchCancelBackgroundJobs403JSONResponse{ForbiddenJSONResponse: forbidden(requestID)}, nil
+	}
+	if request.Body == nil {
+		return api.BatchCancelBackgroundJobs400JSONResponse{InvalidRequestJSONResponse: invalidRequest(requestID)}, nil
+	}
+	result, err := h.service.BatchCancelBackgroundJobs(ginContext.Request.Context(), actor, batchRequestItems(request.Body.Items), request.Body.Reason)
+	if bad, denied, _, _, code := mapError(err, requestID); code != "" {
+		switch code {
+		case "400":
+			return api.BatchCancelBackgroundJobs400JSONResponse{InvalidRequestJSONResponse: bad}, nil
+		case "403":
+			return api.BatchCancelBackgroundJobs403JSONResponse{ForbiddenJSONResponse: denied}, nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	body, err := apiBatchResult(result, requestID)
+	if err != nil {
+		return nil, err
+	}
+	return api.BatchCancelBackgroundJobs200JSONResponse(body), nil
 }
 
 func (h *Handler) CancelBackgroundJob(ctx context.Context, request api.CancelBackgroundJobRequestObject) (api.CancelBackgroundJobResponseObject, error) {
@@ -324,6 +401,44 @@ func apiJob(value domain.BackgroundJob) (api.BackgroundJob, error) {
 	result.LastErrorCode = value.LastErrorCode
 	result.LastErrorSummary = value.LastErrorSummary
 	return result, nil
+}
+
+func apiSummary(value domain.AdministrationSummary, requestID string) api.BackgroundAdministrationSummaryResponse {
+	outbox := make([]api.BackgroundOutboxStatusCount, 0, len(value.OutboxEvents))
+	for _, item := range value.OutboxEvents {
+		outbox = append(outbox, api.BackgroundOutboxStatusCount{Status: api.BackgroundOutboxStatus(item.Status), Count: item.Count})
+	}
+	jobs := make([]api.BackgroundJobStatusCount, 0, len(value.BackgroundJobs))
+	for _, item := range value.BackgroundJobs {
+		jobs = append(jobs, api.BackgroundJobStatusCount{Status: api.BackgroundJobStatus(item.Status), Count: item.Count})
+	}
+	return api.BackgroundAdministrationSummaryResponse{OutboxEvents: outbox, BackgroundJobs: jobs, RequestId: requestID}
+}
+
+func batchRequestItems(items []api.BatchBackgroundJobOperationItemRequest) []domain.BatchJobItem {
+	result := make([]domain.BatchJobItem, 0, len(items))
+	for _, item := range items {
+		result = append(result, domain.BatchJobItem{ID: uuid.UUID(item.BackgroundJobId), RowVersion: item.RowVersion})
+	}
+	return result
+}
+
+func apiBatchResult(value domain.BatchJobOperationResult, requestID string) (api.BatchBackgroundJobOperationResponse, error) {
+	items := make([]api.BatchBackgroundJobOperationItemResult, 0, len(value.Items))
+	for _, item := range value.Items {
+		result := api.BatchBackgroundJobOperationItemResult{BackgroundJobId: openapi_types.UUID(item.ID), Success: item.Success}
+		if item.Job != nil {
+			job, err := apiJob(*item.Job)
+			if err != nil {
+				return api.BatchBackgroundJobOperationResponse{}, err
+			}
+			result.Job = &job
+		}
+		result.ErrorCode = item.ErrorCode
+		result.ErrorMessage = item.ErrorMessage
+		items = append(items, result)
+	}
+	return api.BatchBackgroundJobOperationResponse{Items: items, Succeeded: value.Succeeded, Failed: value.Failed, RequestId: requestID}, nil
 }
 
 func optionalAPIUUID(value *uuid.UUID) *openapi_types.UUID {

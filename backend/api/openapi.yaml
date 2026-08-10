@@ -2675,6 +2675,24 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
 
+  /api/v1/admin/background/summary:
+    get:
+      operationId: getBackgroundAdministrationSummary
+      tags: [BackgroundAdministration]
+      summary: Get background operations status counts.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Background operations status counts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackgroundAdministrationSummaryResponse"
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/v1/admin/background/jobs:
     get:
       operationId: listBackgroundJobs
@@ -2701,6 +2719,56 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BackgroundJobListResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/v1/admin/background/jobs/batch-retry:
+    post:
+      operationId: batchRetryBackgroundJobs
+      tags: [BackgroundAdministration]
+      summary: Retry failed or dead background jobs in a controlled batch.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchBackgroundJobOperationRequest"
+      responses:
+        "200":
+          description: Batch retry results.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchBackgroundJobOperationResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/v1/admin/background/jobs/batch-cancel:
+    post:
+      operationId: batchCancelBackgroundJobs
+      tags: [BackgroundAdministration]
+      summary: Cancel pending, failed, or dead background jobs in a controlled batch.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchBackgroundJobOperationRequest"
+      responses:
+        "200":
+          description: Batch cancel results.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchBackgroundJobOperationResponse"
         "400": { $ref: "#/components/responses/InvalidRequest" }
         "401": { $ref: "#/components/responses/AuthRequired" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -3673,6 +3741,78 @@ components:
       required: [job, requestId]
       properties:
         job: { $ref: "#/components/schemas/BackgroundJob" }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    BackgroundOutboxStatusCount:
+      type: object
+      additionalProperties: false
+      required: [status, count]
+      properties:
+        status: { $ref: "#/components/schemas/BackgroundOutboxStatus" }
+        count: { type: integer, format: int64, minimum: 0 }
+
+    BackgroundJobStatusCount:
+      type: object
+      additionalProperties: false
+      required: [status, count]
+      properties:
+        status: { $ref: "#/components/schemas/BackgroundJobStatus" }
+        count: { type: integer, format: int64, minimum: 0 }
+
+    BackgroundAdministrationSummaryResponse:
+      type: object
+      additionalProperties: false
+      required: [outboxEvents, backgroundJobs, requestId]
+      properties:
+        outboxEvents:
+          type: array
+          items: { $ref: "#/components/schemas/BackgroundOutboxStatusCount" }
+        backgroundJobs:
+          type: array
+          items: { $ref: "#/components/schemas/BackgroundJobStatusCount" }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    BatchBackgroundJobOperationItemRequest:
+      type: object
+      additionalProperties: false
+      required: [backgroundJobId, rowVersion]
+      properties:
+        backgroundJobId: { type: string, format: uuid }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    BatchBackgroundJobOperationRequest:
+      type: object
+      additionalProperties: false
+      required: [items, reason]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items: { $ref: "#/components/schemas/BatchBackgroundJobOperationItemRequest" }
+        reason: { type: string, minLength: 1, maxLength: 256 }
+
+    BatchBackgroundJobOperationItemResult:
+      type: object
+      additionalProperties: false
+      required: [backgroundJobId, success]
+      properties:
+        backgroundJobId: { type: string, format: uuid }
+        success: { type: boolean }
+        job: { $ref: "#/components/schemas/BackgroundJob" }
+        errorCode: { type: string, maxLength: 64 }
+        errorMessage: { type: string, maxLength: 256 }
+
+    BatchBackgroundJobOperationResponse:
+      type: object
+      additionalProperties: false
+      required: [items, succeeded, failed, requestId]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/BatchBackgroundJobOperationItemResult" }
+        succeeded: { type: integer, minimum: 0 }
+        failed: { type: integer, minimum: 0 }
         requestId: { type: string, minLength: 1, maxLength: 128 }
 
     RetryBackgroundItemRequest:

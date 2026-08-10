@@ -13,6 +13,8 @@
 - 支持失败摘要、错误码、退避重试、租约续期、心跳和 `rowVersion` 乐观并发。
 - 管理员 REST API 可分页查询 Outbox/Job 积压与失败原因，并对 `FAILED/DEAD` 单项受控重试。
 - 管理员 REST API 可按 `rowVersion` 受控取消 `PENDING/FAILED/DEAD` 后台任务，取消后任务进入 `CANCELLED` 终态。
+- 管理员 REST API 可查询 Outbox/Job 按状态聚合的积压统计。
+- 管理员 REST API 可对最多 50 个后台任务执行批量重试或批量取消，单项失败以明细返回。
 - 使用 `context.Context`、处理器超时和系统信号完成优雅关闭。
 
 ## 数据库边界
@@ -34,9 +36,12 @@ go run ./cmd/worker
 
 - `GET /api/v1/admin/background/outbox-events?page=1&pageSize=50`
 - `POST /api/v1/admin/background/outbox-events/{outboxEventId}/retry`
+- `GET /api/v1/admin/background/summary`
 - `GET /api/v1/admin/background/jobs?page=1&pageSize=50`
 - `POST /api/v1/admin/background/jobs/{backgroundJobId}/retry`
 - `POST /api/v1/admin/background/jobs/{backgroundJobId}/cancel`
+- `POST /api/v1/admin/background/jobs/batch-retry`
+- `POST /api/v1/admin/background/jobs/batch-cancel`
 
 所有接口仅允许 `SYSTEM_ADMIN` 访问；分页统一使用 `page/pageSize`；重试和取消必须携带 `rowVersion` 和 `reason`。
 
@@ -44,7 +49,7 @@ go run ./cmd/worker
 
 - 审计 Outbox 消费器；
 - 文件 Hash、病毒扫描、预览、索引、生命周期和垃圾回收处理器；
-- 批量重试、批量死信处理；
+- 批量死信处理；
 - 指标、告警和死信人工处理流程；
 - 崩溃恢复压力测试和长时间稳定性测试。
 

@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"time"
 
@@ -12,8 +13,10 @@ import (
 )
 
 type OperationsRepository interface {
+	CountOutboxEventsByStatus(ctx context.Context) ([]domain.OutboxStatusCount, error)
 	ListOutboxEvents(ctx context.Context, filter domain.OutboxListFilter) (domain.OutboxListResult, error)
 	RetryOutboxEvent(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.OutboxEvent, error)
+	CountBackgroundJobsByStatus(ctx context.Context) ([]domain.OutboxStatusCount, error)
 	ListBackgroundJobs(ctx context.Context, filter domain.JobListFilter) (domain.JobListResult, error)
 	RetryBackgroundJob(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error)
 	CancelBackgroundJob(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error)
@@ -30,6 +33,21 @@ func NewService(repository OperationsRepository, jobWriter JobRepository, now fu
 		now = time.Now
 	}
 	return &Service{repository: repository, jobWriter: jobWriter, now: now}
+}
+
+func (s *Service) GetSummary(ctx context.Context, actor domain.Actor) (domain.AdministrationSummary, error) {
+	if err := requireAdmin(actor); err != nil {
+		return domain.AdministrationSummary{}, err
+	}
+	outboxCounts, err := s.repository.CountOutboxEventsByStatus(ctx)
+	if err != nil {
+		return domain.AdministrationSummary{}, err
+	}
+	jobCounts, err := s.repository.CountBackgroundJobsByStatus(ctx)
+	if err != nil {
+		return domain.AdministrationSummary{}, err
+	}
+	return domain.AdministrationSummary{OutboxEvents: outboxCounts, BackgroundJobs: jobCounts}, nil
 }
 
 func (s *Service) ListOutboxEvents(ctx context.Context, actor domain.Actor, filter domain.OutboxListFilter) (domain.OutboxListResult, error) {
@@ -87,8 +105,8 @@ func (s *Service) RetryBackgroundJob(ctx context.Context, actor domain.Actor, id
 	if err := requireAdmin(actor); err != nil {
 		return domain.BackgroundJob{}, err
 	}
-	reason = strings.TrimSpace(reason)
-	if rowVersion < 1 || reason == "" || len(reason) > 256 {
+	reason, err := validateOperationReason(rowVersion, reason)
+	if err != nil {
 		return domain.BackgroundJob{}, domain.ErrInvalidInput
 	}
 	return s.repository.RetryBackgroundJob(ctx, id, rowVersion, "manual retry: "+reason, s.now().UTC())
@@ -98,11 +116,39 @@ func (s *Service) CancelBackgroundJob(ctx context.Context, actor domain.Actor, i
 	if err := requireAdmin(actor); err != nil {
 		return domain.BackgroundJob{}, err
 	}
-	reason = strings.TrimSpace(reason)
-	if rowVersion < 1 || reason == "" || len(reason) > 256 {
+	reason, err := validateOperationReason(rowVersion, reason)
+	if err != nil {
 		return domain.BackgroundJob{}, domain.ErrInvalidInput
 	}
 	return s.repository.CancelBackgroundJob(ctx, id, rowVersion, "manual cancel: "+reason, s.now().UTC())
+}
+
+func (s *Service) BatchRetryBackgroundJobs(ctx context.Context, actor domain.Actor, items []domain.BatchJobItem, reason string) (domain.BatchJobOperationResult, error) {
+	if err := requireAdmin(actor); err != nil {
+		return domain.BatchJobOperationResult{}, err
+	}
+	reason, err := validateBatchInput(items, reason)
+	if err != nil {
+		return domain.BatchJobOperationResult{}, err
+	}
+	now := s.now().UTC()
+	return s.batchOperateJobs(ctx, items, func(ctx context.Context, item domain.BatchJobItem) (domain.BackgroundJob, error) {
+		return s.repository.RetryBackgroundJob(ctx, item.ID, item.RowVersion, "manual batch retry: "+reason, now)
+	})
+}
+
+func (s *Service) BatchCancelBackgroundJobs(ctx context.Context, actor domain.Actor, items []domain.BatchJobItem, reason string) (domain.BatchJobOperationResult, error) {
+	if err := requireAdmin(actor); err != nil {
+		return domain.BatchJobOperationResult{}, err
+	}
+	reason, err := validateBatchInput(items, reason)
+	if err != nil {
+		return domain.BatchJobOperationResult{}, err
+	}
+	now := s.now().UTC()
+	return s.batchOperateJobs(ctx, items, func(ctx context.Context, item domain.BatchJobItem) (domain.BackgroundJob, error) {
+		return s.repository.CancelBackgroundJob(ctx, item.ID, item.RowVersion, "manual batch cancel: "+reason, now)
+	})
 }
 
 func (s *Service) EnqueueJob(ctx context.Context, command EnqueueJobCommand) (domain.BackgroundJob, error) {
@@ -134,6 +180,64 @@ func requireAdmin(actor domain.Actor) error {
 		return domain.ErrForbidden
 	}
 	return nil
+}
+
+func validateOperationReason(rowVersion int64, reason string) (string, error) {
+	reason = strings.TrimSpace(reason)
+	if rowVersion < 1 || reason == "" || len(reason) > 256 {
+		return "", domain.ErrInvalidInput
+	}
+	return reason, nil
+}
+
+func validateBatchInput(items []domain.BatchJobItem, reason string) (string, error) {
+	reason = strings.TrimSpace(reason)
+	if reason == "" || len(reason) > 256 || len(items) < 1 || len(items) > domain.MaxBatchSize {
+		return "", domain.ErrInvalidInput
+	}
+	seen := make(map[uuid.UUID]struct{}, len(items))
+	for _, item := range items {
+		if item.ID == uuid.Nil || item.RowVersion < 1 {
+			return "", domain.ErrInvalidInput
+		}
+		if _, ok := seen[item.ID]; ok {
+			return "", domain.ErrInvalidInput
+		}
+		seen[item.ID] = struct{}{}
+	}
+	return reason, nil
+}
+
+func (s *Service) batchOperateJobs(ctx context.Context, items []domain.BatchJobItem, operate func(context.Context, domain.BatchJobItem) (domain.BackgroundJob, error)) (domain.BatchJobOperationResult, error) {
+	result := domain.BatchJobOperationResult{Items: make([]domain.BatchJobOperationResultItem, 0, len(items))}
+	for _, item := range items {
+		job, err := operate(ctx, item)
+		if err == nil {
+			result.Succeeded++
+			jobCopy := job
+			result.Items = append(result.Items, domain.BatchJobOperationResultItem{ID: item.ID, Success: true, Job: &jobCopy})
+			continue
+		}
+		if errors.Is(err, domain.ErrNotFound) || errors.Is(err, domain.ErrConflict) {
+			result.Failed++
+			code, message := batchError(err)
+			result.Items = append(result.Items, domain.BatchJobOperationResultItem{ID: item.ID, Success: false, ErrorCode: &code, ErrorMessage: &message})
+			continue
+		}
+		return domain.BatchJobOperationResult{}, err
+	}
+	return result, nil
+}
+
+func batchError(err error) (string, string) {
+	switch {
+	case errors.Is(err, domain.ErrNotFound):
+		return "BACKGROUND_ITEM_NOT_FOUND", "background job not found"
+	case errors.Is(err, domain.ErrConflict):
+		return "BACKGROUND_STATE_CONFLICT", "background job state or rowVersion does not allow this operation"
+	default:
+		return "BACKGROUND_OPERATION_FAILED", "background job operation failed"
+	}
 }
 
 func trimmedOptional(value *string) *string {

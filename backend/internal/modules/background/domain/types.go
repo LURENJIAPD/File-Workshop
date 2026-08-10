@@ -27,6 +27,7 @@ const (
 	DefaultPage     = 1
 	DefaultPageSize = 50
 	MaxPageSize     = 200
+	MaxBatchSize    = 50
 )
 
 type Actor struct {
@@ -66,6 +67,11 @@ type OutboxEvent struct {
 type OutboxStatusCount struct {
 	Status string
 	Count  int64
+}
+
+type AdministrationSummary struct {
+	OutboxEvents   []OutboxStatusCount
+	BackgroundJobs []OutboxStatusCount
 }
 
 type BackgroundJob struct {
@@ -121,6 +127,25 @@ type JobListResult struct {
 	Page     int
 	PageSize int
 	Total    int64
+}
+
+type BatchJobItem struct {
+	ID         uuid.UUID
+	RowVersion int64
+}
+
+type BatchJobOperationResultItem struct {
+	ID           uuid.UUID
+	Success      bool
+	Job          *BackgroundJob
+	ErrorCode    *string
+	ErrorMessage *string
+}
+
+type BatchJobOperationResult struct {
+	Items     []BatchJobOperationResultItem
+	Succeeded int
+	Failed    int
 }
 
 type EnqueueJobInput struct {
