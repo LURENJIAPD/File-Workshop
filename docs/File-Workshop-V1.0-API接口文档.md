@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.5
+> 文档版本：V0.6
 > 文档状态：按模块持续编制  
 > 最近更新：2026-08-10
-> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 16 后台任务基础周期
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -23,7 +23,8 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 | 03 | 组织与空间 | 已完成当前模块边界 | 23 | 2026-08-05 |
 | 04 | 权限与管理委派 | 已完成当前模块边界 | 14 | 2026-08-05 |
 | 05 | 文件目录 | 已完成当前模块边界 | 6 | 2026-08-10 |
-| 06～16 | 后续系统模块 | 未收录 | 0 | — |
+| 06～15 | 后续系统模块 | 未收录 | 0 | — |
+| 16 | 后台任务 | 基础 Worker 周期完成；暂无公开 REST API | 0 | 2026-08-10 |
 
 ## 3. 全局接口约定
 
@@ -781,7 +782,65 @@ Space 授权只有在 `inheritToDescendants=true` 时才能作用于后代；Fol
 - `backend/tests/integration/files_http_test.go`
 - `backend/scripts/verify.ps1`
 
-## 10. 文档维护与冻结规则
+## 10. 模块 16：后台任务基础周期
+
+### 10.1 当前边界
+
+本周期完成的是后台任务模块的 Outbox Worker 基础框架，不新增公开 REST API，也不修改 `backend/api/openapi.yaml` 的路径数量。接口文档记录该模块边界，是为了让后续接口测试知道：当前已有可靠消费框架，但尚未提供运维查询、死信重放、取消或后台任务管理接口。
+
+当前能力：
+
+- `cmd/worker` 可作为独立 Go 进程启动；
+- Worker 使用 PostgreSQL `outbox_events` 作为事实源；
+- 只领取已注册处理器声明支持的 `eventType`，未注册事件继续保留，不被空消费；
+- 领取使用 `FOR UPDATE SKIP LOCKED`、状态条件、到期时间和租约；
+- 成功处理标记 `PUBLISHED`；
+- 可重试失败标记 `FAILED`，写入 `nextRetryAt/lastErrorCode/lastErrorSummary`；
+- 永久失败或重试耗尽标记 `DEAD`；
+- 使用 `context.Context`、处理器超时和系统信号完成优雅停止；
+- Redis 不参与任务事实存储。
+
+### 10.2 配置项
+
+| 环境变量 | 默认值 | 含义 |
+|---|---:|---|
+| `FILE_WORKSHOP_WORKER_ID` | 自动生成 | Worker 实例标识；写入 `outbox_events.locked_by` |
+| `FILE_WORKSHOP_WORKER_CONCURRENCY` | `2` | 并发轮询 goroutine 数 |
+| `FILE_WORKSHOP_WORKER_BATCH_SIZE` | `10` | 单次每类事件最多领取数量 |
+| `FILE_WORKSHOP_WORKER_POLL_INTERVAL` | `1s` | 无事件时轮询间隔 |
+| `FILE_WORKSHOP_WORKER_LEASE_DURATION` | `30s` | 领取租约时长 |
+| `FILE_WORKSHOP_WORKER_HANDLER_TIMEOUT` | `20s` | 单个事件处理超时，必须短于租约 |
+| `FILE_WORKSHOP_WORKER_RETRY_INITIAL_BACKOFF` | `5s` | 首次失败退避 |
+| `FILE_WORKSHOP_WORKER_RETRY_MAX_BACKOFF` | `5m` | 最大失败退避 |
+| `FILE_WORKSHOP_WORKER_SHUTDOWN_TIMEOUT` | `15s` | 收到退出信号后的等待时长 |
+
+GoLand 本地测试可直接运行：
+
+```powershell
+cd backend
+go run ./cmd/worker
+```
+
+注意：当前没有注册具体业务消费者时，Worker 会启动但不会领取任何事件；这是为了避免模块 11 审计等消费者尚未实现时吞掉历史 Outbox。
+
+### 10.3 后续接口测试依据
+
+后续若新增运维 REST API，必须同步 OpenAPI、实现和本文档，并至少覆盖：
+
+- 按状态查询 Outbox/Job 积压；
+- 查询失败原因和最近错误；
+- 受控重放 `FAILED/DEAD`；
+- 取消尚未执行的 `background_jobs`；
+- 权限限制：普通用户不得访问运维接口；
+- 分页统一使用 `page/pageSize`。
+
+现有自动化证据：
+
+- `backend/internal/modules/background/application/runner_test.go`
+- `backend/tests/integration/background_worker_test.go`
+- `backend/scripts/verify.ps1`
+
+## 11. 文档维护与冻结规则
 
 1. 新模块先更新 `backend/api/openapi.yaml`，再生成代码和实现。
 2. 模块开发完成时，在本文档追加对应模块章节和接口测试要点，并更新第 2 章状态。

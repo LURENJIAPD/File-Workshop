@@ -14,6 +14,7 @@ type Querier interface {
 	AdminDelegationIsEffective(ctx context.Context, arg *AdminDelegationIsEffectiveParams) (bool, error)
 	ChangeDocumentInheritance(ctx context.Context, arg *ChangeDocumentInheritanceParams) (*ChangeDocumentInheritanceRow, error)
 	ChangeFolderInheritance(ctx context.Context, arg *ChangeFolderInheritanceParams) (*ChangeFolderInheritanceRow, error)
+	ClaimOutboxEventsByType(ctx context.Context, arg *ClaimOutboxEventsByTypeParams) ([]*OutboxEvent, error)
 	CompleteFileIdempotencyRecord(ctx context.Context, arg *CompleteFileIdempotencyRecordParams) error
 	CompleteOrganizationIdempotencyRecord(ctx context.Context, arg *CompleteOrganizationIdempotencyRecordParams) error
 	CompletePermissionIdempotency(ctx context.Context, arg *CompletePermissionIdempotencyParams) error
@@ -28,6 +29,7 @@ type Querier interface {
 	CountOrganizationChangePlans(ctx context.Context, status pgtype.Text) (int64, error)
 	CountOrganizationRowVersion(ctx context.Context, arg *CountOrganizationRowVersionParams) (int64, error)
 	CountOrganizations(ctx context.Context, arg *CountOrganizationsParams) (int64, error)
+	CountOutboxEventsByStatus(ctx context.Context) ([]*CountOutboxEventsByStatusRow, error)
 	CountSpaces(ctx context.Context, arg *CountSpacesParams) (int64, error)
 	CountVisibleAdminDelegations(ctx context.Context, arg *CountVisibleAdminDelegationsParams) (int64, error)
 	CreateSessionRefreshToken(ctx context.Context, arg *CreateSessionRefreshTokenParams) (*CreateSessionRefreshTokenRow, error)
@@ -127,6 +129,9 @@ type Querier interface {
 	LockOrganizationTreeMutation(ctx context.Context) error
 	LockSystemAdminMutation(ctx context.Context) error
 	MarkOrganizationChangeOperation(ctx context.Context, arg *MarkOrganizationChangeOperationParams) (*OrganizationChangeOperation, error)
+	MarkOutboxEventDead(ctx context.Context, arg *MarkOutboxEventDeadParams) (int64, error)
+	MarkOutboxEventFailed(ctx context.Context, arg *MarkOutboxEventFailedParams) (int64, error)
+	MarkOutboxEventPublished(ctx context.Context, arg *MarkOutboxEventPublishedParams) (int64, error)
 	MarkQuotaReservationConsumed(ctx context.Context, arg *MarkQuotaReservationConsumedParams) (*QuotaReservation, error)
 	MarkQuotaReservationReleased(ctx context.Context, arg *MarkQuotaReservationReleasedParams) (*QuotaReservation, error)
 	MarkRefreshTokenReused(ctx context.Context, arg *MarkRefreshTokenReusedParams) error
@@ -137,6 +142,7 @@ type Querier interface {
 	PermissionOrganizationExists(ctx context.Context, organizationID pgtype.UUID) (bool, error)
 	ReleaseSpaceQuotaReservation(ctx context.Context, arg *ReleaseSpaceQuotaReservationParams) (int64, error)
 	RenameFileNamespaceEntry(ctx context.Context, arg *RenameFileNamespaceEntryParams) (*NamespaceEntry, error)
+	RenewOutboxEventLease(ctx context.Context, arg *RenewOutboxEventLeaseParams) (int64, error)
 	ReserveSpaceQuota(ctx context.Context, arg *ReserveSpaceQuotaParams) (*Space, error)
 	RevokeActiveRefreshTokensForSession(ctx context.Context, arg *RevokeActiveRefreshTokensForSessionParams) error
 	RevokeAdminDelegation(ctx context.Context, arg *RevokeAdminDelegationParams) (*AdminDelegation, error)

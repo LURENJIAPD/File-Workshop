@@ -25,6 +25,7 @@ type Config struct {
 	App             AppConfig
 	HTTP            HTTPConfig
 	Auth            AuthConfig
+	Worker          WorkerConfig
 	PostgreSQL      PostgreSQLConfig
 	Redis           RedisConfig
 }
@@ -60,6 +61,18 @@ type AuthConfig struct {
 	CookieSameSite     string
 	CookieDomain       string
 	AllowedOrigins     []string
+}
+
+type WorkerConfig struct {
+	WorkerID            string
+	Concurrency         int
+	BatchSize           int
+	PollInterval        time.Duration
+	LeaseDuration       time.Duration
+	HandlerTimeout      time.Duration
+	RetryInitialBackoff time.Duration
+	RetryMaxBackoff     time.Duration
+	ShutdownTimeout     time.Duration
 }
 
 func (c HTTPConfig) Address() string {
@@ -218,6 +231,17 @@ func loadFromEnvironment() (Config, error) {
 			CookieDomain:       strings.TrimSpace(os.Getenv(envPrefix + "AUTH_COOKIE_DOMAIN")),
 			AllowedOrigins:     csvValue(envPrefix+"AUTH_ALLOWED_ORIGINS", "http://127.0.0.1:5173,http://localhost:5173"),
 		},
+		Worker: WorkerConfig{
+			WorkerID:            stringValue(envPrefix+"WORKER_ID", ""),
+			Concurrency:         intValue(envPrefix+"WORKER_CONCURRENCY", 2, 1, 64, &validationErrors),
+			BatchSize:           intValue(envPrefix+"WORKER_BATCH_SIZE", 10, 1, 500, &validationErrors),
+			PollInterval:        durationValue(envPrefix+"WORKER_POLL_INTERVAL", time.Second, &validationErrors),
+			LeaseDuration:       durationValue(envPrefix+"WORKER_LEASE_DURATION", 30*time.Second, &validationErrors),
+			HandlerTimeout:      durationValue(envPrefix+"WORKER_HANDLER_TIMEOUT", 20*time.Second, &validationErrors),
+			RetryInitialBackoff: durationValue(envPrefix+"WORKER_RETRY_INITIAL_BACKOFF", 5*time.Second, &validationErrors),
+			RetryMaxBackoff:     durationValue(envPrefix+"WORKER_RETRY_MAX_BACKOFF", 5*time.Minute, &validationErrors),
+			ShutdownTimeout:     durationValue(envPrefix+"WORKER_SHUTDOWN_TIMEOUT", 15*time.Second, &validationErrors),
+		},
 		PostgreSQL: PostgreSQLConfig{
 			Host:                      requiredString(envPrefix+"POSTGRES_HOST", &validationErrors),
 			Port:                      postgresPort,
@@ -321,6 +345,12 @@ func validateConfig(cfg Config, validationErrors *[]error) {
 			envPrefix,
 			envPrefix,
 		))
+	}
+	if cfg.Worker.HandlerTimeout >= cfg.Worker.LeaseDuration {
+		*validationErrors = append(*validationErrors, fmt.Errorf("%sWORKER_HANDLER_TIMEOUT must be shorter than %sWORKER_LEASE_DURATION", envPrefix, envPrefix))
+	}
+	if cfg.Worker.RetryMaxBackoff < cfg.Worker.RetryInitialBackoff {
+		*validationErrors = append(*validationErrors, fmt.Errorf("%sWORKER_RETRY_MAX_BACKOFF must not be shorter than %sWORKER_RETRY_INITIAL_BACKOFF", envPrefix, envPrefix))
 	}
 }
 

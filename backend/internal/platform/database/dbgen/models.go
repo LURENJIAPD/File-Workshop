@@ -116,6 +116,34 @@ type OrganizationChangePlan struct {
 	RowVersion               int64
 }
 
+type OutboxEvent struct {
+	OutboxEventID      pgtype.UUID
+	AggregateType      string
+	AggregateID        pgtype.UUID
+	AggregateVersion   int64
+	EventType          string
+	EventSchemaVersion int32
+	PayloadJson        []byte
+	DeduplicationKey   string
+	CorrelationID      pgtype.UUID
+	CausationID        pgtype.UUID
+	Priority           int32
+	Status             string
+	AttemptCount       int32
+	MaxAttempts        int32
+	AvailableAt        pgtype.Timestamptz
+	LockedBy           pgtype.Text
+	LockedAt           pgtype.Timestamptz
+	LeaseUntil         pgtype.Timestamptz
+	NextRetryAt        pgtype.Timestamptz
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
+	PublishedAt        pgtype.Timestamptz
+	LastErrorCode      pgtype.Text
+	LastErrorSummary   pgtype.Text
+	RowVersion         int64
+}
+
 type PermissionGrant struct {
 	PermissionGrantID     pgtype.UUID
 	SubjectUserID         pgtype.UUID
