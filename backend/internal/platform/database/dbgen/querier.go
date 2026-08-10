@@ -238,6 +238,7 @@ type Querier interface {
 	RevokePermissionGrant(ctx context.Context, arg *RevokePermissionGrantParams) (*PermissionGrant, error)
 	RevokeShare(ctx context.Context, arg *RevokeShareParams) (*Share, error)
 	RevokeUserSession(ctx context.Context, arg *RevokeUserSessionParams) error
+	SearchDirectoryEntries(ctx context.Context, arg *SearchDirectoryEntriesParams) ([]*SearchDirectoryEntriesRow, error)
 	SetDocumentCurrentVersion(ctx context.Context, arg *SetDocumentCurrentVersionParams) (int64, error)
 	SetManagedUserStatus(ctx context.Context, arg *SetManagedUserStatusParams) (*SetManagedUserStatusRow, error)
 	SetOrganizationChangePlanStatus(ctx context.Context, arg *SetOrganizationChangePlanStatusParams) (*OrganizationChangePlan, error)

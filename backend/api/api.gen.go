@@ -960,6 +960,69 @@ func (e RecycleItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for SearchResultIndexStatus.
+const (
+	SearchResultIndexStatusCURRENT SearchResultIndexStatus = "CURRENT"
+	SearchResultIndexStatusFAILED  SearchResultIndexStatus = "FAILED"
+	SearchResultIndexStatusPENDING SearchResultIndexStatus = "PENDING"
+	SearchResultIndexStatusSTALE   SearchResultIndexStatus = "STALE"
+)
+
+// Valid indicates whether the value is a known member of the SearchResultIndexStatus enum.
+func (e SearchResultIndexStatus) Valid() bool {
+	switch e {
+	case SearchResultIndexStatusCURRENT:
+		return true
+	case SearchResultIndexStatusFAILED:
+		return true
+	case SearchResultIndexStatusPENDING:
+		return true
+	case SearchResultIndexStatusSTALE:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SearchResultMatchedFields.
+const (
+	CLASSIFICATION SearchResultMatchedFields = "CLASSIFICATION"
+	EXTENSION      SearchResultMatchedFields = "EXTENSION"
+	METADATA       SearchResultMatchedFields = "METADATA"
+	NAME           SearchResultMatchedFields = "NAME"
+)
+
+// Valid indicates whether the value is a known member of the SearchResultMatchedFields enum.
+func (e SearchResultMatchedFields) Valid() bool {
+	switch e {
+	case CLASSIFICATION:
+		return true
+	case EXTENSION:
+		return true
+	case METADATA:
+		return true
+	case NAME:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SearchResultSource.
+const (
+	POSTGRESMETADATA SearchResultSource = "POSTGRES_METADATA"
+)
+
+// Valid indicates whether the value is a known member of the SearchResultSource enum.
+func (e SearchResultSource) Valid() bool {
+	switch e {
+	case POSTGRESMETADATA:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SessionSummaryStatus.
 const (
 	SessionSummaryStatusACTIVE  SessionSummaryStatus = "ACTIVE"
@@ -2294,6 +2357,40 @@ type RevokeShareRequest struct {
 	RowVersion int64  `json:"rowVersion"`
 }
 
+// SearchResult defines model for SearchResult.
+type SearchResult struct {
+	Entry DirectoryEntry `json:"entry"`
+
+	// IndexStatus document_index_states.status 投影；文件夹和未初始化文档可为空。
+	IndexStatus   *SearchResultIndexStatus    `json:"indexStatus,omitempty"`
+	MatchedFields []SearchResultMatchedFields `json:"matchedFields"`
+
+	// Source 当前周期只返回 PostgreSQL 元数据搜索来源。
+	Source SearchResultSource `json:"source"`
+}
+
+// SearchResultIndexStatus document_index_states.status 投影；文件夹和未初始化文档可为空。
+type SearchResultIndexStatus string
+
+// SearchResultMatchedFields defines model for SearchResult.MatchedFields.
+type SearchResultMatchedFields string
+
+// SearchResultSource 当前周期只返回 PostgreSQL 元数据搜索来源。
+type SearchResultSource string
+
+// SearchResultListResponse defines model for SearchResultListResponse.
+type SearchResultListResponse struct {
+	// Degraded 当前为 true，表示全文、OCR 和语义搜索尚未启用，仅使用 PostgreSQL 元数据搜索。
+	Degraded  bool           `json:"degraded"`
+	Items     []SearchResult `json:"items"`
+	Page      Page           `json:"page"`
+	PageSize  PageSize       `json:"pageSize"`
+	RequestId string         `json:"requestId"`
+
+	// Total 当前为本页可见数量；后续具备权限安全计数方案后再提供跨页精确总数。
+	Total int64 `json:"total"`
+}
+
 // SessionSummary defines model for SessionSummary.
 type SessionSummary struct {
 	CreatedAt  time.Time            `json:"createdAt"`
@@ -2944,6 +3041,27 @@ type ListRecycleBinItemsParams struct {
 	SpaceId  *openapi_types.UUID `form:"spaceId,omitempty" json:"spaceId,omitempty"`
 }
 
+// SearchDirectoryEntriesParams defines parameters for SearchDirectoryEntries.
+type SearchDirectoryEntriesParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize *PageSizeQuery `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+
+	// Query 搜索关键词，匹配文件夹/文件名称、规范化名称、扩展名和分类。
+	Query           *string             `form:"query,omitempty" json:"query,omitempty"`
+	SpaceId         *openapi_types.UUID `form:"spaceId,omitempty" json:"spaceId,omitempty"`
+	EntryType       *DirectoryEntryType `form:"entryType,omitempty" json:"entryType,omitempty"`
+	Extension       *string             `form:"extension,omitempty" json:"extension,omitempty"`
+	Classification  *string             `form:"classification,omitempty" json:"classification,omitempty"`
+	CreatedByUserId *openapi_types.UUID `form:"createdByUserId,omitempty" json:"createdByUserId,omitempty"`
+	UpdatedFrom     *time.Time          `form:"updatedFrom,omitempty" json:"updatedFrom,omitempty"`
+	UpdatedTo       *time.Time          `form:"updatedTo,omitempty" json:"updatedTo,omitempty"`
+	MetadataKey     *string             `form:"metadataKey,omitempty" json:"metadataKey,omitempty"`
+	MetadataValue   *string             `form:"metadataValue,omitempty" json:"metadataValue,omitempty"`
+}
+
 // CreateShareParams defines parameters for CreateShare.
 type CreateShareParams struct {
 	// IdempotencyKey 可重试写请求的稳定幂等键。
@@ -3390,6 +3508,9 @@ type ServerInterface interface {
 	// RestoreRecycleItem 恢复回收站条目
 	// (POST /api/v1/recycle-bin/{recycleItemId}/restore)
 	RestoreRecycleItem(c *gin.Context, recycleItemId RecycleItemIdPath)
+	// SearchDirectoryEntries 搜索文件夹、文件名和文档元数据
+	// (GET /api/v1/search)
+	SearchDirectoryEntries(c *gin.Context, params SearchDirectoryEntriesParams)
 	// CreateShare 创建内部共享
 	// (POST /api/v1/shares)
 	CreateShare(c *gin.Context, params CreateShareParams)
@@ -5845,6 +5966,121 @@ func (siw *ServerInterfaceWrapper) RestoreRecycleItem(c *gin.Context) {
 	siw.Handler.RestoreRecycleItem(c, recycleItemId)
 }
 
+// SearchDirectoryEntries operation middleware
+func (siw *ServerInterfaceWrapper) SearchDirectoryEntries(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SearchDirectoryEntriesParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "query", c.Request.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter query: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "spaceId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "spaceId", c.Request.URL.Query(), &params.SpaceId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter spaceId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "entryType" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "entryType", c.Request.URL.Query(), &params.EntryType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter entryType: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "extension" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "extension", c.Request.URL.Query(), &params.Extension, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter extension: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "classification" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "classification", c.Request.URL.Query(), &params.Classification, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter classification: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "createdByUserId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "createdByUserId", c.Request.URL.Query(), &params.CreatedByUserId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter createdByUserId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "updatedFrom" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "updatedFrom", c.Request.URL.Query(), &params.UpdatedFrom, runtime.BindQueryParameterOptions{Type: "string", Format: "date-time"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter updatedFrom: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "updatedTo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "updatedTo", c.Request.URL.Query(), &params.UpdatedTo, runtime.BindQueryParameterOptions{Type: "string", Format: "date-time"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter updatedTo: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "metadataKey" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "metadataKey", c.Request.URL.Query(), &params.MetadataKey, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter metadataKey: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "metadataValue" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "metadataValue", c.Request.URL.Query(), &params.MetadataValue, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter metadataValue: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SearchDirectoryEntries(c, params)
+}
+
 // CreateShare operation middleware
 func (siw *ServerInterfaceWrapper) CreateShare(c *gin.Context) {
 
@@ -6575,6 +6811,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/api/v1/recycle-bin", wrapper.ListRecycleBinItems)
 	router.POST(options.BaseURL+"/api/v1/recycle-bin/:recycleItemId/restore", wrapper.RestoreRecycleItem)
 	router.POST(options.BaseURL+"/api/v1/recycle-bin/:recycleItemId/purge", wrapper.PurgeRecycleItem)
+	router.GET(options.BaseURL+"/api/v1/search", wrapper.SearchDirectoryEntries)
 	router.POST(options.BaseURL+"/api/v1/auth/refresh", wrapper.RefreshSession)
 	router.POST(options.BaseURL+"/api/v1/auth/logout", wrapper.Logout)
 	router.GET(options.BaseURL+"/api/v1/auth/session", wrapper.GetCurrentSession)
@@ -13240,6 +13477,79 @@ func (response RestoreRecycleItem409JSONResponse) VisitRestoreRecycleItemRespons
 	return err
 }
 
+type SearchDirectoryEntriesRequestObject struct {
+	Params SearchDirectoryEntriesParams
+}
+
+type SearchDirectoryEntriesResponseObject interface {
+	VisitSearchDirectoryEntriesResponse(w http.ResponseWriter) error
+}
+
+type SearchDirectoryEntries200JSONResponse SearchResultListResponse
+
+func (response SearchDirectoryEntries200JSONResponse) VisitSearchDirectoryEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SearchDirectoryEntries400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response SearchDirectoryEntries400JSONResponse) VisitSearchDirectoryEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SearchDirectoryEntries401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response SearchDirectoryEntries401JSONResponse) VisitSearchDirectoryEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SearchDirectoryEntries403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response SearchDirectoryEntries403JSONResponse) VisitSearchDirectoryEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type CreateShareRequestObject struct {
 	Params CreateShareParams
 	Body   *CreateShareJSONRequestBody
@@ -15244,6 +15554,9 @@ type StrictServerInterface interface {
 	// RestoreRecycleItem 恢复回收站条目
 	// (POST /api/v1/recycle-bin/{recycleItemId}/restore)
 	RestoreRecycleItem(ctx context.Context, request RestoreRecycleItemRequestObject) (RestoreRecycleItemResponseObject, error)
+	// SearchDirectoryEntries 搜索文件夹、文件名和文档元数据
+	// (GET /api/v1/search)
+	SearchDirectoryEntries(ctx context.Context, request SearchDirectoryEntriesRequestObject) (SearchDirectoryEntriesResponseObject, error)
 	// CreateShare 创建内部共享
 	// (POST /api/v1/shares)
 	CreateShare(ctx context.Context, request CreateShareRequestObject) (CreateShareResponseObject, error)
@@ -17497,6 +17810,32 @@ func (sh *strictHandler) RestoreRecycleItem(ctx *gin.Context, recycleItemId Recy
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(RestoreRecycleItemResponseObject); ok {
 		if err := validResponse.VisitRestoreRecycleItemResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SearchDirectoryEntries operation middleware
+func (sh *strictHandler) SearchDirectoryEntries(ctx *gin.Context, params SearchDirectoryEntriesParams) {
+	var request SearchDirectoryEntriesRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.SearchDirectoryEntries(ctx, request.(SearchDirectoryEntriesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SearchDirectoryEntries")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(SearchDirectoryEntriesResponseObject); ok {
+		if err := validResponse.VisitSearchDirectoryEntriesResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

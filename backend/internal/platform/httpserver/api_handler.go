@@ -121,6 +121,10 @@ type LifecycleAPI interface {
 	PurgeRecycleItem(context.Context, api.PurgeRecycleItemRequestObject) (api.PurgeRecycleItemResponseObject, error)
 }
 
+type SearchAPI interface {
+	SearchDirectoryEntries(context.Context, api.SearchDirectoryEntriesRequestObject) (api.SearchDirectoryEntriesResponseObject, error)
+}
+
 type BackgroundAPI interface {
 	ListBackgroundOutboxEvents(context.Context, api.ListBackgroundOutboxEventsRequestObject) (api.ListBackgroundOutboxEventsResponseObject, error)
 	RetryBackgroundOutboxEvent(context.Context, api.RetryBackgroundOutboxEventRequestObject) (api.RetryBackgroundOutboxEventResponseObject, error)
@@ -146,6 +150,7 @@ type APIHandler struct {
 	versions      VersionsAPI
 	shares        SharesAPI
 	lifecycle     LifecycleAPI
+	search        SearchAPI
 	background    BackgroundAPI
 	audit         AuditAPI
 }
@@ -157,6 +162,7 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 	var versions VersionsAPI
 	var shares SharesAPI
 	var lifecycle LifecycleAPI
+	var search SearchAPI
 	var background BackgroundAPI
 	var audit AuditAPI
 	for _, optional := range optionalHandlers {
@@ -178,6 +184,9 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 		if handler, ok := optional.(LifecycleAPI); ok {
 			lifecycle = handler
 		}
+		if handler, ok := optional.(SearchAPI); ok {
+			search = handler
+		}
 		if handler, ok := optional.(BackgroundAPI); ok {
 			background = handler
 		}
@@ -185,7 +194,11 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 			audit = handler
 		}
 	}
-	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions, files: files, uploads: uploads, versions: versions, shares: shares, lifecycle: lifecycle, background: background, audit: audit}
+	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions, files: files, uploads: uploads, versions: versions, shares: shares, lifecycle: lifecycle, search: search, background: background, audit: audit}
+}
+
+func (h *APIHandler) SearchDirectoryEntries(ctx context.Context, request api.SearchDirectoryEntriesRequestObject) (api.SearchDirectoryEntriesResponseObject, error) {
+	return h.search.SearchDirectoryEntries(ctx, request)
 }
 
 func (h *APIHandler) TrashDirectoryEntry(ctx context.Context, request api.TrashDirectoryEntryRequestObject) (api.TrashDirectoryEntryResponseObject, error) {

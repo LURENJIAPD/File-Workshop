@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.11
+> 文档版本：V0.12
 > 文档状态：按模块持续编制  
 > 最近更新：2026-08-10
-> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 09 回收与生命周期元数据闭环、模块 16 后台任务基础调度与运维接口
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 09 回收与生命周期元数据闭环、模块 10 PostgreSQL 元数据搜索基础接口、模块 16 后台任务基础调度与运维接口
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -27,7 +27,8 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 | 07 | 版本与并发 | 已收录版本与锁基础接口 | 7 | 2026-08-10 |
 | 08 | 共享 | 已收录用户/组织/LINK 基础接口 | 7 | 2026-08-10 |
 | 09 | 回收与生命周期 | 已收录元数据回收、恢复和清理发起接口 | 4 | 2026-08-10 |
-| 10～15 | 后续系统模块 | 未收录 | 0 | — |
+| 10 | 搜索 | 已收录 PostgreSQL 元数据搜索基础接口 | 1 | 2026-08-10 |
+| 11～15 | 后续系统模块 | 未收录 | 0 | — |
 | 16 | 后台任务 | 已完成基础调度与管理员运维接口 | 4 | 2026-08-10 |
 
 ## 3. 全局接口约定
@@ -1223,9 +1224,103 @@ Content-Type: application/json
 - `backend/internal/modules/lifecycle/application/service_test.go`
 - `go test ./...`
 
-## 14. 模块 16：后台任务
+## 14. 模块 10：搜索
 
 ### 14.1 当前边界
+
+本周期完成 Windows 本地可验证的 PostgreSQL 元数据搜索基础能力。搜索不依赖对象存储、预览、OCR、AI、OpenSearch/Elasticsearch 或 pgvector；只从数据库事实和投影表生成候选，并在返回前调用权限模块执行 `READ_METADATA` 最终复核。
+
+当前能力：
+
+- `GET /api/v1/search` 搜索活动目录项；
+- 关键词匹配文件夹/文件名称、规范化名称、扩展名和分类；
+- 支持 `spaceId/entryType/extension/classification/createdByUserId/updatedFrom/updatedTo/metadataKey/metadataValue` 筛选；
+- 只返回 `namespace_entries.lifecycle_status=ACTIVE` 的资源；
+- 返回结果复用 `DirectoryEntry` 结构，并附带 `matchedFields/indexStatus/source`；
+- 响应 `degraded=true`，明确当前为 PostgreSQL 元数据搜索，全文/OCR/语义搜索尚未启用；
+- 返回前逐项执行最终授权，权限拒绝的候选被过滤。
+
+尚未完成：全文内容索引、OCR、外部搜索服务、语义检索、索引刷新后台任务、权限安全的跨页精确 `total`、HTTP 集成测试和大数据量性能压测。
+
+### 14.2 接口清单
+
+| 接口 | Operation ID | 成功响应 | 关键约束 |
+|---|---|---:|---|
+| `GET /api/v1/search?page=1&pageSize=50&query=工艺` | `searchDirectoryEntries` | `200/SearchResultListResponse` | 至少提供一个查询条件；统一使用 `page/pageSize`；仅搜索 ACTIVE 资源；返回前按资源 `READ_METADATA` 最终复核；当前 `total` 为本页可见数量 |
+
+### 14.3 查询参数和响应字段
+
+查询参数：
+
+| 参数 | 类型 | 说明 |
+|---|---|---|
+| `query` | string | 可选，1～128 字符；匹配名称、规范化名称、扩展名和分类 |
+| `spaceId` | uuid | 可选，限定空间 |
+| `entryType` | `FOLDER/DOCUMENT` | 可选，限定目录项类型 |
+| `extension` | string | 可选，文档扩展名，不包含点号 |
+| `classification` | string | 可选，文档分级 |
+| `createdByUserId` | uuid | 可选，创建者 |
+| `updatedFrom/updatedTo` | date-time | 可选，更新时间范围；`updatedFrom` 不得晚于 `updatedTo` |
+| `metadataKey/metadataValue` | string | 必须成对出现；匹配 `documents.metadata_json ->> metadataKey` |
+
+`SearchResult` 字段：
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `entry` | `DirectoryEntry` | 复用目录模块响应结构 |
+| `matchedFields` | array | `NAME/EXTENSION/CLASSIFICATION/METADATA` |
+| `indexStatus` | string | 可选，来自 `document_index_states.status`；文件夹或未建立索引状态时为空 |
+| `source` | string | 当前固定为 `POSTGRES_METADATA` |
+
+搜索响应示例：
+
+```json
+{
+  "items": [
+    {
+      "entry": {
+        "entryId": "0198b100-0000-7000-8000-000000000101",
+        "spaceId": "0198b100-0000-7000-8000-000000000001",
+        "entryType": "DOCUMENT",
+        "name": "工艺卡.docx",
+        "normalizedName": "工艺卡.docx",
+        "depth": 2,
+        "lifecycleStatus": "ACTIVE",
+        "isRoot": false,
+        "createdByUserId": "0198b100-0000-7000-8000-000000000020",
+        "createdAt": "2026-08-10T09:00:00Z",
+        "updatedAt": "2026-08-10T09:00:00Z",
+        "rowVersion": 1,
+        "availabilityStatus": "BLOCKED",
+        "extensionNormalized": "docx"
+      },
+      "matchedFields": ["NAME"],
+      "indexStatus": "PENDING",
+      "source": "POSTGRES_METADATA"
+    }
+  ],
+  "page": 1,
+  "pageSize": 50,
+  "total": 1,
+  "degraded": true,
+  "requestId": "019fcc32-0bc6-7d82-aa70-62d5324b1fbb"
+}
+```
+
+### 14.4 错误码和接口测试依据
+
+除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN` 外，本模块当前不新增专属错误码。
+
+正式接口测试至少覆盖：未登录拒绝；至少一个查询条件；非法 `page/pageSize`；非法 `entryType`；`metadataKey/metadataValue` 不成对拒绝；`updatedFrom > updatedTo` 拒绝；关键词搜索名称；扩展名、分类、空间和 metadata 筛选；TRASHED/PURGING/PURGED 不返回；权限拒绝候选被过滤；权限服务错误不能被吞掉；响应 `degraded=true`；`total` 为本页可见数量。
+
+现有自动化证据：
+
+- `backend/internal/modules/search/application/service_test.go`
+- `go test ./internal/modules/search/...`
+
+## 15. 模块 16：后台任务
+
+### 15.1 当前边界
 
 本周期完成后台任务模块的基础调度与管理员运维接口。模块仍不实现具体业务处理器，例如审计归档、文件 Hash、病毒扫描、预览、搜索索引、生命周期清理或 AI 任务；这些处理器由对应业务模块后续注册。当前 REST API 只面向 `SYSTEM_ADMIN`，用于查看 Outbox/Job 积压与失败项，并对 `FAILED/DEAD` 单项执行受控重试。
 
@@ -1242,7 +1337,7 @@ Content-Type: application/json
 - 使用 `context.Context`、处理器超时和系统信号完成优雅停止；
 - Redis 不参与任务事实存储。
 
-### 14.2 配置项
+### 15.2 配置项
 
 | 环境变量 | 默认值 | 含义 |
 |---|---:|---|
@@ -1265,7 +1360,7 @@ go run ./cmd/worker
 
 注意：模块 11 审计消费者已注册用户、组织、权限和文件目录模块当前产生的 Outbox 事件；未注册事件类型和未注册 Job 类型仍会继续保留，不会被空消费。
 
-### 14.3 管理员运维接口
+### 15.3 管理员运维接口
 
 | 接口 | Operation ID | 成功响应 | 关键约束 |
 |---|---|---:|---|
@@ -1299,7 +1394,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 
 后台任务响应字段严格来自 `background_jobs`：`backgroundJobId/jobType/targetDocumentId/targetDocumentVersionId/targetStorageObjectId/payloadSchemaVersion/payload/deduplicationKey/priority/status/attemptCount/maxAttempts/availableAt/lockedBy/lockedAt/leaseUntil/heartbeatAt/startedAt/completedAt/lastErrorCode/lastErrorSummary/createdAt/updatedAt/rowVersion`。
 
-### 14.4 错误码和接口测试依据
+### 15.4 错误码和接口测试依据
 
 除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN` 外，本模块使用：
 
@@ -1318,9 +1413,9 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 - `backend/tests/integration/background_admin_http_test.go`
 - `backend/scripts/verify.ps1`
 
-## 15. 模块 11：审计
+## 16. 模块 11：审计
 
-### 15.1 当前边界
+### 16.1 当前边界
 
 本周期完成审计模块的基础查询、详情、完整性状态和哈希链校验能力，并将用户、组织、权限、文件目录模块当前产生的 Outbox 事件注册为审计消费者。当前不实现审计导出、归档、WORM、批次锚定和安全告警；这些能力依赖后续对象存储与归档周期。
 
@@ -1334,7 +1429,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 
 所有 REST 查询接口当前仅允许 `SYSTEM_ADMIN` 访问。分页统一使用 `page/pageSize`，默认 `1/50`，最大 `pageSize=200`。
 
-### 15.2 审计接口
+### 16.2 审计接口
 
 | 接口 | Operation ID | 成功响应 | 关键约束 |
 |---|---|---:|---|
@@ -1364,7 +1459,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 }
 ```
 
-### 15.3 字段与映射
+### 16.3 字段与映射
 
 `AuditEvent` 字段严格来自 `audit_events` 和 OpenAPI：`auditEventId/eventType/riskLevel/actorType/actorId/actorDisplayName/actorEmployeeNo/effectiveRole/adminDelegationId/shareId/resourceType/resourceId/resourceName/spaceId/organizationId/documentId/documentVersionId/action/result/failureCode/sourceChannel/ipAddress/userAgent/requestId/traceId/correlationId/reason/metadataSchemaVersion/metadata/hashSchemaVersion/chainId/sequenceNumber/previousHash/eventHash/partitionDate/createdAt`。
 
@@ -1378,7 +1473,7 @@ Outbox 审计消费者的映射规则：
 - `metadata` 保留 `outboxEventId/aggregateType/aggregateId/aggregateVersion/eventSchemaVersion/deduplicationKey/sourcePayload/mappedBy` 等追踪信息；
 - `USER_ROLE_CHANGED`、`AUTH_PASSWORD_CHANGED`、权限与管理委派变更等高风险事件进入哈希链；`AUTH_ACCOUNT_LOCKED` 视为 `CRITICAL`。
 
-### 15.4 错误码和接口测试依据
+### 16.4 错误码和接口测试依据
 
 除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN` 外，本模块使用：
 
@@ -1396,7 +1491,7 @@ Outbox 审计消费者的映射规则：
 - `backend/scripts/verify.ps1`
 - `go test ./internal/modules/audit/... ./...`
 
-## 16. 文档维护与冻结规则
+## 17. 文档维护与冻结规则
 
 1. 新模块先更新 `backend/api/openapi.yaml`，再生成代码和实现。
 2. 模块开发完成时，在本文档追加对应模块章节和接口测试要点，并更新第 2 章状态。

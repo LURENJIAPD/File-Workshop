@@ -40,6 +40,9 @@ tags:
   - name: Lifecycle
     description: 回收站、恢复和永久清理元数据控制；真实对象清理由后台任务在对象存储可用后完成。
 
+  - name: Search
+    description: 权限安全的文件名、目录名和文档元数据搜索；全文、OCR 和语义搜索由后续索引周期接入。
+
   - name: Audit
     description: Audit event query, integrity status and controlled verification.
   - name: BackgroundAdministration
@@ -897,6 +900,72 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/search:
+    get:
+      operationId: searchDirectoryEntries
+      tags: [Search]
+      summary: 搜索文件夹、文件名和文档元数据
+      description: >-
+        当前周期仅基于 PostgreSQL 搜索 ACTIVE 目录项的名称、扩展名、分类和指定 metadata key/value。
+        全文、OCR 和语义搜索暂未启用。搜索结果返回前必须执行 READ_METADATA 最终授权复核。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+        - name: query
+          in: query
+          required: false
+          description: 搜索关键词，匹配文件夹/文件名称、规范化名称、扩展名和分类。
+          schema: { type: string, minLength: 1, maxLength: 128 }
+        - name: spaceId
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+        - name: entryType
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/DirectoryEntryType" }
+        - name: extension
+          in: query
+          required: false
+          schema: { type: string, minLength: 1, maxLength: 64 }
+        - name: classification
+          in: query
+          required: false
+          schema: { type: string, minLength: 1, maxLength: 64 }
+        - name: createdByUserId
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+        - name: updatedFrom
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+        - name: updatedTo
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+        - name: metadataKey
+          in: query
+          required: false
+          schema: { type: string, minLength: 1, maxLength: 128 }
+        - name: metadataValue
+          in: query
+          required: false
+          schema: { type: string, minLength: 1, maxLength: 256 }
+      responses:
+        "200":
+          description: 搜索结果。当前 total 为本页可见数量，不代表跨页精确总数。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResultListResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   /api/v1/auth/refresh:
     post:
@@ -3502,6 +3571,47 @@ components:
         page: { $ref: "#/components/schemas/Page" }
         pageSize: { $ref: "#/components/schemas/PageSize" }
         total: { type: integer, format: int64, minimum: 0 }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    SearchResult:
+      type: object
+      additionalProperties: false
+      required: [entry, matchedFields, source]
+      properties:
+        entry: { $ref: "#/components/schemas/DirectoryEntry" }
+        matchedFields:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum: [NAME, EXTENSION, CLASSIFICATION, METADATA]
+        indexStatus:
+          type: string
+          enum: [PENDING, CURRENT, STALE, FAILED]
+          description: "document_index_states.status 投影；文件夹和未初始化文档可为空。"
+        source:
+          type: string
+          enum: [POSTGRES_METADATA]
+          description: 当前周期只返回 PostgreSQL 元数据搜索来源。
+
+    SearchResultListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, degraded, requestId]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/SearchResult" }
+        page: { $ref: "#/components/schemas/Page" }
+        pageSize: { $ref: "#/components/schemas/PageSize" }
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+          description: 当前为本页可见数量；后续具备权限安全计数方案后再提供跨页精确总数。
+        degraded:
+          type: boolean
+          description: 当前为 true，表示全文、OCR 和语义搜索尚未启用，仅使用 PostgreSQL 元数据搜索。
         requestId: { type: string, minLength: 1, maxLength: 128 }
 
     CreateFolderRequest:
