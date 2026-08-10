@@ -36,6 +36,12 @@ const (
 	ActionCreateFolder = "CREATE_FOLDER"
 
 	DefaultRecycleRetention = 90 * 24 * time.Hour
+
+	SystemRoleAdmin = "SYSTEM_ADMIN"
+
+	LifecyclePurgeJobType       = "LIFECYCLE_PURGE"
+	DefaultExpiredScanBatchSize = 100
+	MaxExpiredScanBatchSize     = 500
 )
 
 type Actor struct {
@@ -113,6 +119,18 @@ type ListResult struct {
 	Page     int
 	PageSize int
 	Total    int64
+}
+
+type ExpiredScanInput struct {
+	BatchSize int
+	RequestID uuid.UUID
+}
+
+type ExpiredScanResult struct {
+	Scanned          int
+	Enqueued         int
+	SkippedLegalHold int
+	JobType          string
 }
 
 type IdempotencyRecord struct {

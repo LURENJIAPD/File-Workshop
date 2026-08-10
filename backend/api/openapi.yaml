@@ -901,6 +901,33 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
 
+  /api/v1/admin/lifecycle/recycle-bin/expired/scan:
+    post:
+      operationId: scanExpiredRecycleItems
+      tags: [Lifecycle]
+      summary: Scan expired recycle bin items and enqueue purge jobs
+      description: SYSTEM_ADMIN operation. It scans ACTIVE recycle items whose expiresAt has passed and enqueues LIFECYCLE_PURGE background jobs. It does not delete object storage data directly.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScanExpiredRecycleItemsRequest"
+      responses:
+        "200":
+          description: Expired recycle items have been scanned and eligible purge jobs have been enqueued.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanExpiredRecycleItemsResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
   /api/v1/search:
     get:
       operationId: searchDirectoryEntries
@@ -3726,6 +3753,38 @@ components:
       properties:
         reason: { type: string, minLength: 1, maxLength: 512 }
         rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    ScanExpiredRecycleItemsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        batchSize:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 100
+
+    ScanExpiredRecycleItemsResponse:
+      type: object
+      additionalProperties: false
+      required: [scanned, enqueued, skippedLegalHold, jobType, requestId]
+      properties:
+        scanned:
+          type: integer
+          minimum: 0
+        enqueued:
+          type: integer
+          minimum: 0
+        skippedLegalHold:
+          type: integer
+          minimum: 0
+        jobType:
+          type: string
+          const: LIFECYCLE_PURGE
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
 
     AdminDelegationScope:
       type: string

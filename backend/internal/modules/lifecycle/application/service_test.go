@@ -2,10 +2,13 @@ package application
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
 
+	backgroundapplication "file-workshop/backend/internal/modules/background/application"
+	backgrounddomain "file-workshop/backend/internal/modules/background/domain"
 	"file-workshop/backend/internal/modules/lifecycle/domain"
 	permissiondomain "file-workshop/backend/internal/modules/permissions/domain"
 
@@ -93,13 +96,76 @@ func TestPurgeRecycleItemRejectsActiveLegalHold(t *testing.T) {
 	}
 }
 
+func TestScanExpiredRecycleItemsEnqueuesPurgeJobsAndSkipsLegalHold(t *testing.T) {
+	now := time.Date(2026, 8, 10, 12, 30, 0, 0, time.UTC)
+	actor := testActor()
+	actor.Role = domain.SystemRoleAdmin
+	first := expiredRecycleItem(now, domain.EntryTypeDocument)
+	second := expiredRecycleItem(now, domain.EntryTypeFolder)
+	repository := newFakeRepository()
+	repository.expiredRecycle = []domain.RecycleItem{first, second}
+	repository.legalHoldByEntry = map[uuid.UUID]bool{second.EntryID: true}
+	enqueuer := &fakeJobEnqueuer{}
+	service := NewService(repository, repository, allowAuthorizer{}, func() time.Time { return now })
+	service.SetJobEnqueuer(enqueuer)
+
+	result, err := service.ScanExpiredRecycleItems(context.Background(), actor, domain.ExpiredScanInput{BatchSize: 2, RequestID: uuid.Must(uuid.NewV7())})
+	if err != nil {
+		t.Fatalf("ScanExpiredRecycleItems returned error: %v", err)
+	}
+	if result.Scanned != 2 || result.Enqueued != 1 || result.SkippedLegalHold != 1 || result.JobType != domain.LifecyclePurgeJobType {
+		t.Fatalf("unexpected scan result: %+v", result)
+	}
+	if len(enqueuer.commands) != 1 {
+		t.Fatalf("expected one enqueue command, got %d", len(enqueuer.commands))
+	}
+	command := enqueuer.commands[0]
+	if command.JobType != domain.LifecyclePurgeJobType || command.DeduplicationKey != domain.LifecyclePurgeJobType+":"+first.ID.String() || command.MaxAttempts != 10 || command.PayloadSchemaVersion != 1 {
+		t.Fatalf("unexpected enqueue command: %+v", command)
+	}
+	if command.TargetDocumentID == nil || *command.TargetDocumentID != first.EntryID {
+		t.Fatalf("expected document target id, got %+v", command.TargetDocumentID)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(command.PayloadJSON, &payload); err != nil {
+		t.Fatalf("invalid payload JSON: %v", err)
+	}
+	if payload["requestedBy"] != "expired-recycle-scan" || payload["entryType"] != domain.EntryTypeDocument {
+		t.Fatalf("unexpected payload: %+v", payload)
+	}
+}
+
+func TestScanExpiredRecycleItemsRejectsNonAdmin(t *testing.T) {
+	service := NewService(newFakeRepository(), newFakeRepository(), allowAuthorizer{}, time.Now)
+	service.SetJobEnqueuer(&fakeJobEnqueuer{})
+	_, err := service.ScanExpiredRecycleItems(context.Background(), testActor(), domain.ExpiredScanInput{})
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("expected ErrForbidden, got %v", err)
+	}
+}
+
+func TestScanExpiredRecycleItemsRejectsInvalidBatchSize(t *testing.T) {
+	actor := testActor()
+	actor.Role = domain.SystemRoleAdmin
+	repository := newFakeRepository()
+	service := NewService(repository, repository, allowAuthorizer{}, time.Now)
+	service.SetJobEnqueuer(&fakeJobEnqueuer{})
+	_, err := service.ScanExpiredRecycleItems(context.Background(), actor, domain.ExpiredScanInput{BatchSize: domain.MaxExpiredScanBatchSize + 1})
+	var validationError *domain.ValidationError
+	if !errors.As(err, &validationError) || validationError.Field != "batchSize" {
+		t.Fatalf("expected batchSize validation error, got %v", err)
+	}
+}
+
 type fakeRepository struct {
 	entries              map[uuid.UUID]domain.Entry
 	recycle              map[uuid.UUID]domain.RecycleItem
+	expiredRecycle       []domain.RecycleItem
 	idempotency          map[string]domain.IdempotencyRecord
 	events               []domain.Event
 	nameExists           bool
 	legalHold            bool
+	legalHoldByEntry     map[uuid.UUID]bool
 	sharesUnavailable    bool
 	securityEpochTouched bool
 }
@@ -183,7 +249,10 @@ func (r *fakeRepository) TouchSpaceSecurityEpoch(context.Context, uuid.UUID, tim
 	return nil
 }
 
-func (r *fakeRepository) ActiveLegalHoldExists(context.Context, uuid.UUID) (bool, error) {
+func (r *fakeRepository) ActiveLegalHoldExists(_ context.Context, rootID uuid.UUID) (bool, error) {
+	if r.legalHoldByEntry != nil {
+		return r.legalHoldByEntry[rootID], nil
+	}
 	return r.legalHold, nil
 }
 
@@ -215,6 +284,10 @@ func (r *fakeRepository) ListRecycleItems(context.Context, *uuid.UUID, int, int)
 		items = append(items, item)
 	}
 	return items, nil
+}
+
+func (r *fakeRepository) ListExpiredActiveRecycleItems(context.Context, time.Time, int) ([]domain.RecycleItem, error) {
+	return append([]domain.RecycleItem(nil), r.expiredRecycle...), nil
 }
 
 func (r *fakeRepository) RestoreRecycleItem(_ context.Context, recycleID uuid.UUID, restoredToFolderID uuid.UUID, rowVersion int64, at time.Time) (domain.RecycleItem, error) {
@@ -292,6 +365,37 @@ func testEntry(parentID uuid.UUID) domain.Entry {
 		parent = &parentID
 	}
 	return domain.Entry{ID: entryID, SpaceID: spaceID, ParentFolderID: parent, EntryType: domain.EntryTypeDocument, Name: "设计说明.docx", NormalizedName: "设计说明.docx", PathCache: ptr("/设计说明.docx"), Depth: 1, LifecycleStatus: domain.LifecycleActive, CreatedByUserID: uuid.Must(uuid.NewV7()), RowVersion: 3}
+}
+
+func expiredRecycleItem(now time.Time, entryType string) domain.RecycleItem {
+	entryID := uuid.Must(uuid.NewV7())
+	parentID := uuid.Must(uuid.NewV7())
+	return domain.RecycleItem{
+		ID:                     uuid.Must(uuid.NewV7()),
+		EntryID:                entryID,
+		EntryType:              entryType,
+		OriginalSpaceID:        uuid.Must(uuid.NewV7()),
+		OriginalParentFolderID: &parentID,
+		OriginalName:           "expired.dat",
+		CurrentName:            "expired.dat",
+		LifecycleStatus:        domain.LifecycleTrashed,
+		DeletedByUserID:        uuid.Must(uuid.NewV7()),
+		DeletedAt:              now.Add(-domain.DefaultRecycleRetention),
+		ExpiresAt:              now.Add(-time.Minute),
+		Status:                 domain.RecycleStatusActive,
+		CreatedAt:              now.Add(-domain.DefaultRecycleRetention),
+		UpdatedAt:              now.Add(-domain.DefaultRecycleRetention),
+		RowVersion:             1,
+	}
+}
+
+type fakeJobEnqueuer struct {
+	commands []backgroundapplication.EnqueueJobCommand
+}
+
+func (e *fakeJobEnqueuer) EnqueueJob(_ context.Context, command backgroundapplication.EnqueueJobCommand) (backgrounddomain.BackgroundJob, error) {
+	e.commands = append(e.commands, command)
+	return backgrounddomain.BackgroundJob{ID: uuid.Must(uuid.NewV7()), JobType: command.JobType, PayloadSchemaVersion: command.PayloadSchemaVersion, PayloadJSON: command.PayloadJSON, DeduplicationKey: command.DeduplicationKey, Priority: command.Priority, Status: backgrounddomain.JobStatusPending, MaxAttempts: command.MaxAttempts, AvailableAt: command.AvailableAt, RowVersion: 1}, nil
 }
 
 func ptr(value string) *string {

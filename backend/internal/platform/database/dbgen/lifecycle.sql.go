@@ -441,6 +441,84 @@ func (q *Queries) LifecycleNameExists(ctx context.Context, arg *LifecycleNameExi
 	return column_1, err
 }
 
+const listExpiredActiveRecycleItems = `-- name: ListExpiredActiveRecycleItems :many
+SELECT
+  r.recycle_item_id, r.namespace_entry_id, r.original_space_id, r.original_parent_folder_id,
+  r.original_name, r.deleted_by_user_id, r.deleted_at, r.expires_at, r.status,
+  r.restored_to_folder_id, r.restored_at, r.created_at, r.updated_at, r.row_version,
+  e.entry_type, e.name AS current_name, e.lifecycle_status
+FROM recycle_items r
+JOIN namespace_entries e ON e.namespace_entry_id = r.namespace_entry_id
+WHERE r.status = 'ACTIVE'
+  AND r.expires_at <= $1::timestamptz
+  AND e.lifecycle_status = 'TRASHED'
+ORDER BY r.expires_at ASC, r.recycle_item_id ASC
+LIMIT $2::integer
+`
+
+type ListExpiredActiveRecycleItemsParams struct {
+	Now       pgtype.Timestamptz
+	BatchSize int32
+}
+
+type ListExpiredActiveRecycleItemsRow struct {
+	RecycleItemID          pgtype.UUID
+	NamespaceEntryID       pgtype.UUID
+	OriginalSpaceID        pgtype.UUID
+	OriginalParentFolderID pgtype.UUID
+	OriginalName           string
+	DeletedByUserID        pgtype.UUID
+	DeletedAt              pgtype.Timestamptz
+	ExpiresAt              pgtype.Timestamptz
+	Status                 string
+	RestoredToFolderID     pgtype.UUID
+	RestoredAt             pgtype.Timestamptz
+	CreatedAt              pgtype.Timestamptz
+	UpdatedAt              pgtype.Timestamptz
+	RowVersion             int64
+	EntryType              string
+	CurrentName            string
+	LifecycleStatus        string
+}
+
+func (q *Queries) ListExpiredActiveRecycleItems(ctx context.Context, arg *ListExpiredActiveRecycleItemsParams) ([]*ListExpiredActiveRecycleItemsRow, error) {
+	rows, err := q.db.Query(ctx, listExpiredActiveRecycleItems, arg.Now, arg.BatchSize)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*ListExpiredActiveRecycleItemsRow{}
+	for rows.Next() {
+		var i ListExpiredActiveRecycleItemsRow
+		if err := rows.Scan(
+			&i.RecycleItemID,
+			&i.NamespaceEntryID,
+			&i.OriginalSpaceID,
+			&i.OriginalParentFolderID,
+			&i.OriginalName,
+			&i.DeletedByUserID,
+			&i.DeletedAt,
+			&i.ExpiresAt,
+			&i.Status,
+			&i.RestoredToFolderID,
+			&i.RestoredAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.RowVersion,
+			&i.EntryType,
+			&i.CurrentName,
+			&i.LifecycleStatus,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRecycleItems = `-- name: ListRecycleItems :many
 SELECT
   r.recycle_item_id, r.namespace_entry_id, r.original_space_id, r.original_parent_folder_id,

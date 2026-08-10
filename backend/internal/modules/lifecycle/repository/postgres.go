@@ -159,6 +159,18 @@ func (r *PostgreSQL) ListRecycleItems(ctx context.Context, spaceID *uuid.UUID, p
 	return items, nil
 }
 
+func (r *PostgreSQL) ListExpiredActiveRecycleItems(ctx context.Context, now time.Time, batchSize int) ([]domain.RecycleItem, error) {
+	rows, err := r.queries.ListExpiredActiveRecycleItems(ctx, &dbgen.ListExpiredActiveRecycleItemsParams{Now: timestamptz(now), BatchSize: int32(batchSize)})
+	if err != nil {
+		return nil, mapDatabaseError(err)
+	}
+	items := make([]domain.RecycleItem, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, recycleFromRow(row))
+	}
+	return items, nil
+}
+
 func (r *PostgreSQL) RestoreRecycleItem(ctx context.Context, recycleID uuid.UUID, restoredToFolderID uuid.UUID, rowVersion int64, at time.Time) (domain.RecycleItem, error) {
 	if _, err := r.queries.RestoreRecycleItem(ctx, &dbgen.RestoreRecycleItemParams{RecycleItemID: pgUUID(recycleID), RestoredToFolderID: pgUUID(restoredToFolderID), RestoredAt: timestamptz(at), RowVersion: rowVersion}); errors.Is(err, pgx.ErrNoRows) {
 		return domain.RecycleItem{}, domain.ErrVersionConflict
@@ -220,6 +232,8 @@ func recycleFromRow(row any) domain.RecycleItem {
 	case *dbgen.GetRecycleItemWithEntryForUpdateRow:
 		return recycleFromFields(value.RecycleItemID, value.NamespaceEntryID, value.EntryType, value.OriginalSpaceID, value.OriginalParentFolderID, value.OriginalName, value.CurrentName, value.LifecycleStatus, value.DeletedByUserID, value.DeletedAt, value.ExpiresAt, value.Status, value.RestoredToFolderID, value.RestoredAt, value.CreatedAt, value.UpdatedAt, value.RowVersion)
 	case *dbgen.ListRecycleItemsRow:
+		return recycleFromFields(value.RecycleItemID, value.NamespaceEntryID, value.EntryType, value.OriginalSpaceID, value.OriginalParentFolderID, value.OriginalName, value.CurrentName, value.LifecycleStatus, value.DeletedByUserID, value.DeletedAt, value.ExpiresAt, value.Status, value.RestoredToFolderID, value.RestoredAt, value.CreatedAt, value.UpdatedAt, value.RowVersion)
+	case *dbgen.ListExpiredActiveRecycleItemsRow:
 		return recycleFromFields(value.RecycleItemID, value.NamespaceEntryID, value.EntryType, value.OriginalSpaceID, value.OriginalParentFolderID, value.OriginalName, value.CurrentName, value.LifecycleStatus, value.DeletedByUserID, value.DeletedAt, value.ExpiresAt, value.Status, value.RestoredToFolderID, value.RestoredAt, value.CreatedAt, value.UpdatedAt, value.RowVersion)
 	default:
 		return domain.RecycleItem{}

@@ -119,6 +119,7 @@ type LifecycleAPI interface {
 	ListRecycleBinItems(context.Context, api.ListRecycleBinItemsRequestObject) (api.ListRecycleBinItemsResponseObject, error)
 	RestoreRecycleItem(context.Context, api.RestoreRecycleItemRequestObject) (api.RestoreRecycleItemResponseObject, error)
 	PurgeRecycleItem(context.Context, api.PurgeRecycleItemRequestObject) (api.PurgeRecycleItemResponseObject, error)
+	ScanExpiredRecycleItems(context.Context, api.ScanExpiredRecycleItemsRequestObject) (api.ScanExpiredRecycleItemsResponseObject, error)
 }
 
 type SearchAPI interface {
@@ -212,6 +213,9 @@ func (h *APIHandler) RestoreRecycleItem(ctx context.Context, request api.Restore
 }
 func (h *APIHandler) PurgeRecycleItem(ctx context.Context, request api.PurgeRecycleItemRequestObject) (api.PurgeRecycleItemResponseObject, error) {
 	return h.lifecycle.PurgeRecycleItem(ctx, request)
+}
+func (h *APIHandler) ScanExpiredRecycleItems(ctx context.Context, request api.ScanExpiredRecycleItemsRequestObject) (api.ScanExpiredRecycleItemsResponseObject, error) {
+	return h.lifecycle.ScanExpiredRecycleItems(ctx, request)
 }
 
 func (h *APIHandler) CreateShare(ctx context.Context, request api.CreateShareRequestObject) (api.CreateShareResponseObject, error) {

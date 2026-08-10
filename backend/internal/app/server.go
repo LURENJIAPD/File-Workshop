@@ -144,6 +144,7 @@ func RunServer(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 	searchHandler := searchtransport.NewHandler(searchService, identityService, cfg.Auth)
 	backgroundRepository := backgroundrepository.NewPostgreSQL(postgresPool)
 	backgroundService := backgroundapplication.NewService(backgroundRepository, backgroundRepository, time.Now)
+	lifecycleService.SetJobEnqueuer(backgroundService)
 	backgroundHandler := backgroundtransport.NewHandler(backgroundService, identityService, cfg.Auth)
 	auditRepository := auditrepository.NewPostgreSQL(postgresPool)
 	auditService := auditapplication.NewService(auditRepository, time.Now)

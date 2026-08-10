@@ -177,6 +177,20 @@ WHERE r.status = 'ACTIVE'
 ORDER BY r.deleted_at DESC, r.recycle_item_id DESC
 LIMIT sqlc.arg('page_size')::integer OFFSET sqlc.arg('page_offset')::bigint;
 
+-- name: ListExpiredActiveRecycleItems :many
+SELECT
+  r.recycle_item_id, r.namespace_entry_id, r.original_space_id, r.original_parent_folder_id,
+  r.original_name, r.deleted_by_user_id, r.deleted_at, r.expires_at, r.status,
+  r.restored_to_folder_id, r.restored_at, r.created_at, r.updated_at, r.row_version,
+  e.entry_type, e.name AS current_name, e.lifecycle_status
+FROM recycle_items r
+JOIN namespace_entries e ON e.namespace_entry_id = r.namespace_entry_id
+WHERE r.status = 'ACTIVE'
+  AND r.expires_at <= sqlc.arg('now')::timestamptz
+  AND e.lifecycle_status = 'TRASHED'
+ORDER BY r.expires_at ASC, r.recycle_item_id ASC
+LIMIT sqlc.arg('batch_size')::integer;
+
 -- name: RestoreRecycleItem :one
 UPDATE recycle_items
 SET status = 'RESTORED',

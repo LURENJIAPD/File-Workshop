@@ -179,6 +179,7 @@ type Querier interface {
 	ListCreatedShares(ctx context.Context, arg *ListCreatedSharesParams) ([]*ListCreatedSharesRow, error)
 	ListDirectPermissionGrants(ctx context.Context, arg *ListDirectPermissionGrantsParams) ([]*ListDirectPermissionGrantsRow, error)
 	ListDocumentVersions(ctx context.Context, arg *ListDocumentVersionsParams) ([]*DocumentVersion, error)
+	ListExpiredActiveRecycleItems(ctx context.Context, arg *ListExpiredActiveRecycleItemsParams) ([]*ListExpiredActiveRecycleItemsRow, error)
 	ListFileChildEntries(ctx context.Context, arg *ListFileChildEntriesParams) ([]*ListFileChildEntriesRow, error)
 	ListFolderAuthorizationAncestors(ctx context.Context, resourceID pgtype.UUID) ([]*ListFolderAuthorizationAncestorsRow, error)
 	ListManagedUserSessions(ctx context.Context, arg *ListManagedUserSessionsParams) ([]*UserSession, error)

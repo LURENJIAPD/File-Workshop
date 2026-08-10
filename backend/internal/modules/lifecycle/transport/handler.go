@@ -168,6 +168,41 @@ func (h *Handler) PurgeRecycleItem(ctx context.Context, request api.PurgeRecycle
 	return api.PurgeRecycleItem200JSONResponse(api.RecycleItemResponse{Item: apiRecycleItem(item), RequestId: requestID}), nil
 }
 
+func (h *Handler) ScanExpiredRecycleItems(ctx context.Context, request api.ScanExpiredRecycleItemsRequestObject) (api.ScanExpiredRecycleItemsResponseObject, error) {
+	ginContext, actor, requestID, err := h.authenticate(ctx)
+	if err != nil {
+		return api.ScanExpiredRecycleItems401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	if !h.originAllowed(ginContext) {
+		return api.ScanExpiredRecycleItems403JSONResponse{ForbiddenJSONResponse: forbidden(requestID, true)}, nil
+	}
+	batchSize := 0
+	if request.Body != nil && request.Body.BatchSize != nil {
+		batchSize = *request.Body.BatchSize
+	}
+	result, err := h.service.ScanExpiredRecycleItems(ginContext.Request.Context(), actor, domain.ExpiredScanInput{BatchSize: batchSize, RequestID: databaseRequestID(requestID)})
+	if err != nil {
+		if bad, denied, _, conflictResponse, code := mapError(err, requestID); code != "" {
+			switch code {
+			case "400":
+				return api.ScanExpiredRecycleItems400JSONResponse{InvalidRequestJSONResponse: bad}, nil
+			case "403":
+				return api.ScanExpiredRecycleItems403JSONResponse{ForbiddenJSONResponse: denied}, nil
+			case "409":
+				return api.ScanExpiredRecycleItems409JSONResponse{ConflictJSONResponse: conflictResponse}, nil
+			}
+		}
+		return nil, err
+	}
+	return api.ScanExpiredRecycleItems200JSONResponse(api.ScanExpiredRecycleItemsResponse{
+		Scanned:          result.Scanned,
+		Enqueued:         result.Enqueued,
+		SkippedLegalHold: result.SkippedLegalHold,
+		JobType:          api.ScanExpiredRecycleItemsResponseJobType(result.JobType),
+		RequestId:        requestID,
+	}), nil
+}
+
 func (h *Handler) authenticate(ctx context.Context) (*gin.Context, domain.Actor, string, error) {
 	ginContext, ok := ctx.(*gin.Context)
 	if !ok {
@@ -255,7 +290,10 @@ func databaseRequestID(value string) uuid.UUID {
 }
 
 func mapError(err error, requestID string) (api.InvalidRequestJSONResponse, api.ForbiddenJSONResponse, api.NotFoundJSONResponse, api.ConflictJSONResponse, string) {
+	var validationError *domain.ValidationError
 	switch {
+	case errors.As(err, &validationError):
+		return invalidRequest(requestID), api.ForbiddenJSONResponse{}, api.NotFoundJSONResponse{}, api.ConflictJSONResponse{}, "400"
 	case errors.Is(err, domain.ErrInvalidInput):
 		return invalidRequest(requestID), api.ForbiddenJSONResponse{}, api.NotFoundJSONResponse{}, api.ConflictJSONResponse{}, "400"
 	case errors.Is(err, domain.ErrForbidden):

@@ -960,6 +960,21 @@ func (e RecycleItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for ScanExpiredRecycleItemsResponseJobType.
+const (
+	LIFECYCLEPURGE ScanExpiredRecycleItemsResponseJobType = "LIFECYCLE_PURGE"
+)
+
+// Valid indicates whether the value is a known member of the ScanExpiredRecycleItemsResponseJobType enum.
+func (e ScanExpiredRecycleItemsResponseJobType) Valid() bool {
+	switch e {
+	case LIFECYCLEPURGE:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SearchResultIndexStatus.
 const (
 	SearchResultIndexStatusCURRENT SearchResultIndexStatus = "CURRENT"
@@ -2357,6 +2372,23 @@ type RevokeShareRequest struct {
 	RowVersion int64  `json:"rowVersion"`
 }
 
+// ScanExpiredRecycleItemsRequest defines model for ScanExpiredRecycleItemsRequest.
+type ScanExpiredRecycleItemsRequest struct {
+	BatchSize *int `json:"batchSize,omitempty"`
+}
+
+// ScanExpiredRecycleItemsResponse defines model for ScanExpiredRecycleItemsResponse.
+type ScanExpiredRecycleItemsResponse struct {
+	Enqueued         int                                    `json:"enqueued"`
+	JobType          ScanExpiredRecycleItemsResponseJobType `json:"jobType"`
+	RequestId        string                                 `json:"requestId"`
+	Scanned          int                                    `json:"scanned"`
+	SkippedLegalHold int                                    `json:"skippedLegalHold"`
+}
+
+// ScanExpiredRecycleItemsResponseJobType defines model for ScanExpiredRecycleItemsResponse.JobType.
+type ScanExpiredRecycleItemsResponseJobType string
+
 // SearchResult defines model for SearchResult.
 type SearchResult struct {
 	Entry DirectoryEntry `json:"entry"`
@@ -3149,6 +3181,9 @@ type RetryBackgroundJobJSONRequestBody = RetryBackgroundItemRequest
 // RetryBackgroundOutboxEventJSONRequestBody defines body for RetryBackgroundOutboxEvent for application/json ContentType.
 type RetryBackgroundOutboxEventJSONRequestBody = RetryBackgroundItemRequest
 
+// ScanExpiredRecycleItemsJSONRequestBody defines body for ScanExpiredRecycleItems for application/json ContentType.
+type ScanExpiredRecycleItemsJSONRequestBody = ScanExpiredRecycleItemsRequest
+
 // CreateOrganizationChangePlanJSONRequestBody defines body for CreateOrganizationChangePlan for application/json ContentType.
 type CreateOrganizationChangePlanJSONRequestBody = CreateOrganizationChangePlanRequest
 
@@ -3325,6 +3360,9 @@ type ServerInterface interface {
 	// RetryBackgroundOutboxEvent Retry a failed or dead Outbox event.
 	// (POST /api/v1/admin/background/outbox-events/{outboxEventId}/retry)
 	RetryBackgroundOutboxEvent(c *gin.Context, outboxEventId OutboxEventIdPath)
+	// ScanExpiredRecycleItems Scan expired recycle bin items and enqueue purge jobs
+	// (POST /api/v1/admin/lifecycle/recycle-bin/expired/scan)
+	ScanExpiredRecycleItems(c *gin.Context)
 	// ListOrganizationChangePlans 分页查询组织重组计划
 	// (GET /api/v1/admin/organization-change-plans)
 	ListOrganizationChangePlans(c *gin.Context, params ListOrganizationChangePlansParams)
@@ -3895,6 +3933,19 @@ func (siw *ServerInterfaceWrapper) RetryBackgroundOutboxEvent(c *gin.Context) {
 	}
 
 	siw.Handler.RetryBackgroundOutboxEvent(c, outboxEventId)
+}
+
+// ScanExpiredRecycleItems operation middleware
+func (siw *ServerInterfaceWrapper) ScanExpiredRecycleItems(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ScanExpiredRecycleItems(c)
 }
 
 // ListOrganizationChangePlans operation middleware
@@ -6811,6 +6862,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/api/v1/recycle-bin", wrapper.ListRecycleBinItems)
 	router.POST(options.BaseURL+"/api/v1/recycle-bin/:recycleItemId/restore", wrapper.RestoreRecycleItem)
 	router.POST(options.BaseURL+"/api/v1/recycle-bin/:recycleItemId/purge", wrapper.PurgeRecycleItem)
+	router.POST(options.BaseURL+"/api/v1/admin/lifecycle/recycle-bin/expired/scan", wrapper.ScanExpiredRecycleItems)
 	router.GET(options.BaseURL+"/api/v1/search", wrapper.SearchDirectoryEntries)
 	router.POST(options.BaseURL+"/api/v1/auth/refresh", wrapper.RefreshSession)
 	router.POST(options.BaseURL+"/api/v1/auth/logout", wrapper.Logout)
@@ -7689,6 +7741,96 @@ func (response RetryBackgroundOutboxEvent404JSONResponse) VisitRetryBackgroundOu
 type RetryBackgroundOutboxEvent409JSONResponse struct{ ConflictJSONResponse }
 
 func (response RetryBackgroundOutboxEvent409JSONResponse) VisitRetryBackgroundOutboxEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScanExpiredRecycleItemsRequestObject struct {
+	Body *ScanExpiredRecycleItemsJSONRequestBody
+}
+
+type ScanExpiredRecycleItemsResponseObject interface {
+	VisitScanExpiredRecycleItemsResponse(w http.ResponseWriter) error
+}
+
+type ScanExpiredRecycleItems200JSONResponse ScanExpiredRecycleItemsResponse
+
+func (response ScanExpiredRecycleItems200JSONResponse) VisitScanExpiredRecycleItemsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScanExpiredRecycleItems400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ScanExpiredRecycleItems400JSONResponse) VisitScanExpiredRecycleItemsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScanExpiredRecycleItems401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ScanExpiredRecycleItems401JSONResponse) VisitScanExpiredRecycleItemsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScanExpiredRecycleItems403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ScanExpiredRecycleItems403JSONResponse) VisitScanExpiredRecycleItemsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScanExpiredRecycleItems409JSONResponse struct{ ConflictJSONResponse }
+
+func (response ScanExpiredRecycleItems409JSONResponse) VisitScanExpiredRecycleItemsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -15371,6 +15513,9 @@ type StrictServerInterface interface {
 	// RetryBackgroundOutboxEvent Retry a failed or dead Outbox event.
 	// (POST /api/v1/admin/background/outbox-events/{outboxEventId}/retry)
 	RetryBackgroundOutboxEvent(ctx context.Context, request RetryBackgroundOutboxEventRequestObject) (RetryBackgroundOutboxEventResponseObject, error)
+	// ScanExpiredRecycleItems Scan expired recycle bin items and enqueue purge jobs
+	// (POST /api/v1/admin/lifecycle/recycle-bin/expired/scan)
+	ScanExpiredRecycleItems(ctx context.Context, request ScanExpiredRecycleItemsRequestObject) (ScanExpiredRecycleItemsResponseObject, error)
 	// ListOrganizationChangePlans 分页查询组织重组计划
 	// (GET /api/v1/admin/organization-change-plans)
 	ListOrganizationChangePlans(ctx context.Context, request ListOrganizationChangePlansRequestObject) (ListOrganizationChangePlansResponseObject, error)
@@ -15942,6 +16087,37 @@ func (sh *strictHandler) RetryBackgroundOutboxEvent(ctx *gin.Context, outboxEven
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(RetryBackgroundOutboxEventResponseObject); ok {
 		if err := validResponse.VisitRetryBackgroundOutboxEventResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScanExpiredRecycleItems operation middleware
+func (sh *strictHandler) ScanExpiredRecycleItems(ctx *gin.Context) {
+	var request ScanExpiredRecycleItemsRequestObject
+
+	var body ScanExpiredRecycleItemsJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ScanExpiredRecycleItems(ctx, request.(ScanExpiredRecycleItemsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScanExpiredRecycleItems")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ScanExpiredRecycleItemsResponseObject); ok {
+		if err := validResponse.VisitScanExpiredRecycleItemsResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

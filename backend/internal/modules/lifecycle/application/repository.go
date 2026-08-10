@@ -27,6 +27,7 @@ type Repository interface {
 	GetRecycleItemForUpdate(context.Context, uuid.UUID) (domain.RecycleItem, error)
 	CountRecycleItems(context.Context, *uuid.UUID) (int64, error)
 	ListRecycleItems(context.Context, *uuid.UUID, int, int) ([]domain.RecycleItem, error)
+	ListExpiredActiveRecycleItems(context.Context, time.Time, int) ([]domain.RecycleItem, error)
 	RestoreRecycleItem(context.Context, uuid.UUID, uuid.UUID, int64, time.Time) (domain.RecycleItem, error)
 	MarkRecycleItemPurging(context.Context, uuid.UUID, int64, time.Time) (domain.RecycleItem, error)
 

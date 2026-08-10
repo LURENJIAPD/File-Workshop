@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	backgroundapplication "file-workshop/backend/internal/modules/background/application"
+	backgrounddomain "file-workshop/backend/internal/modules/background/domain"
 	"file-workshop/backend/internal/modules/lifecycle/domain"
 	permissiondomain "file-workshop/backend/internal/modules/permissions/domain"
 
@@ -24,11 +26,16 @@ type Authorizer interface {
 	EvaluatePermission(context.Context, permissiondomain.Actor, string, uuid.UUID, string, *string, bool) (permissiondomain.PermissionEvaluation, error)
 }
 
+type JobEnqueuer interface {
+	EnqueueJob(context.Context, backgroundapplication.EnqueueJobCommand) (backgrounddomain.BackgroundJob, error)
+}
+
 type Service struct {
-	repository Repository
-	transactor Transactor
-	authorizer Authorizer
-	now        func() time.Time
+	repository  Repository
+	transactor  Transactor
+	authorizer  Authorizer
+	jobEnqueuer JobEnqueuer
+	now         func() time.Time
 }
 
 func NewService(repository Repository, transactor Transactor, authorizer Authorizer, now func() time.Time) *Service {
@@ -36,6 +43,10 @@ func NewService(repository Repository, transactor Transactor, authorizer Authori
 		now = time.Now
 	}
 	return &Service{repository: repository, transactor: transactor, authorizer: authorizer, now: now}
+}
+
+func (s *Service) SetJobEnqueuer(enqueuer JobEnqueuer) {
+	s.jobEnqueuer = enqueuer
 }
 
 func (s *Service) TrashEntry(ctx context.Context, actor domain.Actor, entryID uuid.UUID, input domain.TrashInput) (domain.RecycleItem, error) {
@@ -245,6 +256,67 @@ func (s *Service) PurgeRecycleItem(ctx context.Context, actor domain.Actor, recy
 		return insertEvent(ctx, repository, "ENTRY_PURGE_REQUESTED", result, input.RequestID, now)
 	})
 	return result, err
+}
+
+func (s *Service) ScanExpiredRecycleItems(ctx context.Context, actor domain.Actor, input domain.ExpiredScanInput) (domain.ExpiredScanResult, error) {
+	if actor.Role != domain.SystemRoleAdmin {
+		return domain.ExpiredScanResult{}, domain.ErrForbidden
+	}
+	if s.jobEnqueuer == nil {
+		return domain.ExpiredScanResult{}, domain.ErrConflict
+	}
+	batchSize := input.BatchSize
+	if batchSize == 0 {
+		batchSize = domain.DefaultExpiredScanBatchSize
+	}
+	if batchSize < 1 || batchSize > domain.MaxExpiredScanBatchSize {
+		return domain.ExpiredScanResult{}, &domain.ValidationError{Field: "batchSize"}
+	}
+	now := s.now().UTC()
+	items, err := s.repository.ListExpiredActiveRecycleItems(ctx, now, batchSize)
+	if err != nil {
+		return domain.ExpiredScanResult{}, err
+	}
+	result := domain.ExpiredScanResult{Scanned: len(items), JobType: domain.LifecyclePurgeJobType}
+	for _, item := range items {
+		hold, err := s.repository.ActiveLegalHoldExists(ctx, item.EntryID)
+		if err != nil {
+			return domain.ExpiredScanResult{}, err
+		}
+		if hold {
+			result.SkippedLegalHold++
+			continue
+		}
+		payload, err := json.Marshal(map[string]any{
+			"recycleItemId": item.ID,
+			"entryId":       item.EntryID,
+			"entryType":     item.EntryType,
+			"expiresAt":     item.ExpiresAt,
+			"requestedBy":   "expired-recycle-scan",
+			"requestId":     input.RequestID,
+		})
+		if err != nil {
+			return domain.ExpiredScanResult{}, err
+		}
+		var documentID *uuid.UUID
+		if item.EntryType == domain.EntryTypeDocument {
+			documentID = &item.EntryID
+		}
+		if _, err = s.jobEnqueuer.EnqueueJob(ctx, backgroundapplication.EnqueueJobCommand{
+			JobType:              domain.LifecyclePurgeJobType,
+			TargetDocumentID:     documentID,
+			PayloadSchemaVersion: 1,
+			PayloadJSON:          payload,
+			DeduplicationKey:     fmt.Sprintf("%s:%s", domain.LifecyclePurgeJobType, item.ID),
+			Priority:             50,
+			MaxAttempts:          10,
+			AvailableAt:          now,
+		}); err != nil {
+			return domain.ExpiredScanResult{}, err
+		}
+		result.Enqueued++
+	}
+	return result, nil
 }
 
 func (s *Service) requirePermission(ctx context.Context, actor domain.Actor, resourceType string, resourceID uuid.UUID, action string) error {
