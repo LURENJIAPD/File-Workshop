@@ -12,12 +12,14 @@ import (
 
 type Querier interface {
 	AbortUploadSession(ctx context.Context, arg *AbortUploadSessionParams) (*UploadSession, error)
+	ActiveLegalHoldExistsForEntrySubtree(ctx context.Context, namespaceEntryID pgtype.UUID) (bool, error)
 	AdminDelegationIsEffective(ctx context.Context, arg *AdminDelegationIsEffectiveParams) (bool, error)
 	ChangeDocumentInheritance(ctx context.Context, arg *ChangeDocumentInheritanceParams) (*ChangeDocumentInheritanceRow, error)
 	ChangeFolderInheritance(ctx context.Context, arg *ChangeFolderInheritanceParams) (*ChangeFolderInheritanceRow, error)
 	ClaimBackgroundJobsByType(ctx context.Context, arg *ClaimBackgroundJobsByTypeParams) ([]*BackgroundJob, error)
 	ClaimOutboxEventsByType(ctx context.Context, arg *ClaimOutboxEventsByTypeParams) ([]*OutboxEvent, error)
 	CompleteFileIdempotencyRecord(ctx context.Context, arg *CompleteFileIdempotencyRecordParams) error
+	CompleteLifecycleIdempotency(ctx context.Context, arg *CompleteLifecycleIdempotencyParams) error
 	CompleteOrganizationIdempotencyRecord(ctx context.Context, arg *CompleteOrganizationIdempotencyRecordParams) error
 	CompletePermissionIdempotency(ctx context.Context, arg *CompletePermissionIdempotencyParams) error
 	CompleteShareIdempotency(ctx context.Context, arg *CompleteShareIdempotencyParams) error
@@ -41,6 +43,7 @@ type Querier interface {
 	CountOutboxEvents(ctx context.Context, arg *CountOutboxEventsParams) (int64, error)
 	CountOutboxEventsByStatus(ctx context.Context) ([]*CountOutboxEventsByStatusRow, error)
 	CountReceivedShares(ctx context.Context, arg *CountReceivedSharesParams) (int64, error)
+	CountRecycleItems(ctx context.Context, spaceID pgtype.UUID) (int64, error)
 	CountSpaces(ctx context.Context, arg *CountSpacesParams) (int64, error)
 	CountVisibleAdminDelegations(ctx context.Context, arg *CountVisibleAdminDelegationsParams) (int64, error)
 	CreateSessionRefreshToken(ctx context.Context, arg *CreateSessionRefreshTokenParams) (*CreateSessionRefreshTokenRow, error)
@@ -72,6 +75,9 @@ type Querier interface {
 	GetFileSpaceDirectoryInfo(ctx context.Context, spaceID pgtype.UUID) (*GetFileSpaceDirectoryInfoRow, error)
 	GetFileSpaceDirectoryInfoForUpdate(ctx context.Context, spaceID pgtype.UUID) (*GetFileSpaceDirectoryInfoForUpdateRow, error)
 	GetFolderAuthorizationResource(ctx context.Context, folderID pgtype.UUID) (*GetFolderAuthorizationResourceRow, error)
+	GetLifecycleEntryForUpdate(ctx context.Context, namespaceEntryID pgtype.UUID) (*GetLifecycleEntryForUpdateRow, error)
+	GetLifecycleFolderForUpdate(ctx context.Context, namespaceEntryID pgtype.UUID) (*GetLifecycleFolderForUpdateRow, error)
+	GetLifecycleIdempotency(ctx context.Context, arg *GetLifecycleIdempotencyParams) (*GetLifecycleIdempotencyRow, error)
 	GetManagedUserByID(ctx context.Context, userID pgtype.UUID) (*GetManagedUserByIDRow, error)
 	GetManagedUserForUpdate(ctx context.Context, userID pgtype.UUID) (*GetManagedUserForUpdateRow, error)
 	GetMembership(ctx context.Context, userOrganizationID pgtype.UUID) (*UserOrganization, error)
@@ -92,6 +98,8 @@ type Querier interface {
 	GetPersonalSpaceByUser(ctx context.Context, ownerUserID pgtype.UUID) (*Space, error)
 	GetQuotaReservationForUpdate(ctx context.Context, quotaReservationID pgtype.UUID) (*QuotaReservation, error)
 	GetRecentLoginFailureState(ctx context.Context, arg *GetRecentLoginFailureStateParams) (*GetRecentLoginFailureStateRow, error)
+	GetRecycleItemWithEntry(ctx context.Context, recycleItemID pgtype.UUID) (*GetRecycleItemWithEntryRow, error)
+	GetRecycleItemWithEntryForUpdate(ctx context.Context, recycleItemID pgtype.UUID) (*GetRecycleItemWithEntryForUpdateRow, error)
 	GetRefreshTokenForUpdate(ctx context.Context, tokenHash []byte) (*GetRefreshTokenForUpdateRow, error)
 	GetSessionIDByRefreshTokenHash(ctx context.Context, tokenHash []byte) (pgtype.UUID, error)
 	GetShareIdempotency(ctx context.Context, arg *GetShareIdempotencyParams) (*GetShareIdempotencyRow, error)
@@ -133,6 +141,7 @@ type Querier interface {
 	InsertFileFolder(ctx context.Context, arg *InsertFileFolderParams) error
 	InsertFileNamespaceEntry(ctx context.Context, arg *InsertFileNamespaceEntryParams) (*NamespaceEntry, error)
 	InsertFileOutboxEvent(ctx context.Context, arg *InsertFileOutboxEventParams) error
+	InsertLifecycleOutboxEvent(ctx context.Context, arg *InsertLifecycleOutboxEventParams) error
 	InsertLoginAttempt(ctx context.Context, arg *InsertLoginAttemptParams) error
 	InsertManagedPasswordCredential(ctx context.Context, arg *InsertManagedPasswordCredentialParams) error
 	InsertManagedUser(ctx context.Context, arg *InsertManagedUserParams) (*InsertManagedUserRow, error)
@@ -149,6 +158,7 @@ type Querier interface {
 	InsertPermissionOutboxEvent(ctx context.Context, arg *InsertPermissionOutboxEventParams) error
 	InsertPrincipalSecurityVersions(ctx context.Context, arg *InsertPrincipalSecurityVersionsParams) error
 	InsertQuotaReservation(ctx context.Context, arg *InsertQuotaReservationParams) (*QuotaReservation, error)
+	InsertRecycleItem(ctx context.Context, arg *InsertRecycleItemParams) (*RecycleItem, error)
 	InsertRestoredDocumentVersion(ctx context.Context, arg *InsertRestoredDocumentVersionParams) (*DocumentVersion, error)
 	InsertShare(ctx context.Context, arg *InsertShareParams) (*Share, error)
 	InsertShareAction(ctx context.Context, arg *InsertShareActionParams) error
@@ -158,6 +168,7 @@ type Querier interface {
 	InsertUserOutboxEvent(ctx context.Context, arg *InsertUserOutboxEventParams) error
 	InsertVersionOutboxEvent(ctx context.Context, arg *InsertVersionOutboxEventParams) error
 	InvalidateDescendantAdminDelegations(ctx context.Context, arg *InvalidateDescendantAdminDelegationsParams) ([]pgtype.UUID, error)
+	LifecycleNameExists(ctx context.Context, arg *LifecycleNameExistsParams) (bool, error)
 	ListActivePermissionUserOrganizations(ctx context.Context, arg *ListActivePermissionUserOrganizationsParams) ([]pgtype.UUID, error)
 	ListAuditChainEventsForVerify(ctx context.Context, arg *ListAuditChainEventsForVerifyParams) ([]*ListAuditChainEventsForVerifyRow, error)
 	ListAuditChainHeads(ctx context.Context, arg *ListAuditChainHeadsParams) ([]*AuditChainHead, error)
@@ -179,6 +190,7 @@ type Querier interface {
 	ListOrganizations(ctx context.Context, arg *ListOrganizationsParams) ([]*Organization, error)
 	ListOutboxEvents(ctx context.Context, arg *ListOutboxEventsParams) ([]*OutboxEvent, error)
 	ListReceivedShares(ctx context.Context, arg *ListReceivedSharesParams) ([]*ListReceivedSharesRow, error)
+	ListRecycleItems(ctx context.Context, arg *ListRecycleItemsParams) ([]*ListRecycleItemsRow, error)
 	ListSpaces(ctx context.Context, arg *ListSpacesParams) ([]*Space, error)
 	ListVisibleAdminDelegations(ctx context.Context, arg *ListVisibleAdminDelegationsParams) ([]*ListVisibleAdminDelegationsRow, error)
 	LockActiveSystemAdministrators(ctx context.Context) ([]pgtype.UUID, error)
@@ -189,16 +201,20 @@ type Querier interface {
 	MarkBackgroundJobDead(ctx context.Context, arg *MarkBackgroundJobDeadParams) (int64, error)
 	MarkBackgroundJobFailed(ctx context.Context, arg *MarkBackgroundJobFailedParams) (int64, error)
 	MarkBackgroundJobSuccess(ctx context.Context, arg *MarkBackgroundJobSuccessParams) (int64, error)
+	MarkLifecycleEntrySubtreePurging(ctx context.Context, arg *MarkLifecycleEntrySubtreePurgingParams) (int64, error)
 	MarkOrganizationChangeOperation(ctx context.Context, arg *MarkOrganizationChangeOperationParams) (*OrganizationChangeOperation, error)
 	MarkOutboxEventDead(ctx context.Context, arg *MarkOutboxEventDeadParams) (int64, error)
 	MarkOutboxEventFailed(ctx context.Context, arg *MarkOutboxEventFailedParams) (int64, error)
 	MarkOutboxEventPublished(ctx context.Context, arg *MarkOutboxEventPublishedParams) (int64, error)
 	MarkQuotaReservationConsumed(ctx context.Context, arg *MarkQuotaReservationConsumedParams) (*QuotaReservation, error)
 	MarkQuotaReservationReleased(ctx context.Context, arg *MarkQuotaReservationReleasedParams) (*QuotaReservation, error)
+	MarkRecycleItemPurging(ctx context.Context, arg *MarkRecycleItemPurgingParams) (*RecycleItem, error)
 	MarkRefreshTokenReused(ctx context.Context, arg *MarkRefreshTokenReusedParams) error
 	MarkRefreshTokenUsed(ctx context.Context, arg *MarkRefreshTokenUsedParams) (int64, error)
+	MarkSharesSourceUnavailableForEntrySubtree(ctx context.Context, arg *MarkSharesSourceUnavailableForEntrySubtreeParams) error
 	MarkUploadSessionUploading(ctx context.Context, arg *MarkUploadSessionUploadingParams) (*UploadSession, error)
 	MoveFileNamespaceEntry(ctx context.Context, arg *MoveFileNamespaceEntryParams) (*NamespaceEntry, error)
+	MoveRestoreLifecycleRoot(ctx context.Context, arg *MoveRestoreLifecycleRootParams) (*NamespaceEntry, error)
 	OrganizationDeletionBlocked(ctx context.Context, arg *OrganizationDeletionBlockedParams) (bool, error)
 	OrganizationWouldCreateCycle(ctx context.Context, arg *OrganizationWouldCreateCycleParams) (bool, error)
 	PermissionOrganizationExists(ctx context.Context, organizationID pgtype.UUID) (bool, error)
@@ -208,6 +224,8 @@ type Querier interface {
 	RenewBackgroundJobLease(ctx context.Context, arg *RenewBackgroundJobLeaseParams) (int64, error)
 	RenewOutboxEventLease(ctx context.Context, arg *RenewOutboxEventLeaseParams) (int64, error)
 	ReserveSpaceQuota(ctx context.Context, arg *ReserveSpaceQuotaParams) (*Space, error)
+	RestoreLifecycleEntrySubtree(ctx context.Context, arg *RestoreLifecycleEntrySubtreeParams) (int64, error)
+	RestoreRecycleItem(ctx context.Context, arg *RestoreRecycleItemParams) (*RecycleItem, error)
 	RetryBackgroundJob(ctx context.Context, arg *RetryBackgroundJobParams) (*BackgroundJob, error)
 	RetryOutboxEvent(ctx context.Context, arg *RetryOutboxEventParams) (*OutboxEvent, error)
 	RevokeActiveRefreshTokensForSession(ctx context.Context, arg *RevokeActiveRefreshTokensForSessionParams) error
@@ -229,10 +247,13 @@ type Querier interface {
 	TouchCredentialAfterLogin(ctx context.Context, arg *TouchCredentialAfterLoginParams) error
 	TouchDraftOrganizationChangePlan(ctx context.Context, arg *TouchDraftOrganizationChangePlanParams) (*OrganizationChangePlan, error)
 	TouchFileSpaceSecurityEpoch(ctx context.Context, arg *TouchFileSpaceSecurityEpochParams) error
+	TouchLifecycleSpaceSecurityEpoch(ctx context.Context, arg *TouchLifecycleSpaceSecurityEpochParams) error
 	TouchManagedUserForPasswordReset(ctx context.Context, arg *TouchManagedUserForPasswordResetParams) (int64, error)
 	TouchUserAfterLogin(ctx context.Context, arg *TouchUserAfterLoginParams) error
 	TouchUserSession(ctx context.Context, arg *TouchUserSessionParams) error
+	TrashLifecycleEntrySubtree(ctx context.Context, arg *TrashLifecycleEntrySubtreeParams) (int64, error)
 	TryCreateFileIdempotencyRecord(ctx context.Context, arg *TryCreateFileIdempotencyRecordParams) (int64, error)
+	TryCreateLifecycleIdempotency(ctx context.Context, arg *TryCreateLifecycleIdempotencyParams) (int64, error)
 	TryCreateOrganizationIdempotencyRecord(ctx context.Context, arg *TryCreateOrganizationIdempotencyRecordParams) (int64, error)
 	TryCreatePermissionIdempotency(ctx context.Context, arg *TryCreatePermissionIdempotencyParams) (int64, error)
 	TryCreateShareIdempotency(ctx context.Context, arg *TryCreateShareIdempotencyParams) (int64, error)
@@ -241,6 +262,7 @@ type Querier interface {
 	UpdateFileDescendantPaths(ctx context.Context, arg *UpdateFileDescendantPathsParams) error
 	UpdateFileDocumentExtension(ctx context.Context, arg *UpdateFileDocumentExtensionParams) error
 	UpdateFileSpaceRootFolder(ctx context.Context, arg *UpdateFileSpaceRootFolderParams) error
+	UpdateLifecycleDescendantPaths(ctx context.Context, arg *UpdateLifecycleDescendantPathsParams) error
 	UpdateManagedPasswordCredential(ctx context.Context, arg *UpdateManagedPasswordCredentialParams) (int64, error)
 	UpdateManagedUser(ctx context.Context, arg *UpdateManagedUserParams) (*UpdateManagedUserRow, error)
 	UpdateMembership(ctx context.Context, arg *UpdateMembershipParams) (*UserOrganization, error)

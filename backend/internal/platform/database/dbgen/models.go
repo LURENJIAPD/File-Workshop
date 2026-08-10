@@ -256,6 +256,23 @@ type QuotaReservation struct {
 	RowVersion         int64
 }
 
+type RecycleItem struct {
+	RecycleItemID          pgtype.UUID
+	NamespaceEntryID       pgtype.UUID
+	OriginalSpaceID        pgtype.UUID
+	OriginalParentFolderID pgtype.UUID
+	OriginalName           string
+	DeletedByUserID        pgtype.UUID
+	DeletedAt              pgtype.Timestamptz
+	ExpiresAt              pgtype.Timestamptz
+	Status                 string
+	RestoredToFolderID     pgtype.UUID
+	RestoredAt             pgtype.Timestamptz
+	CreatedAt              pgtype.Timestamptz
+	UpdatedAt              pgtype.Timestamptz
+	RowVersion             int64
+}
+
 type Share struct {
 	ShareID              pgtype.UUID
 	SourceDocumentID     pgtype.UUID

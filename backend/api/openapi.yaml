@@ -37,6 +37,9 @@ tags:
   - name: Sharing
     description: 内部用户、组织、空间和登录态链接共享；共享是独立允许来源，不写入普通 ACL。
 
+  - name: Lifecycle
+    description: 回收站、恢复和永久清理元数据控制；真实对象清理由后台任务在对象存储可用后完成。
+
   - name: Audit
     description: Audit event query, integrity status and controlled verification.
   - name: BackgroundAdministration
@@ -772,6 +775,123 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DirectoryEntryResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/entries/{entryId}/trash:
+    post:
+      operationId: trashDirectoryEntry
+      tags: [Lifecycle]
+      summary: 将目录项移入回收站
+      description: 根文件夹不可回收；文件夹回收会隐藏整棵子树。删除时间写入 recycle_items，namespace_entries.deleted_at 仅用于 PURGING/PURGED。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/DirectoryEntryIdPath"
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrashDirectoryEntryRequest"
+      responses:
+        "201":
+          description: 目录项已进入回收站。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecycleItemResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/recycle-bin:
+    get:
+      operationId: listRecycleBinItems
+      tags: [Lifecycle]
+      summary: 分页查询可见回收站条目
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+        - name: spaceId
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: 回收站条目列表。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecycleItemListResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/v1/recycle-bin/{recycleItemId}/restore:
+    post:
+      operationId: restoreRecycleItem
+      tags: [Lifecycle]
+      summary: 恢复回收站条目
+      description: 默认恢复到原父目录；原父目录不可用或出现同名冲突时，可显式传入 targetParentFolderId 和 name。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/RecycleItemIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RestoreRecycleItemRequest"
+      responses:
+        "200":
+          description: 回收站条目已恢复。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecycleItemResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/recycle-bin/{recycleItemId}/purge:
+    post:
+      operationId: purgeRecycleItem
+      tags: [Lifecycle]
+      summary: 请求永久清理回收站条目
+      description: 本周期只把回收项和命名空间子树标记为 PURGING，并写入 Outbox；对象存储清理由后台任务后续完成。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/RecycleItemIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurgeRecycleItemRequest"
+      responses:
+        "200":
+          description: 永久清理已进入 PURGING 状态。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecycleItemResponse"
         "400": { $ref: "#/components/responses/InvalidRequest" }
         "401": { $ref: "#/components/responses/AuthRequired" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -2511,6 +2631,13 @@ components:
       schema:
         type: string
         format: uuid
+    RecycleItemIdPath:
+      name: recycleItemId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     PlanIdPath:
       name: planId
       in: path
@@ -3411,6 +3538,83 @@ components:
       required: [rowVersion]
       properties:
         targetParentFolderId: { type: string, format: uuid }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    RecycleItemStatus:
+      type: string
+      enum: [ACTIVE, RESTORED, PURGING, PURGED]
+
+    RecycleItem:
+      type: object
+      additionalProperties: false
+      required: [recycleItemId, entryId, entryType, originalSpaceId, originalName, deletedByUserId, deletedAt, expiresAt, status, createdAt, updatedAt, rowVersion]
+      properties:
+        recycleItemId: { type: string, format: uuid }
+        entryId: { type: string, format: uuid }
+        entryType: { $ref: "#/components/schemas/DirectoryEntryType" }
+        originalSpaceId: { type: string, format: uuid }
+        originalParentFolderId: { type: string, format: uuid }
+        originalName: { type: string, minLength: 1, maxLength: 512 }
+        currentName: { type: string, minLength: 1, maxLength: 512 }
+        lifecycleStatus: { $ref: "#/components/schemas/DirectoryLifecycleStatus" }
+        deletedByUserId: { type: string, format: uuid }
+        deletedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        status: { $ref: "#/components/schemas/RecycleItemStatus" }
+        restoredToFolderId: { type: string, format: uuid }
+        restoredAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    RecycleItemListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/RecycleItem" }
+        page: { $ref: "#/components/schemas/Page" }
+        pageSize: { $ref: "#/components/schemas/PageSize" }
+        total: { type: integer, format: int64, minimum: 0 }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    RecycleItemResponse:
+      type: object
+      additionalProperties: false
+      required: [item, requestId]
+      properties:
+        item: { $ref: "#/components/schemas/RecycleItem" }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    TrashDirectoryEntryRequest:
+      type: object
+      additionalProperties: false
+      required: [rowVersion]
+      properties:
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+        reason: { type: string, minLength: 1, maxLength: 512 }
+
+    RestoreRecycleItemRequest:
+      type: object
+      additionalProperties: false
+      required: [rowVersion]
+      properties:
+        targetParentFolderId: { type: string, format: uuid }
+        name:
+          type: string
+          minLength: 1
+          maxLength: 512
+          description: 省略时使用回收前原名称；发生冲突时客户端应重新提交新名称。
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    PurgeRecycleItemRequest:
+      type: object
+      additionalProperties: false
+      required: [reason, rowVersion]
+      properties:
+        reason: { type: string, minLength: 1, maxLength: 512 }
         rowVersion: { type: integer, format: int64, minimum: 1 }
 
     AdminDelegationScope:

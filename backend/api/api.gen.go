@@ -936,6 +936,30 @@ func (e PermissionSubjectType) Valid() bool {
 	}
 }
 
+// Defines values for RecycleItemStatus.
+const (
+	RecycleItemStatusACTIVE   RecycleItemStatus = "ACTIVE"
+	RecycleItemStatusPURGED   RecycleItemStatus = "PURGED"
+	RecycleItemStatusPURGING  RecycleItemStatus = "PURGING"
+	RecycleItemStatusRESTORED RecycleItemStatus = "RESTORED"
+)
+
+// Valid indicates whether the value is a known member of the RecycleItemStatus enum.
+func (e RecycleItemStatus) Valid() bool {
+	switch e {
+	case RecycleItemStatusACTIVE:
+		return true
+	case RecycleItemStatusPURGED:
+		return true
+	case RecycleItemStatusPURGING:
+		return true
+	case RecycleItemStatusRESTORED:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SessionSummaryStatus.
 const (
 	SessionSummaryStatusACTIVE  SessionSummaryStatus = "ACTIVE"
@@ -2162,6 +2186,51 @@ type ProvisionPersonalSpaceRequest struct {
 	QuotaBytes int64                   `json:"quotaBytes"`
 }
 
+// PurgeRecycleItemRequest defines model for PurgeRecycleItemRequest.
+type PurgeRecycleItemRequest struct {
+	Reason     string `json:"reason"`
+	RowVersion int64  `json:"rowVersion"`
+}
+
+// RecycleItem defines model for RecycleItem.
+type RecycleItem struct {
+	CreatedAt              time.Time                 `json:"createdAt"`
+	CurrentName            *string                   `json:"currentName,omitempty"`
+	DeletedAt              time.Time                 `json:"deletedAt"`
+	DeletedByUserId        openapi_types.UUID        `json:"deletedByUserId"`
+	EntryId                openapi_types.UUID        `json:"entryId"`
+	EntryType              DirectoryEntryType        `json:"entryType"`
+	ExpiresAt              time.Time                 `json:"expiresAt"`
+	LifecycleStatus        *DirectoryLifecycleStatus `json:"lifecycleStatus,omitempty"`
+	OriginalName           string                    `json:"originalName"`
+	OriginalParentFolderId *openapi_types.UUID       `json:"originalParentFolderId,omitempty"`
+	OriginalSpaceId        openapi_types.UUID        `json:"originalSpaceId"`
+	RecycleItemId          openapi_types.UUID        `json:"recycleItemId"`
+	RestoredAt             *time.Time                `json:"restoredAt,omitempty"`
+	RestoredToFolderId     *openapi_types.UUID       `json:"restoredToFolderId,omitempty"`
+	RowVersion             int64                     `json:"rowVersion"`
+	Status                 RecycleItemStatus         `json:"status"`
+	UpdatedAt              time.Time                 `json:"updatedAt"`
+}
+
+// RecycleItemListResponse defines model for RecycleItemListResponse.
+type RecycleItemListResponse struct {
+	Items     []RecycleItem `json:"items"`
+	Page      Page          `json:"page"`
+	PageSize  PageSize      `json:"pageSize"`
+	RequestId string        `json:"requestId"`
+	Total     int64         `json:"total"`
+}
+
+// RecycleItemResponse defines model for RecycleItemResponse.
+type RecycleItemResponse struct {
+	Item      RecycleItem `json:"item"`
+	RequestId string      `json:"requestId"`
+}
+
+// RecycleItemStatus defines model for RecycleItemStatus.
+type RecycleItemStatus string
+
 // ReleaseDocumentLockRequest defines model for ReleaseDocumentLockRequest.
 type ReleaseDocumentLockRequest struct {
 	LockToken  string  `json:"lockToken"`
@@ -2191,6 +2260,14 @@ type ResetUserPasswordRequest struct {
 type RestoreDocumentVersionRequest struct {
 	ChangeNote *string `json:"changeNote,omitempty"`
 	RowVersion int64   `json:"rowVersion"`
+}
+
+// RestoreRecycleItemRequest defines model for RestoreRecycleItemRequest.
+type RestoreRecycleItemRequest struct {
+	// Name 省略时使用回收前原名称；发生冲突时客户端应重新提交新名称。
+	Name                 *string             `json:"name,omitempty"`
+	RowVersion           int64               `json:"rowVersion"`
+	TargetParentFolderId *openapi_types.UUID `json:"targetParentFolderId,omitempty"`
 }
 
 // RetryBackgroundItemRequest defines model for RetryBackgroundItemRequest.
@@ -2336,6 +2413,12 @@ type TransitionOrganizationChangePlanRequest struct {
 	Action     OrganizationChangePlanAction `json:"action"`
 	Reason     *string                      `json:"reason,omitempty"`
 	RowVersion int64                        `json:"rowVersion"`
+}
+
+// TrashDirectoryEntryRequest defines model for TrashDirectoryEntryRequest.
+type TrashDirectoryEntryRequest struct {
+	Reason     *string `json:"reason,omitempty"`
+	RowVersion int64   `json:"rowVersion"`
 }
 
 // UpdateCurrentUserRequest defines model for UpdateCurrentUserRequest.
@@ -2587,6 +2670,9 @@ type PermissionResourceTypePath = PermissionResourceType
 // PlanIdPath defines model for PlanIdPath.
 type PlanIdPath = openapi_types.UUID
 
+// RecycleItemIdPath defines model for RecycleItemIdPath.
+type RecycleItemIdPath = openapi_types.UUID
+
 // SessionIdPath defines model for SessionIdPath.
 type SessionIdPath = openapi_types.UUID
 
@@ -2818,6 +2904,12 @@ type RestoreDocumentVersionParams struct {
 	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
 }
 
+// TrashDirectoryEntryParams defines parameters for TrashDirectoryEntry.
+type TrashDirectoryEntryParams struct {
+	// IdempotencyKey 可重试写请求的稳定幂等键。
+	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
+}
+
 // ListOrganizationAdministratorsParams defines parameters for ListOrganizationAdministrators.
 type ListOrganizationAdministratorsParams struct {
 	// Page 从 1 开始的页码。
@@ -2840,6 +2932,16 @@ type ListResourcePermissionGrantsParams struct {
 
 	// PageSize 每页数量，最大 200。
 	PageSize *PageSizeQuery `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+}
+
+// ListRecycleBinItemsParams defines parameters for ListRecycleBinItems.
+type ListRecycleBinItemsParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize *PageSizeQuery      `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+	SpaceId  *openapi_types.UUID `form:"spaceId,omitempty" json:"spaceId,omitempty"`
 }
 
 // CreateShareParams defines parameters for CreateShare.
@@ -3019,6 +3121,9 @@ type RenameDirectoryEntryJSONRequestBody = RenameDirectoryEntryRequest
 // MoveDirectoryEntryJSONRequestBody defines body for MoveDirectoryEntry for application/json ContentType.
 type MoveDirectoryEntryJSONRequestBody = MoveDirectoryEntryRequest
 
+// TrashDirectoryEntryJSONRequestBody defines body for TrashDirectoryEntry for application/json ContentType.
+type TrashDirectoryEntryJSONRequestBody = TrashDirectoryEntryRequest
+
 // BatchEvaluatePermissionsJSONRequestBody defines body for BatchEvaluatePermissions for application/json ContentType.
 type BatchEvaluatePermissionsJSONRequestBody = BatchPermissionEvaluationRequest
 
@@ -3039,6 +3144,12 @@ type BreakPermissionInheritanceJSONRequestBody = ChangePermissionInheritanceRequ
 
 // RestorePermissionInheritanceJSONRequestBody defines body for RestorePermissionInheritance for application/json ContentType.
 type RestorePermissionInheritanceJSONRequestBody = ChangePermissionInheritanceRequest
+
+// PurgeRecycleItemJSONRequestBody defines body for PurgeRecycleItem for application/json ContentType.
+type PurgeRecycleItemJSONRequestBody = PurgeRecycleItemRequest
+
+// RestoreRecycleItemJSONRequestBody defines body for RestoreRecycleItem for application/json ContentType.
+type RestoreRecycleItemJSONRequestBody = RestoreRecycleItemRequest
 
 // CreateShareJSONRequestBody defines body for CreateShare for application/json ContentType.
 type CreateShareJSONRequestBody = CreateShareRequest
@@ -3240,6 +3351,9 @@ type ServerInterface interface {
 	// MoveDirectoryEntry 移动目录项
 	// (POST /api/v1/entries/{entryId}/move)
 	MoveDirectoryEntry(c *gin.Context, entryId DirectoryEntryIdPath)
+	// TrashDirectoryEntry 将目录项移入回收站
+	// (POST /api/v1/entries/{entryId}/trash)
+	TrashDirectoryEntry(c *gin.Context, entryId DirectoryEntryIdPath, params TrashDirectoryEntryParams)
 	// ListOrganizationAdministrators 查询组织的有效管理员
 	// (GET /api/v1/organizations/{organizationId}/administrators)
 	ListOrganizationAdministrators(c *gin.Context, organizationId OrganizationIdPath, params ListOrganizationAdministratorsParams)
@@ -3267,6 +3381,15 @@ type ServerInterface interface {
 	// RestorePermissionInheritance 恢复文件夹或文档的 ACL 继承
 	// (POST /api/v1/permissions/resources/{resourceType}/{resourceId}/restore-inheritance)
 	RestorePermissionInheritance(c *gin.Context, resourceType PermissionResourceTypePath, resourceId PermissionResourceIdPath)
+	// ListRecycleBinItems 分页查询可见回收站条目
+	// (GET /api/v1/recycle-bin)
+	ListRecycleBinItems(c *gin.Context, params ListRecycleBinItemsParams)
+	// PurgeRecycleItem 请求永久清理回收站条目
+	// (POST /api/v1/recycle-bin/{recycleItemId}/purge)
+	PurgeRecycleItem(c *gin.Context, recycleItemId RecycleItemIdPath)
+	// RestoreRecycleItem 恢复回收站条目
+	// (POST /api/v1/recycle-bin/{recycleItemId}/restore)
+	RestoreRecycleItem(c *gin.Context, recycleItemId RecycleItemIdPath)
 	// CreateShare 创建内部共享
 	// (POST /api/v1/shares)
 	CreateShare(c *gin.Context, params CreateShareParams)
@@ -5293,6 +5416,58 @@ func (siw *ServerInterfaceWrapper) MoveDirectoryEntry(c *gin.Context) {
 	siw.Handler.MoveDirectoryEntry(c, entryId)
 }
 
+// TrashDirectoryEntry operation middleware
+func (siw *ServerInterfaceWrapper) TrashDirectoryEntry(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "entryId" -------------
+	var entryId DirectoryEntryIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "entryId", c.Param("entryId"), &entryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter entryId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params TrashDirectoryEntryParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKeyHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.TrashDirectoryEntry(c, entryId, params)
+}
+
 // ListOrganizationAdministrators operation middleware
 func (siw *ServerInterfaceWrapper) ListOrganizationAdministrators(c *gin.Context) {
 
@@ -5575,6 +5750,99 @@ func (siw *ServerInterfaceWrapper) RestorePermissionInheritance(c *gin.Context) 
 	}
 
 	siw.Handler.RestorePermissionInheritance(c, resourceType, resourceId)
+}
+
+// ListRecycleBinItems operation middleware
+func (siw *ServerInterfaceWrapper) ListRecycleBinItems(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListRecycleBinItemsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "spaceId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "spaceId", c.Request.URL.Query(), &params.SpaceId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter spaceId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListRecycleBinItems(c, params)
+}
+
+// PurgeRecycleItem operation middleware
+func (siw *ServerInterfaceWrapper) PurgeRecycleItem(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "recycleItemId" -------------
+	var recycleItemId RecycleItemIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "recycleItemId", c.Param("recycleItemId"), &recycleItemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter recycleItemId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PurgeRecycleItem(c, recycleItemId)
+}
+
+// RestoreRecycleItem operation middleware
+func (siw *ServerInterfaceWrapper) RestoreRecycleItem(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "recycleItemId" -------------
+	var recycleItemId RecycleItemIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "recycleItemId", c.Param("recycleItemId"), &recycleItemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter recycleItemId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.RestoreRecycleItem(c, recycleItemId)
 }
 
 // CreateShare operation middleware
@@ -6303,6 +6571,10 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/api/v1/entries/:entryId", wrapper.GetDirectoryEntry)
 	router.PATCH(options.BaseURL+"/api/v1/entries/:entryId", wrapper.RenameDirectoryEntry)
 	router.POST(options.BaseURL+"/api/v1/entries/:entryId/move", wrapper.MoveDirectoryEntry)
+	router.POST(options.BaseURL+"/api/v1/entries/:entryId/trash", wrapper.TrashDirectoryEntry)
+	router.GET(options.BaseURL+"/api/v1/recycle-bin", wrapper.ListRecycleBinItems)
+	router.POST(options.BaseURL+"/api/v1/recycle-bin/:recycleItemId/restore", wrapper.RestoreRecycleItem)
+	router.POST(options.BaseURL+"/api/v1/recycle-bin/:recycleItemId/purge", wrapper.PurgeRecycleItem)
 	router.POST(options.BaseURL+"/api/v1/auth/refresh", wrapper.RefreshSession)
 	router.POST(options.BaseURL+"/api/v1/auth/logout", wrapper.Logout)
 	router.GET(options.BaseURL+"/api/v1/auth/session", wrapper.GetCurrentSession)
@@ -11733,6 +12005,115 @@ func (response MoveDirectoryEntry409JSONResponse) VisitMoveDirectoryEntryRespons
 	return err
 }
 
+type TrashDirectoryEntryRequestObject struct {
+	EntryId DirectoryEntryIdPath `json:"entryId"`
+	Params  TrashDirectoryEntryParams
+	Body    *TrashDirectoryEntryJSONRequestBody
+}
+
+type TrashDirectoryEntryResponseObject interface {
+	VisitTrashDirectoryEntryResponse(w http.ResponseWriter) error
+}
+
+type TrashDirectoryEntry201JSONResponse RecycleItemResponse
+
+func (response TrashDirectoryEntry201JSONResponse) VisitTrashDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TrashDirectoryEntry400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response TrashDirectoryEntry400JSONResponse) VisitTrashDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TrashDirectoryEntry401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response TrashDirectoryEntry401JSONResponse) VisitTrashDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TrashDirectoryEntry403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response TrashDirectoryEntry403JSONResponse) VisitTrashDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TrashDirectoryEntry404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response TrashDirectoryEntry404JSONResponse) VisitTrashDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TrashDirectoryEntry409JSONResponse struct{ ConflictJSONResponse }
+
+func (response TrashDirectoryEntry409JSONResponse) VisitTrashDirectoryEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListOrganizationAdministratorsRequestObject struct {
 	OrganizationId OrganizationIdPath `json:"organizationId"`
 	Params         ListOrganizationAdministratorsParams
@@ -12556,6 +12937,295 @@ func (response RestorePermissionInheritance404JSONResponse) VisitRestorePermissi
 type RestorePermissionInheritance409JSONResponse struct{ ConflictJSONResponse }
 
 func (response RestorePermissionInheritance409JSONResponse) VisitRestorePermissionInheritanceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRecycleBinItemsRequestObject struct {
+	Params ListRecycleBinItemsParams
+}
+
+type ListRecycleBinItemsResponseObject interface {
+	VisitListRecycleBinItemsResponse(w http.ResponseWriter) error
+}
+
+type ListRecycleBinItems200JSONResponse RecycleItemListResponse
+
+func (response ListRecycleBinItems200JSONResponse) VisitListRecycleBinItemsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRecycleBinItems400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListRecycleBinItems400JSONResponse) VisitListRecycleBinItemsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRecycleBinItems401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListRecycleBinItems401JSONResponse) VisitListRecycleBinItemsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRecycleBinItems403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListRecycleBinItems403JSONResponse) VisitListRecycleBinItemsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PurgeRecycleItemRequestObject struct {
+	RecycleItemId RecycleItemIdPath `json:"recycleItemId"`
+	Body          *PurgeRecycleItemJSONRequestBody
+}
+
+type PurgeRecycleItemResponseObject interface {
+	VisitPurgeRecycleItemResponse(w http.ResponseWriter) error
+}
+
+type PurgeRecycleItem200JSONResponse RecycleItemResponse
+
+func (response PurgeRecycleItem200JSONResponse) VisitPurgeRecycleItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PurgeRecycleItem400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response PurgeRecycleItem400JSONResponse) VisitPurgeRecycleItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PurgeRecycleItem401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response PurgeRecycleItem401JSONResponse) VisitPurgeRecycleItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PurgeRecycleItem403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response PurgeRecycleItem403JSONResponse) VisitPurgeRecycleItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PurgeRecycleItem404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response PurgeRecycleItem404JSONResponse) VisitPurgeRecycleItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PurgeRecycleItem409JSONResponse struct{ ConflictJSONResponse }
+
+func (response PurgeRecycleItem409JSONResponse) VisitPurgeRecycleItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreRecycleItemRequestObject struct {
+	RecycleItemId RecycleItemIdPath `json:"recycleItemId"`
+	Body          *RestoreRecycleItemJSONRequestBody
+}
+
+type RestoreRecycleItemResponseObject interface {
+	VisitRestoreRecycleItemResponse(w http.ResponseWriter) error
+}
+
+type RestoreRecycleItem200JSONResponse RecycleItemResponse
+
+func (response RestoreRecycleItem200JSONResponse) VisitRestoreRecycleItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreRecycleItem400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response RestoreRecycleItem400JSONResponse) VisitRestoreRecycleItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreRecycleItem401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response RestoreRecycleItem401JSONResponse) VisitRestoreRecycleItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreRecycleItem403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RestoreRecycleItem403JSONResponse) VisitRestoreRecycleItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreRecycleItem404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response RestoreRecycleItem404JSONResponse) VisitRestoreRecycleItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreRecycleItem409JSONResponse struct{ ConflictJSONResponse }
+
+func (response RestoreRecycleItem409JSONResponse) VisitRestoreRecycleItemResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -14535,6 +15205,9 @@ type StrictServerInterface interface {
 	// MoveDirectoryEntry 移动目录项
 	// (POST /api/v1/entries/{entryId}/move)
 	MoveDirectoryEntry(ctx context.Context, request MoveDirectoryEntryRequestObject) (MoveDirectoryEntryResponseObject, error)
+	// TrashDirectoryEntry 将目录项移入回收站
+	// (POST /api/v1/entries/{entryId}/trash)
+	TrashDirectoryEntry(ctx context.Context, request TrashDirectoryEntryRequestObject) (TrashDirectoryEntryResponseObject, error)
 	// ListOrganizationAdministrators 查询组织的有效管理员
 	// (GET /api/v1/organizations/{organizationId}/administrators)
 	ListOrganizationAdministrators(ctx context.Context, request ListOrganizationAdministratorsRequestObject) (ListOrganizationAdministratorsResponseObject, error)
@@ -14562,6 +15235,15 @@ type StrictServerInterface interface {
 	// RestorePermissionInheritance 恢复文件夹或文档的 ACL 继承
 	// (POST /api/v1/permissions/resources/{resourceType}/{resourceId}/restore-inheritance)
 	RestorePermissionInheritance(ctx context.Context, request RestorePermissionInheritanceRequestObject) (RestorePermissionInheritanceResponseObject, error)
+	// ListRecycleBinItems 分页查询可见回收站条目
+	// (GET /api/v1/recycle-bin)
+	ListRecycleBinItems(ctx context.Context, request ListRecycleBinItemsRequestObject) (ListRecycleBinItemsResponseObject, error)
+	// PurgeRecycleItem 请求永久清理回收站条目
+	// (POST /api/v1/recycle-bin/{recycleItemId}/purge)
+	PurgeRecycleItem(ctx context.Context, request PurgeRecycleItemRequestObject) (PurgeRecycleItemResponseObject, error)
+	// RestoreRecycleItem 恢复回收站条目
+	// (POST /api/v1/recycle-bin/{recycleItemId}/restore)
+	RestoreRecycleItem(ctx context.Context, request RestoreRecycleItemRequestObject) (RestoreRecycleItemResponseObject, error)
 	// CreateShare 创建内部共享
 	// (POST /api/v1/shares)
 	CreateShare(ctx context.Context, request CreateShareRequestObject) (CreateShareResponseObject, error)
@@ -16412,6 +17094,40 @@ func (sh *strictHandler) MoveDirectoryEntry(ctx *gin.Context, entryId DirectoryE
 	}
 }
 
+// TrashDirectoryEntry operation middleware
+func (sh *strictHandler) TrashDirectoryEntry(ctx *gin.Context, entryId DirectoryEntryIdPath, params TrashDirectoryEntryParams) {
+	var request TrashDirectoryEntryRequestObject
+
+	request.EntryId = entryId
+	request.Params = params
+
+	var body TrashDirectoryEntryJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.TrashDirectoryEntry(ctx, request.(TrashDirectoryEntryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TrashDirectoryEntry")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(TrashDirectoryEntryResponseObject); ok {
+		if err := validResponse.VisitTrashDirectoryEntryResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListOrganizationAdministrators operation middleware
 func (sh *strictHandler) ListOrganizationAdministrators(ctx *gin.Context, organizationId OrganizationIdPath, params ListOrganizationAdministratorsParams) {
 	var request ListOrganizationAdministratorsRequestObject
@@ -16689,6 +17405,98 @@ func (sh *strictHandler) RestorePermissionInheritance(ctx *gin.Context, resource
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(RestorePermissionInheritanceResponseObject); ok {
 		if err := validResponse.VisitRestorePermissionInheritanceResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListRecycleBinItems operation middleware
+func (sh *strictHandler) ListRecycleBinItems(ctx *gin.Context, params ListRecycleBinItemsParams) {
+	var request ListRecycleBinItemsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListRecycleBinItems(ctx, request.(ListRecycleBinItemsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListRecycleBinItems")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListRecycleBinItemsResponseObject); ok {
+		if err := validResponse.VisitListRecycleBinItemsResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PurgeRecycleItem operation middleware
+func (sh *strictHandler) PurgeRecycleItem(ctx *gin.Context, recycleItemId RecycleItemIdPath) {
+	var request PurgeRecycleItemRequestObject
+
+	request.RecycleItemId = recycleItemId
+
+	var body PurgeRecycleItemJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PurgeRecycleItem(ctx, request.(PurgeRecycleItemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PurgeRecycleItem")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(PurgeRecycleItemResponseObject); ok {
+		if err := validResponse.VisitPurgeRecycleItemResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RestoreRecycleItem operation middleware
+func (sh *strictHandler) RestoreRecycleItem(ctx *gin.Context, recycleItemId RecycleItemIdPath) {
+	var request RestoreRecycleItemRequestObject
+
+	request.RecycleItemId = recycleItemId
+
+	var body RestoreRecycleItemJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RestoreRecycleItem(ctx, request.(RestoreRecycleItemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RestoreRecycleItem")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(RestoreRecycleItemResponseObject); ok {
+		if err := validResponse.VisitRestoreRecycleItemResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

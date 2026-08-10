@@ -22,6 +22,9 @@ import (
 	identityrepository "file-workshop/backend/internal/modules/identity/repository"
 	"file-workshop/backend/internal/modules/identity/security"
 	identitytransport "file-workshop/backend/internal/modules/identity/transport"
+	lifecycleapplication "file-workshop/backend/internal/modules/lifecycle/application"
+	lifecyclerepository "file-workshop/backend/internal/modules/lifecycle/repository"
+	lifecycletransport "file-workshop/backend/internal/modules/lifecycle/transport"
 	organizationsapplication "file-workshop/backend/internal/modules/organizations/application"
 	organizationsrepository "file-workshop/backend/internal/modules/organizations/repository"
 	organizationstransport "file-workshop/backend/internal/modules/organizations/transport"
@@ -130,13 +133,16 @@ func RunServer(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 	sharesRepository := sharesrepository.NewPostgreSQL(postgresPool)
 	sharesService := sharesapplication.NewService(sharesRepository, sharesRepository, permissionsService, time.Now)
 	sharesHandler := sharestransport.NewHandler(sharesService, identityService, cfg.Auth)
+	lifecycleRepository := lifecyclerepository.NewPostgreSQL(postgresPool)
+	lifecycleService := lifecycleapplication.NewService(lifecycleRepository, lifecycleRepository, permissionsService, time.Now)
+	lifecycleHandler := lifecycletransport.NewHandler(lifecycleService, identityService, cfg.Auth)
 	backgroundRepository := backgroundrepository.NewPostgreSQL(postgresPool)
 	backgroundService := backgroundapplication.NewService(backgroundRepository, backgroundRepository, time.Now)
 	backgroundHandler := backgroundtransport.NewHandler(backgroundService, identityService, cfg.Auth)
 	auditRepository := auditrepository.NewPostgreSQL(postgresPool)
 	auditService := auditapplication.NewService(auditRepository, time.Now)
 	auditHandler := audittransport.NewHandler(auditService, identityService, cfg.Auth)
-	router := httpserver.NewRouter(httpserver.NewAPIHandler(healthHandler, identityHandler, usersHandler, organizationsHandler, permissionsHandler, filesHandler, uploadsHandler, versionsHandler, sharesHandler, backgroundHandler, auditHandler), logger, cfg.Auth.AllowedOrigins)
+	router := httpserver.NewRouter(httpserver.NewAPIHandler(healthHandler, identityHandler, usersHandler, organizationsHandler, permissionsHandler, filesHandler, uploadsHandler, versionsHandler, sharesHandler, lifecycleHandler, backgroundHandler, auditHandler), logger, cfg.Auth.AllowedOrigins)
 	server := httpserver.NewServer(cfg.HTTP, router)
 
 	serverErrors := make(chan error, 1)

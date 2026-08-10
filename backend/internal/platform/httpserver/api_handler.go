@@ -114,6 +114,13 @@ type SharesAPI interface {
 	OpenShare(context.Context, api.OpenShareRequestObject) (api.OpenShareResponseObject, error)
 }
 
+type LifecycleAPI interface {
+	TrashDirectoryEntry(context.Context, api.TrashDirectoryEntryRequestObject) (api.TrashDirectoryEntryResponseObject, error)
+	ListRecycleBinItems(context.Context, api.ListRecycleBinItemsRequestObject) (api.ListRecycleBinItemsResponseObject, error)
+	RestoreRecycleItem(context.Context, api.RestoreRecycleItemRequestObject) (api.RestoreRecycleItemResponseObject, error)
+	PurgeRecycleItem(context.Context, api.PurgeRecycleItemRequestObject) (api.PurgeRecycleItemResponseObject, error)
+}
+
 type BackgroundAPI interface {
 	ListBackgroundOutboxEvents(context.Context, api.ListBackgroundOutboxEventsRequestObject) (api.ListBackgroundOutboxEventsResponseObject, error)
 	RetryBackgroundOutboxEvent(context.Context, api.RetryBackgroundOutboxEventRequestObject) (api.RetryBackgroundOutboxEventResponseObject, error)
@@ -138,6 +145,7 @@ type APIHandler struct {
 	uploads       UploadsAPI
 	versions      VersionsAPI
 	shares        SharesAPI
+	lifecycle     LifecycleAPI
 	background    BackgroundAPI
 	audit         AuditAPI
 }
@@ -148,6 +156,7 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 	var uploads UploadsAPI
 	var versions VersionsAPI
 	var shares SharesAPI
+	var lifecycle LifecycleAPI
 	var background BackgroundAPI
 	var audit AuditAPI
 	for _, optional := range optionalHandlers {
@@ -166,6 +175,9 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 		if handler, ok := optional.(SharesAPI); ok {
 			shares = handler
 		}
+		if handler, ok := optional.(LifecycleAPI); ok {
+			lifecycle = handler
+		}
 		if handler, ok := optional.(BackgroundAPI); ok {
 			background = handler
 		}
@@ -173,7 +185,20 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 			audit = handler
 		}
 	}
-	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions, files: files, uploads: uploads, versions: versions, shares: shares, background: background, audit: audit}
+	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions, files: files, uploads: uploads, versions: versions, shares: shares, lifecycle: lifecycle, background: background, audit: audit}
+}
+
+func (h *APIHandler) TrashDirectoryEntry(ctx context.Context, request api.TrashDirectoryEntryRequestObject) (api.TrashDirectoryEntryResponseObject, error) {
+	return h.lifecycle.TrashDirectoryEntry(ctx, request)
+}
+func (h *APIHandler) ListRecycleBinItems(ctx context.Context, request api.ListRecycleBinItemsRequestObject) (api.ListRecycleBinItemsResponseObject, error) {
+	return h.lifecycle.ListRecycleBinItems(ctx, request)
+}
+func (h *APIHandler) RestoreRecycleItem(ctx context.Context, request api.RestoreRecycleItemRequestObject) (api.RestoreRecycleItemResponseObject, error) {
+	return h.lifecycle.RestoreRecycleItem(ctx, request)
+}
+func (h *APIHandler) PurgeRecycleItem(ctx context.Context, request api.PurgeRecycleItemRequestObject) (api.PurgeRecycleItemResponseObject, error) {
+	return h.lifecycle.PurgeRecycleItem(ctx, request)
 }
 
 func (h *APIHandler) CreateShare(ctx context.Context, request api.CreateShareRequestObject) (api.CreateShareResponseObject, error) {

@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.10
+> 文档版本：V0.11
 > 文档状态：按模块持续编制  
 > 最近更新：2026-08-10
-> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 16 后台任务基础调度与运维接口
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 09 回收与生命周期元数据闭环、模块 16 后台任务基础调度与运维接口
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -26,7 +26,8 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 | 06 | 文件传输与存储 | 已收录上传控制面当前边界 | 4 | 2026-08-10 |
 | 07 | 版本与并发 | 已收录版本与锁基础接口 | 7 | 2026-08-10 |
 | 08 | 共享 | 已收录用户/组织/LINK 基础接口 | 7 | 2026-08-10 |
-| 09～15 | 后续系统模块 | 未收录 | 0 | — |
+| 09 | 回收与生命周期 | 已收录元数据回收、恢复和清理发起接口 | 4 | 2026-08-10 |
+| 10～15 | 后续系统模块 | 未收录 | 0 | — |
 | 16 | 后台任务 | 已完成基础调度与管理员运维接口 | 4 | 2026-08-10 |
 
 ## 3. 全局接口约定
@@ -1108,9 +1109,123 @@ POST /api/v1/uploads/0198a8e9-0c8a-7d21-9ea9-e9e70d477eed/parts/1/presign
 - `backend/internal/modules/shares/application/service_test.go`
 - `backend/internal/modules/permissions/application` 已覆盖权限判定编译与单元测试回归
 
-## 13. 模块 16：后台任务
+## 13. 模块 09：回收与生命周期
 
 ### 13.1 当前边界
+
+本周期完成不依赖对象存储集群的回收站元数据闭环。回收站事实写入 `recycle_items`，目录项状态写入 `namespace_entries.lifecycle_status`；进入回收站时将资源子树标记为 `TRASHED`，不会立即删除对象存储数据，也不会破坏版本、授权和审计引用。
+
+当前能力：
+
+- 文件或文件夹进入回收站；
+- 分页查询回收站项目；
+- 从回收站恢复到原父目录或指定父目录；
+- 恢复时支持指定新名称，并校验同目录重名冲突；
+- 发起永久清理，将目录子树标记为 `PURGING`，并写入 Outbox 事件等待后续 Worker；
+- 删除时把源资源相关共享标记为 `SOURCE_UNAVAILABLE`；
+- 删除、恢复和清理都会递增空间安全纪元，确保权限/搜索等后续缓存可失效；
+- 法务保留存在时阻断永久清理。
+
+尚未完成：自动到期扫描、批量清理 Job、法务保留创建/解除接口、归档/冷存储策略、真实对象存储删除、版本对象引用计数、HTTP 集成测试和大目录性能压测。
+
+### 13.2 接口清单
+
+| 接口 | Operation ID | 成功响应 | 关键约束 |
+|---|---|---:|---|
+| `POST /api/v1/entries/{entryId}/trash` | `trashDirectoryEntry` | `201/RecycleItemResponse` | 要求 `Idempotency-Key`；根目录不可删除；要求资源 `DELETE` 权限；要求 `rowVersion` |
+| `GET /api/v1/recycle-bin?page=1&pageSize=50` | `listRecycleBinItems` | `200/RecycleItemListResponse` | 分页统一使用 `page/pageSize`；可选 `spaceId`；仅返回通过 `RESTORE` 权限复核的项目；当前 `total` 为本页可见数量，避免泄露无权项目总量 |
+| `POST /api/v1/recycle-bin/{recycleItemId}/restore` | `restoreRecycleItem` | `200/RecycleItemResponse` | 要求回收项 `rowVersion`；要求源资源 `RESTORE` 权限和目标父目录 `UPLOAD/CREATE_FOLDER` 权限；同名冲突返回 409 |
+| `POST /api/v1/recycle-bin/{recycleItemId}/purge` | `purgeRecycleItem` | `200/RecycleItemResponse` | 要求回收项 `rowVersion` 和 `reason`；要求源资源 `PURGE` 权限；存在有效法务保留时拒绝 |
+
+### 13.3 字段和示例
+
+`RecycleItem` 字段严格来自 `recycle_items` 与关联 `namespace_entries`：`recycleItemId/entryId/entryType/originalSpaceId/originalParentFolderId/originalName/currentName/lifecycleStatus/deletedByUserId/deletedAt/expiresAt/status/restoredToFolderId/restoredAt/createdAt/updatedAt/rowVersion`。
+
+进入回收站请求示例：
+
+```http
+POST /api/v1/entries/0198b100-0000-7000-8000-000000000101/trash HTTP/1.1
+Host: 127.0.0.1:8080
+Authorization: Bearer <accessToken>
+Idempotency-Key: trash-0198b100-0000-7000-8000-000000000101-1
+Content-Type: application/json
+
+{
+  "rowVersion": 3,
+  "reason": "用户主动删除"
+}
+```
+
+成功响应示例：
+
+```json
+{
+  "item": {
+    "recycleItemId": "0198b100-0000-7000-8000-000000000201",
+    "entryId": "0198b100-0000-7000-8000-000000000101",
+    "entryType": "DOCUMENT",
+    "originalSpaceId": "0198b100-0000-7000-8000-000000000001",
+    "originalParentFolderId": "0198b100-0000-7000-8000-000000000010",
+    "originalName": "设计说明.docx",
+    "currentName": "设计说明.docx",
+    "lifecycleStatus": "TRASHED",
+    "deletedByUserId": "0198b100-0000-7000-8000-000000000020",
+    "deletedAt": "2026-08-10T09:00:00Z",
+    "expiresAt": "2026-11-08T09:00:00Z",
+    "status": "ACTIVE",
+    "createdAt": "2026-08-10T09:00:00Z",
+    "updatedAt": "2026-08-10T09:00:00Z",
+    "rowVersion": 1
+  },
+  "requestId": "019fcc32-0bc6-7d82-aa70-62d5324b1fbb"
+}
+```
+
+恢复请求示例：
+
+```json
+{
+  "rowVersion": 1,
+  "targetParentFolderId": "0198b100-0000-7000-8000-000000000010",
+  "name": "设计说明-恢复.docx"
+}
+```
+
+永久清理请求示例：
+
+```json
+{
+  "rowVersion": 1,
+  "reason": "超过保留期并经管理员确认"
+}
+```
+
+注意：永久清理接口当前只把资源标记为 `PURGING` 并写入 `ENTRY_PURGE_REQUESTED` Outbox 事件；实际对象存储删除、版本对象引用计数和最终 `PURGED` 收敛由后续 Worker 周期实现。
+
+### 13.4 错误码和接口测试依据
+
+除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN/AUTH_ORIGIN_REJECTED` 外，本模块使用：
+
+| HTTP | 错误码 | 含义 |
+|---:|---|---|
+| 404 | `RECYCLE_ITEM_NOT_FOUND` | 回收站项目、目录项或目标父目录不存在/不可见 |
+| 409 | `RECYCLE_CONFLICT` | 生命周期状态冲突 |
+| 409 | `ROW_VERSION_CONFLICT` | `rowVersion` 已过期或资源不在可操作状态 |
+| 409 | `IDEMPOTENCY_CONFLICT` | 同一幂等键对应不同请求 |
+| 409 | `RECYCLE_ROOT_OPERATION_FORBIDDEN` | 根目录不允许进入回收站 |
+| 409 | `RECYCLE_NAME_CONFLICT` | 恢复目标位置已存在同名活动文件或文件夹 |
+| 409 | `LEGAL_HOLD_ACTIVE` | 存在有效法务保留，不能永久清理 |
+
+正式接口测试至少覆盖：未登录拒绝；普通用户越权；根目录删除拒绝；进入回收站成功并生成 `recycle_items`；重复幂等键重放和冲突；删除后共享变为 `SOURCE_UNAVAILABLE`；回收站列表分页默认值、非法值和最大值；无 `RESTORE` 权限的项目不返回；恢复原位置；恢复到指定父目录；恢复重名冲突；陈旧 `rowVersion` 拒绝；永久清理要求原因；法务保留阻断清理；清理只进入 `PURGING` 并产生 Outbox，不伪造对象存储删除完成。
+
+现有自动化证据：
+
+- `backend/internal/modules/lifecycle/application/service_test.go`
+- `go test ./...`
+
+## 14. 模块 16：后台任务
+
+### 14.1 当前边界
 
 本周期完成后台任务模块的基础调度与管理员运维接口。模块仍不实现具体业务处理器，例如审计归档、文件 Hash、病毒扫描、预览、搜索索引、生命周期清理或 AI 任务；这些处理器由对应业务模块后续注册。当前 REST API 只面向 `SYSTEM_ADMIN`，用于查看 Outbox/Job 积压与失败项，并对 `FAILED/DEAD` 单项执行受控重试。
 
@@ -1127,7 +1242,7 @@ POST /api/v1/uploads/0198a8e9-0c8a-7d21-9ea9-e9e70d477eed/parts/1/presign
 - 使用 `context.Context`、处理器超时和系统信号完成优雅停止；
 - Redis 不参与任务事实存储。
 
-### 13.2 配置项
+### 14.2 配置项
 
 | 环境变量 | 默认值 | 含义 |
 |---|---:|---|
@@ -1150,7 +1265,7 @@ go run ./cmd/worker
 
 注意：模块 11 审计消费者已注册用户、组织、权限和文件目录模块当前产生的 Outbox 事件；未注册事件类型和未注册 Job 类型仍会继续保留，不会被空消费。
 
-### 13.3 管理员运维接口
+### 14.3 管理员运维接口
 
 | 接口 | Operation ID | 成功响应 | 关键约束 |
 |---|---|---:|---|
@@ -1184,7 +1299,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 
 后台任务响应字段严格来自 `background_jobs`：`backgroundJobId/jobType/targetDocumentId/targetDocumentVersionId/targetStorageObjectId/payloadSchemaVersion/payload/deduplicationKey/priority/status/attemptCount/maxAttempts/availableAt/lockedBy/lockedAt/leaseUntil/heartbeatAt/startedAt/completedAt/lastErrorCode/lastErrorSummary/createdAt/updatedAt/rowVersion`。
 
-### 13.4 错误码和接口测试依据
+### 14.4 错误码和接口测试依据
 
 除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN` 外，本模块使用：
 
@@ -1203,9 +1318,9 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 - `backend/tests/integration/background_admin_http_test.go`
 - `backend/scripts/verify.ps1`
 
-## 14. 模块 11：审计
+## 15. 模块 11：审计
 
-### 14.1 当前边界
+### 15.1 当前边界
 
 本周期完成审计模块的基础查询、详情、完整性状态和哈希链校验能力，并将用户、组织、权限、文件目录模块当前产生的 Outbox 事件注册为审计消费者。当前不实现审计导出、归档、WORM、批次锚定和安全告警；这些能力依赖后续对象存储与归档周期。
 
@@ -1219,7 +1334,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 
 所有 REST 查询接口当前仅允许 `SYSTEM_ADMIN` 访问。分页统一使用 `page/pageSize`，默认 `1/50`，最大 `pageSize=200`。
 
-### 14.2 审计接口
+### 15.2 审计接口
 
 | 接口 | Operation ID | 成功响应 | 关键约束 |
 |---|---|---:|---|
@@ -1249,7 +1364,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 }
 ```
 
-### 14.3 字段与映射
+### 15.3 字段与映射
 
 `AuditEvent` 字段严格来自 `audit_events` 和 OpenAPI：`auditEventId/eventType/riskLevel/actorType/actorId/actorDisplayName/actorEmployeeNo/effectiveRole/adminDelegationId/shareId/resourceType/resourceId/resourceName/spaceId/organizationId/documentId/documentVersionId/action/result/failureCode/sourceChannel/ipAddress/userAgent/requestId/traceId/correlationId/reason/metadataSchemaVersion/metadata/hashSchemaVersion/chainId/sequenceNumber/previousHash/eventHash/partitionDate/createdAt`。
 
@@ -1263,7 +1378,7 @@ Outbox 审计消费者的映射规则：
 - `metadata` 保留 `outboxEventId/aggregateType/aggregateId/aggregateVersion/eventSchemaVersion/deduplicationKey/sourcePayload/mappedBy` 等追踪信息；
 - `USER_ROLE_CHANGED`、`AUTH_PASSWORD_CHANGED`、权限与管理委派变更等高风险事件进入哈希链；`AUTH_ACCOUNT_LOCKED` 视为 `CRITICAL`。
 
-### 14.4 错误码和接口测试依据
+### 15.4 错误码和接口测试依据
 
 除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN` 外，本模块使用：
 
@@ -1281,7 +1396,7 @@ Outbox 审计消费者的映射规则：
 - `backend/scripts/verify.ps1`
 - `go test ./internal/modules/audit/... ./...`
 
-## 15. 文档维护与冻结规则
+## 16. 文档维护与冻结规则
 
 1. 新模块先更新 `backend/api/openapi.yaml`，再生成代码和实现。
 2. 模块开发完成时，在本文档追加对应模块章节和接口测试要点，并更新第 2 章状态。
