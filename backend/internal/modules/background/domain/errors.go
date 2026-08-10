@@ -11,6 +11,25 @@ const (
 )
 
 var ErrNoHandlers = errors.New("no outbox handlers registered")
+var ErrForbidden = errors.New("background operation is forbidden")
+var ErrInvalidInput = errors.New("background input is invalid")
+var ErrNotFound = errors.New("background item not found")
+var ErrConflict = errors.New("background item conflict")
+
+type ValidationError struct {
+	Field string
+}
+
+func (e *ValidationError) Error() string {
+	if strings.TrimSpace(e.Field) == "" {
+		return ErrInvalidInput.Error()
+	}
+	return ErrInvalidInput.Error() + ": " + e.Field
+}
+
+func (e *ValidationError) Unwrap() error {
+	return ErrInvalidInput
+}
 
 type ProcessingError struct {
 	Code      string
@@ -66,4 +85,38 @@ func ClassifyError(err error) (code, summary string, retryable bool) {
 		return normalizeCode(processing.Code, ErrorCodeHandlerFailed), sanitizeSummary(processing.Error()), processing.Retryable
 	}
 	return ErrorCodeHandlerFailed, sanitizeSummary(err.Error()), true
+}
+
+func NormalizePage(page, pageSize int) (int, int, error) {
+	if page == 0 {
+		page = DefaultPage
+	}
+	if pageSize == 0 {
+		pageSize = DefaultPageSize
+	}
+	if page < 1 {
+		return 0, 0, &ValidationError{Field: "page"}
+	}
+	if pageSize < 1 || pageSize > MaxPageSize {
+		return 0, 0, &ValidationError{Field: "pageSize"}
+	}
+	return page, pageSize, nil
+}
+
+func ValidateOutboxStatus(value string) error {
+	switch value {
+	case OutboxStatusPending, OutboxStatusProcessing, OutboxStatusPublished, OutboxStatusFailed, OutboxStatusDead:
+		return nil
+	default:
+		return &ValidationError{Field: "status"}
+	}
+}
+
+func ValidateJobStatus(value string) error {
+	switch value {
+	case JobStatusPending, JobStatusProcessing, JobStatusSuccess, JobStatusFailed, JobStatusDead, JobStatusCancelled, JobStatusSkipped:
+		return nil
+	default:
+		return &ValidationError{Field: "status"}
+	}
 }

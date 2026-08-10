@@ -87,6 +87,13 @@ type FilesAPI interface {
 	MoveDirectoryEntry(context.Context, api.MoveDirectoryEntryRequestObject) (api.MoveDirectoryEntryResponseObject, error)
 }
 
+type BackgroundAPI interface {
+	ListBackgroundOutboxEvents(context.Context, api.ListBackgroundOutboxEventsRequestObject) (api.ListBackgroundOutboxEventsResponseObject, error)
+	RetryBackgroundOutboxEvent(context.Context, api.RetryBackgroundOutboxEventRequestObject) (api.RetryBackgroundOutboxEventResponseObject, error)
+	ListBackgroundJobs(context.Context, api.ListBackgroundJobsRequestObject) (api.ListBackgroundJobsResponseObject, error)
+	RetryBackgroundJob(context.Context, api.RetryBackgroundJobRequestObject) (api.RetryBackgroundJobResponseObject, error)
+}
+
 type APIHandler struct {
 	health        HealthAPI
 	identity      IdentityAPI
@@ -94,11 +101,13 @@ type APIHandler struct {
 	organizations OrganizationsAPI
 	permissions   PermissionsAPI
 	files         FilesAPI
+	background    BackgroundAPI
 }
 
 func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organizations OrganizationsAPI, optionalHandlers ...any) *APIHandler {
 	var permissions PermissionsAPI
 	var files FilesAPI
+	var background BackgroundAPI
 	for _, optional := range optionalHandlers {
 		if handler, ok := optional.(PermissionsAPI); ok {
 			permissions = handler
@@ -106,8 +115,24 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 		if handler, ok := optional.(FilesAPI); ok {
 			files = handler
 		}
+		if handler, ok := optional.(BackgroundAPI); ok {
+			background = handler
+		}
 	}
-	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions, files: files}
+	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions, files: files, background: background}
+}
+
+func (h *APIHandler) ListBackgroundOutboxEvents(ctx context.Context, request api.ListBackgroundOutboxEventsRequestObject) (api.ListBackgroundOutboxEventsResponseObject, error) {
+	return h.background.ListBackgroundOutboxEvents(ctx, request)
+}
+func (h *APIHandler) RetryBackgroundOutboxEvent(ctx context.Context, request api.RetryBackgroundOutboxEventRequestObject) (api.RetryBackgroundOutboxEventResponseObject, error) {
+	return h.background.RetryBackgroundOutboxEvent(ctx, request)
+}
+func (h *APIHandler) ListBackgroundJobs(ctx context.Context, request api.ListBackgroundJobsRequestObject) (api.ListBackgroundJobsResponseObject, error) {
+	return h.background.ListBackgroundJobs(ctx, request)
+}
+func (h *APIHandler) RetryBackgroundJob(ctx context.Context, request api.RetryBackgroundJobRequestObject) (api.RetryBackgroundJobResponseObject, error) {
+	return h.background.RetryBackgroundJob(ctx, request)
 }
 
 func (h *APIHandler) ListDirectoryEntries(ctx context.Context, request api.ListDirectoryEntriesRequestObject) (api.ListDirectoryEntriesResponseObject, error) {

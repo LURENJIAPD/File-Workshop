@@ -6,7 +6,7 @@
 > 编制日期：2026-08-05  
 > 最近修订：2026-08-10
 > 默认路径：`docs/File-Workshop-V1.0-开发计划.md`  
-> 本次修订：启动模块 16 后台任务基础周期，完成 Outbox Worker 最小可用框架
+> 本次修订：完成模块 16 后台任务基础调度与管理员运维接口周期
 
 ## 1. 如何阅读本计划
 
@@ -133,7 +133,7 @@
 | 13 | WebDAV兼容 | `[ ]` | 仅为接入适配器，复用统一身份、权限、文件和锁 |
 | 14 | SMB迁移 | `[ ]` | 依赖目录、存储、权限映射和后台任务 |
 | 15 | AI与Agent集成 | `[ ]` | 按确认的 V1.0 启用范围开发，禁止直持数据库或存储凭据 |
-| 16 | 后台任务 | `[~]` | 已完成 Outbox Worker 最小可用框架；任务调度、运维控制和具体业务处理器继续开发 |
+| 16 | 后台任务 | `[~]` | 已完成 Outbox Worker、`background_jobs` 基础调度、管理员积压查询和受控重试接口；具体业务处理器、取消、告警和审计消费者继续开发 |
 
 ### 6.2 模块 01：身份认证
 
@@ -366,13 +366,13 @@
 | 工程任务 | 状态 | 具体内容 |
 |---|---|---|
 | Outbox 与 Worker | `[x]` | 已完成事务外盒 Worker 框架、按已注册事件类型认领、`FOR UPDATE SKIP LOCKED`、租约、并发轮询、处理器超时和优雅关闭 |
-| 任务调度 | `[ ]` | 统一索引、AI、病毒扫描、预览、生命周期和审计归档任务接口 |
-| 重试与死信 | `[~]` | Outbox 已实现可重试/永久失败分类、指数退避、失败摘要和重试耗尽转 `DEAD`；受控重放和运维 API 后续实现 |
-| 幂等与恢复 | `[~]` | Outbox 通过去重键、注册处理器过滤、状态机和租约过期恢复支持重复领取安全；具体业务处理器幂等策略随各消费者接入 |
-| 运维与观测 | `[~]` | 已提供按状态统计的 Repository 查询和结构化日志；积压 API、成功率、重放、取消和告警后续实现 |
-| 模块测试与文档 | `[~]` | 已覆盖成功发布、未注册事件不吞、可重试失败、重试耗尽死信和真实 PostgreSQL 生命周期；并发压力、崩溃恢复和运维接口后续补充 |
+| 任务调度 | `[x]` | 已基于 `background_jobs` 建立通用入队、认领、执行、心跳续租和状态机；统一索引、AI、病毒扫描、预览、生命周期和审计归档处理器后续接入 |
+| 重试与死信 | `[x]` | Outbox 与 Job 均已实现可重试/永久失败分类、指数退避、失败摘要、重试耗尽转 `DEAD`，并提供 `FAILED/DEAD` 单项受控重试 API |
+| 幂等与恢复 | `[~]` | Outbox/Job 已通过去重键、注册处理器过滤、状态机和租约过期恢复支持重复领取安全；具体业务处理器幂等策略随各消费者接入 |
+| 运维与观测 | `[~]` | 已提供管理员分页查询 Outbox/Job 积压、失败原因和单项重试接口；取消、批量处理、指标和告警后续补齐 |
+| 模块测试与文档 | `[~]` | 已覆盖 Outbox Worker、Job Runner、真实 PostgreSQL/Redis 后台运维 HTTP 流程、OpenAPI、统一 API 文档和模块说明；并发压力、崩溃恢复、取消和告警后续补充 |
 
-完成标准：PostgreSQL 业务事实和 Outbox 在同一事务写入；Redis 不是任务事实唯一来源；Worker 可安全停止和恢复，不泄漏 Goroutine。当前仅完成 Outbox Worker 基础周期，模块 16 尚未整体完成。
+完成标准：PostgreSQL 业务事实、Outbox 和 Job 事实保持可追踪；Redis 不是任务事实唯一来源；Worker 可安全停止和恢复，不泄漏 Goroutine；管理员可查询积压并受控重试失败项。当前已完成后台任务基础调度与运维接口周期，模块 16 尚未整体完成。
 
 ### 6.18 后端阶段完成标准
 
@@ -537,16 +537,17 @@
 | 模块 03：组织与空间 | 2026-08-05 | 组织闭包树、成员关系、个人/组织/公共空间、原子配额、组织重组计划、Outbox、OpenAPI、统一 API 文档和模块工程说明 | 单元测试和真实 PostgreSQL/Redis HTTP 流程通过；覆盖幂等、分页、管理员边界、主职唯一和有效期、配额并发防超卖、组织并发移动与防环、MOVE 计划执行和删除阻断 | 个人空间默认策略与 `USER_CREATED` 自动调度由模块 16 接入；文件内容型重组由模块 05/16 实现；资源权限由模块 04 统一计算 |
 | 模块 04：权限与管理委派 | 2026-08-05 | 管理委派、递归委派与失效、用户/组织 ACL、Space/Folder/Document 继承与断开、单项/批量最终判定、版本化 Redis 缓存、安全版本、Outbox、OpenAPI、统一 API 文档、工程说明及 `00003` 触发器修复 | `verify.ps1` 和真实 PostgreSQL/Redis/Migration 集成测试通过；覆盖默认拒绝、个人所有者、系统管理员原因与二次确认、子树委派、能力上限、父撤销、直接/继承授权、BREAK、撤销和缓存立即失效 | Share 允许源由模块 08 接入；不可篡改审计查询和拒绝/特权访问链由模块 11 消费 Outbox；文件操作入口由模块 05 起强制调用本模块 |
 | 模块 05：文件目录 | 2026-08-10 | 统一命名空间、根目录懒创建、Folder/Document 稳定身份、Document 占位、目录列表、详情、重命名、移动、防环、权限最终复核、Outbox、OpenAPI、统一 API 文档和模块工程说明 | `go test ./...` 与 `FILE_WORKSHOP_RUN_INTEGRATION=1 go test ./tests/integration -run TestFilesHTTPDirectoryLifecycle -count=1` 通过；覆盖真实 PostgreSQL/Redis 下的公共空间、中文目录、文档占位、分页列表、乐观锁重命名、移动和循环移动拒绝 | 模块 06 暂缓至 SeaweedFS/S3 可用；真实上传下载、对象 Key、版本内容、容量扣减、扫描、预览、搜索索引和回收生命周期由后续模块接入 |
-| 模块 16：后台任务基础周期 | 2026-08-10 | `cmd/worker`、Outbox Runner、处理器注册、PostgreSQL 领取/发布/失败/死信/续租 SQL、配置项、单元测试、真实 PostgreSQL 集成测试和专项调研 | `go test ./internal/modules/background/...` 与 `FILE_WORKSHOP_RUN_INTEGRATION=1 go test ./tests/integration -run TestBackgroundWorkerOutboxLifecycle -count=1` 通过；覆盖支持事件发布、未注册事件保留、可重试失败和重试耗尽死信 | 模块 16 尚未整体完成；`background_jobs` 调度、业务处理器、积压运维 API、受控重放、取消、告警和审计消费者后续继续 |
+| 模块 16：后台任务基础周期 | 2026-08-10 | `cmd/worker`、Outbox Runner、处理器注册、PostgreSQL 领取/发布/失败/死信/续租 SQL、配置项、单元测试、真实 PostgreSQL 集成测试和专项调研 | `go test ./internal/modules/background/...` 与 `FILE_WORKSHOP_RUN_INTEGRATION=1 go test ./tests/integration -run TestBackgroundWorkerOutboxLifecycle -count=1` 通过；覆盖支持事件发布、未注册事件保留、可重试失败和重试耗尽死信 | 已由后续“基础调度与运维接口周期”补齐 `background_jobs` 基础调度和运维 API；具体业务处理器、取消、告警和审计消费者继续 |
+| 模块 16：后台任务基础调度与运维接口周期 | 2026-08-10 | `background_jobs` 通用入队/认领/执行/续租/成功/失败/死信框架，Outbox/Job 管理员分页查询，`FAILED/DEAD` 单项受控重试接口，OpenAPI、sqlc、统一 API 文档、模块说明和真实 HTTP 集成测试 | `go test ./internal/modules/background/... ./internal/app ./internal/platform/httpserver ./tests/integration` 与 `FILE_WORKSHOP_RUN_INTEGRATION=1 go test ./tests/integration -run TestBackgroundAdministrationHTTPWorkflow -count=1 -v` 通过；覆盖管理员查询/重试、普通用户拒绝、真实 PostgreSQL/Redis 连接 | 模块 16 尚未整体完成；业务处理器、取消/批量处理、积压指标、告警、审计消费者和崩溃恢复压力测试后续继续 |
 
 ## 13. 下一步
 
-当前基础准备以及模块 01～05 已完成当前边界；模块 16 已启动并完成 Outbox Worker 基础周期。由于对象存储集群尚未搭建，模块 06 文件传输与存储继续暂缓。
+当前基础准备以及模块 01～05 已完成当前边界；模块 16 已完成后台任务基础调度与管理员运维接口周期。由于对象存储集群尚未搭建，模块 06 文件传输与存储继续暂缓。
 
 建议执行顺序：
 
 1. 继续跳过模块 06，直到 SeaweedFS S3 Gateway、Bucket、访问凭据和本地验证方式明确；
-2. 继续模块 16，补 `background_jobs` 基础调度、积压统计和受控死信重放接口；或切入模块 11 审计，注册审计 Outbox 消费器；
+2. 下一步建议切入模块 11 审计，注册审计 Outbox 消费器并建立审计查询；模块 16 的取消、批量处理、指标和告警可在后续运维增强周期继续；
 3. 模块 10 搜索、模块 12 预览和模块 09 回收涉及文件内容、版本或存储对象时必须等待模块 06/07 基线；
 4. 模块 16 接入 `USER_CREATED` 个人空间自动初始化时，先确认可配置的默认名称和配额策略；
 5. 后续每个模块完成时继续追加统一 API 接口文档。

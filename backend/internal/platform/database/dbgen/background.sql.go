@@ -11,6 +11,95 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const claimBackgroundJobsByType = `-- name: ClaimBackgroundJobsByType :many
+WITH candidates AS (
+  SELECT background_job_id
+  FROM background_jobs
+  WHERE job_type = $4::varchar
+    AND attempt_count < max_attempts
+    AND (
+      (status = 'PENDING' AND available_at <= $2::timestamptz)
+      OR (status = 'FAILED' AND available_at <= $2::timestamptz)
+      OR (status = 'PROCESSING' AND lease_until <= $2::timestamptz)
+    )
+  ORDER BY priority DESC, available_at, background_job_id
+  LIMIT $5::integer
+  FOR UPDATE SKIP LOCKED
+)
+UPDATE background_jobs j
+SET status = 'PROCESSING',
+    attempt_count = j.attempt_count + 1,
+    locked_by = $1::varchar,
+    locked_at = $2::timestamptz,
+    lease_until = $3::timestamptz,
+    heartbeat_at = $2::timestamptz,
+    started_at = COALESCE(j.started_at, $2::timestamptz),
+    updated_at = $2::timestamptz,
+    row_version = j.row_version + 1
+FROM candidates c
+WHERE j.background_job_id = c.background_job_id
+RETURNING j.background_job_id, j.job_type, j.target_document_id, j.target_document_version_id, j.target_storage_object_id, j.payload_schema_version, j.payload_json, j.deduplication_key, j.priority, j.status, j.attempt_count, j.max_attempts, j.available_at, j.locked_by, j.locked_at, j.lease_until, j.heartbeat_at, j.created_at, j.updated_at, j.started_at, j.completed_at, j.last_error_code, j.last_error_summary, j.row_version
+`
+
+type ClaimBackgroundJobsByTypeParams struct {
+	LockedBy   string
+	Now        pgtype.Timestamptz
+	LeaseUntil pgtype.Timestamptz
+	JobType    string
+	BatchSize  int32
+}
+
+func (q *Queries) ClaimBackgroundJobsByType(ctx context.Context, arg *ClaimBackgroundJobsByTypeParams) ([]*BackgroundJob, error) {
+	rows, err := q.db.Query(ctx, claimBackgroundJobsByType,
+		arg.LockedBy,
+		arg.Now,
+		arg.LeaseUntil,
+		arg.JobType,
+		arg.BatchSize,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*BackgroundJob{}
+	for rows.Next() {
+		var i BackgroundJob
+		if err := rows.Scan(
+			&i.BackgroundJobID,
+			&i.JobType,
+			&i.TargetDocumentID,
+			&i.TargetDocumentVersionID,
+			&i.TargetStorageObjectID,
+			&i.PayloadSchemaVersion,
+			&i.PayloadJson,
+			&i.DeduplicationKey,
+			&i.Priority,
+			&i.Status,
+			&i.AttemptCount,
+			&i.MaxAttempts,
+			&i.AvailableAt,
+			&i.LockedBy,
+			&i.LockedAt,
+			&i.LeaseUntil,
+			&i.HeartbeatAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.StartedAt,
+			&i.CompletedAt,
+			&i.LastErrorCode,
+			&i.LastErrorSummary,
+			&i.RowVersion,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const claimOutboxEventsByType = `-- name: ClaimOutboxEventsByType :many
 WITH candidates AS (
   SELECT outbox_event_id
@@ -100,6 +189,76 @@ func (q *Queries) ClaimOutboxEventsByType(ctx context.Context, arg *ClaimOutboxE
 	return items, nil
 }
 
+const countBackgroundJobs = `-- name: CountBackgroundJobs :one
+SELECT count(*)::bigint
+FROM background_jobs
+WHERE ($1::text IS NULL OR status = $1::text)
+  AND ($2::text IS NULL OR job_type = $2::text)
+`
+
+type CountBackgroundJobsParams struct {
+	Status  pgtype.Text
+	JobType pgtype.Text
+}
+
+func (q *Queries) CountBackgroundJobs(ctx context.Context, arg *CountBackgroundJobsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countBackgroundJobs, arg.Status, arg.JobType)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const countBackgroundJobsByStatus = `-- name: CountBackgroundJobsByStatus :many
+SELECT status, count(*)::bigint AS count
+FROM background_jobs
+GROUP BY status
+ORDER BY status
+`
+
+type CountBackgroundJobsByStatusRow struct {
+	Status string
+	Count  int64
+}
+
+func (q *Queries) CountBackgroundJobsByStatus(ctx context.Context) ([]*CountBackgroundJobsByStatusRow, error) {
+	rows, err := q.db.Query(ctx, countBackgroundJobsByStatus)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*CountBackgroundJobsByStatusRow{}
+	for rows.Next() {
+		var i CountBackgroundJobsByStatusRow
+		if err := rows.Scan(&i.Status, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const countOutboxEvents = `-- name: CountOutboxEvents :one
+SELECT count(*)::bigint
+FROM outbox_events
+WHERE ($1::text IS NULL OR status = $1::text)
+  AND ($2::text IS NULL OR event_type = $2::text)
+`
+
+type CountOutboxEventsParams struct {
+	Status    pgtype.Text
+	EventType pgtype.Text
+}
+
+func (q *Queries) CountOutboxEvents(ctx context.Context, arg *CountOutboxEventsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countOutboxEvents, arg.Status, arg.EventType)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const countOutboxEventsByStatus = `-- name: CountOutboxEventsByStatus :many
 SELECT status, count(*)::bigint AS count
 FROM outbox_events
@@ -130,6 +289,426 @@ func (q *Queries) CountOutboxEventsByStatus(ctx context.Context) ([]*CountOutbox
 		return nil, err
 	}
 	return items, nil
+}
+
+const getBackgroundJob = `-- name: GetBackgroundJob :one
+SELECT background_job_id, job_type, target_document_id, target_document_version_id, target_storage_object_id, payload_schema_version, payload_json, deduplication_key, priority, status, attempt_count, max_attempts, available_at, locked_by, locked_at, lease_until, heartbeat_at, created_at, updated_at, started_at, completed_at, last_error_code, last_error_summary, row_version
+FROM background_jobs
+WHERE background_job_id = $1::uuid
+`
+
+func (q *Queries) GetBackgroundJob(ctx context.Context, backgroundJobID pgtype.UUID) (*BackgroundJob, error) {
+	row := q.db.QueryRow(ctx, getBackgroundJob, backgroundJobID)
+	var i BackgroundJob
+	err := row.Scan(
+		&i.BackgroundJobID,
+		&i.JobType,
+		&i.TargetDocumentID,
+		&i.TargetDocumentVersionID,
+		&i.TargetStorageObjectID,
+		&i.PayloadSchemaVersion,
+		&i.PayloadJson,
+		&i.DeduplicationKey,
+		&i.Priority,
+		&i.Status,
+		&i.AttemptCount,
+		&i.MaxAttempts,
+		&i.AvailableAt,
+		&i.LockedBy,
+		&i.LockedAt,
+		&i.LeaseUntil,
+		&i.HeartbeatAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.StartedAt,
+		&i.CompletedAt,
+		&i.LastErrorCode,
+		&i.LastErrorSummary,
+		&i.RowVersion,
+	)
+	return &i, err
+}
+
+const getOutboxEvent = `-- name: GetOutboxEvent :one
+SELECT outbox_event_id, aggregate_type, aggregate_id, aggregate_version, event_type, event_schema_version, payload_json, deduplication_key, correlation_id, causation_id, priority, status, attempt_count, max_attempts, available_at, locked_by, locked_at, lease_until, next_retry_at, created_at, updated_at, published_at, last_error_code, last_error_summary, row_version
+FROM outbox_events
+WHERE outbox_event_id = $1::uuid
+`
+
+func (q *Queries) GetOutboxEvent(ctx context.Context, outboxEventID pgtype.UUID) (*OutboxEvent, error) {
+	row := q.db.QueryRow(ctx, getOutboxEvent, outboxEventID)
+	var i OutboxEvent
+	err := row.Scan(
+		&i.OutboxEventID,
+		&i.AggregateType,
+		&i.AggregateID,
+		&i.AggregateVersion,
+		&i.EventType,
+		&i.EventSchemaVersion,
+		&i.PayloadJson,
+		&i.DeduplicationKey,
+		&i.CorrelationID,
+		&i.CausationID,
+		&i.Priority,
+		&i.Status,
+		&i.AttemptCount,
+		&i.MaxAttempts,
+		&i.AvailableAt,
+		&i.LockedBy,
+		&i.LockedAt,
+		&i.LeaseUntil,
+		&i.NextRetryAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.PublishedAt,
+		&i.LastErrorCode,
+		&i.LastErrorSummary,
+		&i.RowVersion,
+	)
+	return &i, err
+}
+
+const insertBackgroundJob = `-- name: InsertBackgroundJob :one
+INSERT INTO background_jobs (
+  background_job_id, job_type, target_document_id, target_document_version_id,
+  target_storage_object_id, payload_schema_version, payload_json,
+  deduplication_key, priority, max_attempts, available_at, created_at, updated_at
+) VALUES (
+  $1::uuid,
+  $2::varchar,
+  $3::uuid,
+  $4::uuid,
+  $5::uuid,
+  $6::integer,
+  $7::jsonb,
+  $8::varchar,
+  $9::integer,
+  $10::integer,
+  $11::timestamptz,
+  $12::timestamptz,
+  $12::timestamptz
+)
+ON CONFLICT (job_type, deduplication_key) WHERE status IN ('PENDING', 'PROCESSING', 'FAILED')
+DO UPDATE SET updated_at = EXCLUDED.updated_at
+RETURNING background_job_id, job_type, target_document_id, target_document_version_id, target_storage_object_id, payload_schema_version, payload_json, deduplication_key, priority, status, attempt_count, max_attempts, available_at, locked_by, locked_at, lease_until, heartbeat_at, created_at, updated_at, started_at, completed_at, last_error_code, last_error_summary, row_version
+`
+
+type InsertBackgroundJobParams struct {
+	BackgroundJobID         pgtype.UUID
+	JobType                 string
+	TargetDocumentID        pgtype.UUID
+	TargetDocumentVersionID pgtype.UUID
+	TargetStorageObjectID   pgtype.UUID
+	PayloadSchemaVersion    int32
+	PayloadJson             []byte
+	DeduplicationKey        string
+	Priority                int32
+	MaxAttempts             int32
+	AvailableAt             pgtype.Timestamptz
+	CreatedAt               pgtype.Timestamptz
+}
+
+func (q *Queries) InsertBackgroundJob(ctx context.Context, arg *InsertBackgroundJobParams) (*BackgroundJob, error) {
+	row := q.db.QueryRow(ctx, insertBackgroundJob,
+		arg.BackgroundJobID,
+		arg.JobType,
+		arg.TargetDocumentID,
+		arg.TargetDocumentVersionID,
+		arg.TargetStorageObjectID,
+		arg.PayloadSchemaVersion,
+		arg.PayloadJson,
+		arg.DeduplicationKey,
+		arg.Priority,
+		arg.MaxAttempts,
+		arg.AvailableAt,
+		arg.CreatedAt,
+	)
+	var i BackgroundJob
+	err := row.Scan(
+		&i.BackgroundJobID,
+		&i.JobType,
+		&i.TargetDocumentID,
+		&i.TargetDocumentVersionID,
+		&i.TargetStorageObjectID,
+		&i.PayloadSchemaVersion,
+		&i.PayloadJson,
+		&i.DeduplicationKey,
+		&i.Priority,
+		&i.Status,
+		&i.AttemptCount,
+		&i.MaxAttempts,
+		&i.AvailableAt,
+		&i.LockedBy,
+		&i.LockedAt,
+		&i.LeaseUntil,
+		&i.HeartbeatAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.StartedAt,
+		&i.CompletedAt,
+		&i.LastErrorCode,
+		&i.LastErrorSummary,
+		&i.RowVersion,
+	)
+	return &i, err
+}
+
+const listBackgroundJobs = `-- name: ListBackgroundJobs :many
+SELECT background_job_id, job_type, target_document_id, target_document_version_id, target_storage_object_id, payload_schema_version, payload_json, deduplication_key, priority, status, attempt_count, max_attempts, available_at, locked_by, locked_at, lease_until, heartbeat_at, created_at, updated_at, started_at, completed_at, last_error_code, last_error_summary, row_version
+FROM background_jobs
+WHERE ($1::text IS NULL OR status = $1::text)
+  AND ($2::text IS NULL OR job_type = $2::text)
+ORDER BY created_at DESC, background_job_id DESC
+LIMIT $4::integer OFFSET $3::bigint
+`
+
+type ListBackgroundJobsParams struct {
+	Status     pgtype.Text
+	JobType    pgtype.Text
+	PageOffset int64
+	PageSize   int32
+}
+
+func (q *Queries) ListBackgroundJobs(ctx context.Context, arg *ListBackgroundJobsParams) ([]*BackgroundJob, error) {
+	rows, err := q.db.Query(ctx, listBackgroundJobs,
+		arg.Status,
+		arg.JobType,
+		arg.PageOffset,
+		arg.PageSize,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*BackgroundJob{}
+	for rows.Next() {
+		var i BackgroundJob
+		if err := rows.Scan(
+			&i.BackgroundJobID,
+			&i.JobType,
+			&i.TargetDocumentID,
+			&i.TargetDocumentVersionID,
+			&i.TargetStorageObjectID,
+			&i.PayloadSchemaVersion,
+			&i.PayloadJson,
+			&i.DeduplicationKey,
+			&i.Priority,
+			&i.Status,
+			&i.AttemptCount,
+			&i.MaxAttempts,
+			&i.AvailableAt,
+			&i.LockedBy,
+			&i.LockedAt,
+			&i.LeaseUntil,
+			&i.HeartbeatAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.StartedAt,
+			&i.CompletedAt,
+			&i.LastErrorCode,
+			&i.LastErrorSummary,
+			&i.RowVersion,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listOutboxEvents = `-- name: ListOutboxEvents :many
+SELECT outbox_event_id, aggregate_type, aggregate_id, aggregate_version, event_type, event_schema_version, payload_json, deduplication_key, correlation_id, causation_id, priority, status, attempt_count, max_attempts, available_at, locked_by, locked_at, lease_until, next_retry_at, created_at, updated_at, published_at, last_error_code, last_error_summary, row_version
+FROM outbox_events
+WHERE ($1::text IS NULL OR status = $1::text)
+  AND ($2::text IS NULL OR event_type = $2::text)
+ORDER BY created_at DESC, outbox_event_id DESC
+LIMIT $4::integer OFFSET $3::bigint
+`
+
+type ListOutboxEventsParams struct {
+	Status     pgtype.Text
+	EventType  pgtype.Text
+	PageOffset int64
+	PageSize   int32
+}
+
+func (q *Queries) ListOutboxEvents(ctx context.Context, arg *ListOutboxEventsParams) ([]*OutboxEvent, error) {
+	rows, err := q.db.Query(ctx, listOutboxEvents,
+		arg.Status,
+		arg.EventType,
+		arg.PageOffset,
+		arg.PageSize,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*OutboxEvent{}
+	for rows.Next() {
+		var i OutboxEvent
+		if err := rows.Scan(
+			&i.OutboxEventID,
+			&i.AggregateType,
+			&i.AggregateID,
+			&i.AggregateVersion,
+			&i.EventType,
+			&i.EventSchemaVersion,
+			&i.PayloadJson,
+			&i.DeduplicationKey,
+			&i.CorrelationID,
+			&i.CausationID,
+			&i.Priority,
+			&i.Status,
+			&i.AttemptCount,
+			&i.MaxAttempts,
+			&i.AvailableAt,
+			&i.LockedBy,
+			&i.LockedAt,
+			&i.LeaseUntil,
+			&i.NextRetryAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PublishedAt,
+			&i.LastErrorCode,
+			&i.LastErrorSummary,
+			&i.RowVersion,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const markBackgroundJobDead = `-- name: MarkBackgroundJobDead :execrows
+UPDATE background_jobs
+SET status = 'DEAD',
+    locked_by = NULL,
+    locked_at = NULL,
+    lease_until = NULL,
+    heartbeat_at = NULL,
+    completed_at = $1::timestamptz,
+    last_error_code = $2::varchar,
+    last_error_summary = $3::text,
+    updated_at = $1::timestamptz,
+    row_version = row_version + 1
+WHERE background_job_id = $4::uuid
+  AND status = 'PROCESSING'
+  AND locked_by = $5::varchar
+  AND row_version = $6::bigint
+`
+
+type MarkBackgroundJobDeadParams struct {
+	Now              pgtype.Timestamptz
+	LastErrorCode    string
+	LastErrorSummary string
+	BackgroundJobID  pgtype.UUID
+	LockedBy         string
+	RowVersion       int64
+}
+
+func (q *Queries) MarkBackgroundJobDead(ctx context.Context, arg *MarkBackgroundJobDeadParams) (int64, error) {
+	result, err := q.db.Exec(ctx, markBackgroundJobDead,
+		arg.Now,
+		arg.LastErrorCode,
+		arg.LastErrorSummary,
+		arg.BackgroundJobID,
+		arg.LockedBy,
+		arg.RowVersion,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const markBackgroundJobFailed = `-- name: MarkBackgroundJobFailed :execrows
+UPDATE background_jobs
+SET status = 'FAILED',
+    locked_by = NULL,
+    locked_at = NULL,
+    lease_until = NULL,
+    heartbeat_at = NULL,
+    available_at = $1::timestamptz,
+    last_error_code = $2::varchar,
+    last_error_summary = $3::text,
+    updated_at = $4::timestamptz,
+    row_version = row_version + 1
+WHERE background_job_id = $5::uuid
+  AND status = 'PROCESSING'
+  AND locked_by = $6::varchar
+  AND row_version = $7::bigint
+  AND attempt_count < max_attempts
+`
+
+type MarkBackgroundJobFailedParams struct {
+	NextRetryAt      pgtype.Timestamptz
+	LastErrorCode    string
+	LastErrorSummary string
+	Now              pgtype.Timestamptz
+	BackgroundJobID  pgtype.UUID
+	LockedBy         string
+	RowVersion       int64
+}
+
+func (q *Queries) MarkBackgroundJobFailed(ctx context.Context, arg *MarkBackgroundJobFailedParams) (int64, error) {
+	result, err := q.db.Exec(ctx, markBackgroundJobFailed,
+		arg.NextRetryAt,
+		arg.LastErrorCode,
+		arg.LastErrorSummary,
+		arg.Now,
+		arg.BackgroundJobID,
+		arg.LockedBy,
+		arg.RowVersion,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const markBackgroundJobSuccess = `-- name: MarkBackgroundJobSuccess :execrows
+UPDATE background_jobs
+SET status = 'SUCCESS',
+    locked_by = NULL,
+    locked_at = NULL,
+    lease_until = NULL,
+    heartbeat_at = NULL,
+    completed_at = $1::timestamptz,
+    last_error_code = NULL,
+    last_error_summary = NULL,
+    updated_at = $1::timestamptz,
+    row_version = row_version + 1
+WHERE background_job_id = $2::uuid
+  AND status = 'PROCESSING'
+  AND locked_by = $3::varchar
+  AND row_version = $4::bigint
+`
+
+type MarkBackgroundJobSuccessParams struct {
+	CompletedAt     pgtype.Timestamptz
+	BackgroundJobID pgtype.UUID
+	LockedBy        string
+	RowVersion      int64
+}
+
+func (q *Queries) MarkBackgroundJobSuccess(ctx context.Context, arg *MarkBackgroundJobSuccessParams) (int64, error) {
+	result, err := q.db.Exec(ctx, markBackgroundJobSuccess,
+		arg.CompletedAt,
+		arg.BackgroundJobID,
+		arg.LockedBy,
+		arg.RowVersion,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const markOutboxEventDead = `-- name: MarkOutboxEventDead :execrows
@@ -255,6 +834,40 @@ func (q *Queries) MarkOutboxEventPublished(ctx context.Context, arg *MarkOutboxE
 	return result.RowsAffected(), nil
 }
 
+const renewBackgroundJobLease = `-- name: RenewBackgroundJobLease :execrows
+UPDATE background_jobs
+SET lease_until = $1::timestamptz,
+    heartbeat_at = $2::timestamptz,
+    updated_at = $2::timestamptz,
+    row_version = row_version + 1
+WHERE background_job_id = $3::uuid
+  AND status = 'PROCESSING'
+  AND locked_by = $4::varchar
+  AND row_version = $5::bigint
+`
+
+type RenewBackgroundJobLeaseParams struct {
+	LeaseUntil      pgtype.Timestamptz
+	Now             pgtype.Timestamptz
+	BackgroundJobID pgtype.UUID
+	LockedBy        string
+	RowVersion      int64
+}
+
+func (q *Queries) RenewBackgroundJobLease(ctx context.Context, arg *RenewBackgroundJobLeaseParams) (int64, error) {
+	result, err := q.db.Exec(ctx, renewBackgroundJobLease,
+		arg.LeaseUntil,
+		arg.Now,
+		arg.BackgroundJobID,
+		arg.LockedBy,
+		arg.RowVersion,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const renewOutboxEventLease = `-- name: RenewOutboxEventLease :execrows
 UPDATE outbox_events
 SET lease_until = $1::timestamptz,
@@ -286,4 +899,133 @@ func (q *Queries) RenewOutboxEventLease(ctx context.Context, arg *RenewOutboxEve
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const retryBackgroundJob = `-- name: RetryBackgroundJob :one
+UPDATE background_jobs
+SET status = 'PENDING',
+    attempt_count = 0,
+    available_at = $1::timestamptz,
+    locked_by = NULL,
+    locked_at = NULL,
+    lease_until = NULL,
+    heartbeat_at = NULL,
+    completed_at = NULL,
+    last_error_code = 'MANUAL_RETRY',
+    last_error_summary = $2::text,
+    updated_at = $1::timestamptz,
+    row_version = row_version + 1
+WHERE background_job_id = $3::uuid
+  AND row_version = $4::bigint
+  AND status IN ('FAILED', 'DEAD')
+RETURNING background_job_id, job_type, target_document_id, target_document_version_id, target_storage_object_id, payload_schema_version, payload_json, deduplication_key, priority, status, attempt_count, max_attempts, available_at, locked_by, locked_at, lease_until, heartbeat_at, created_at, updated_at, started_at, completed_at, last_error_code, last_error_summary, row_version
+`
+
+type RetryBackgroundJobParams struct {
+	AvailableAt     pgtype.Timestamptz
+	Reason          string
+	BackgroundJobID pgtype.UUID
+	RowVersion      int64
+}
+
+func (q *Queries) RetryBackgroundJob(ctx context.Context, arg *RetryBackgroundJobParams) (*BackgroundJob, error) {
+	row := q.db.QueryRow(ctx, retryBackgroundJob,
+		arg.AvailableAt,
+		arg.Reason,
+		arg.BackgroundJobID,
+		arg.RowVersion,
+	)
+	var i BackgroundJob
+	err := row.Scan(
+		&i.BackgroundJobID,
+		&i.JobType,
+		&i.TargetDocumentID,
+		&i.TargetDocumentVersionID,
+		&i.TargetStorageObjectID,
+		&i.PayloadSchemaVersion,
+		&i.PayloadJson,
+		&i.DeduplicationKey,
+		&i.Priority,
+		&i.Status,
+		&i.AttemptCount,
+		&i.MaxAttempts,
+		&i.AvailableAt,
+		&i.LockedBy,
+		&i.LockedAt,
+		&i.LeaseUntil,
+		&i.HeartbeatAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.StartedAt,
+		&i.CompletedAt,
+		&i.LastErrorCode,
+		&i.LastErrorSummary,
+		&i.RowVersion,
+	)
+	return &i, err
+}
+
+const retryOutboxEvent = `-- name: RetryOutboxEvent :one
+UPDATE outbox_events
+SET status = 'PENDING',
+    attempt_count = 0,
+    available_at = $1::timestamptz,
+    locked_by = NULL,
+    locked_at = NULL,
+    lease_until = NULL,
+    next_retry_at = NULL,
+    published_at = NULL,
+    last_error_code = 'MANUAL_RETRY',
+    last_error_summary = $2::text,
+    updated_at = $1::timestamptz,
+    row_version = row_version + 1
+WHERE outbox_event_id = $3::uuid
+  AND row_version = $4::bigint
+  AND status IN ('FAILED', 'DEAD')
+RETURNING outbox_event_id, aggregate_type, aggregate_id, aggregate_version, event_type, event_schema_version, payload_json, deduplication_key, correlation_id, causation_id, priority, status, attempt_count, max_attempts, available_at, locked_by, locked_at, lease_until, next_retry_at, created_at, updated_at, published_at, last_error_code, last_error_summary, row_version
+`
+
+type RetryOutboxEventParams struct {
+	AvailableAt   pgtype.Timestamptz
+	Reason        string
+	OutboxEventID pgtype.UUID
+	RowVersion    int64
+}
+
+func (q *Queries) RetryOutboxEvent(ctx context.Context, arg *RetryOutboxEventParams) (*OutboxEvent, error) {
+	row := q.db.QueryRow(ctx, retryOutboxEvent,
+		arg.AvailableAt,
+		arg.Reason,
+		arg.OutboxEventID,
+		arg.RowVersion,
+	)
+	var i OutboxEvent
+	err := row.Scan(
+		&i.OutboxEventID,
+		&i.AggregateType,
+		&i.AggregateID,
+		&i.AggregateVersion,
+		&i.EventType,
+		&i.EventSchemaVersion,
+		&i.PayloadJson,
+		&i.DeduplicationKey,
+		&i.CorrelationID,
+		&i.CausationID,
+		&i.Priority,
+		&i.Status,
+		&i.AttemptCount,
+		&i.MaxAttempts,
+		&i.AvailableAt,
+		&i.LockedBy,
+		&i.LockedAt,
+		&i.LeaseUntil,
+		&i.NextRetryAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.PublishedAt,
+		&i.LastErrorCode,
+		&i.LastErrorSummary,
+		&i.RowVersion,
+	)
+	return &i, err
 }

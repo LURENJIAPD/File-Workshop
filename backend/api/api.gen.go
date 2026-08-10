@@ -145,6 +145,66 @@ func (e AuthenticatedUserSystemRole) Valid() bool {
 	}
 }
 
+// Defines values for BackgroundJobStatus.
+const (
+	BackgroundJobStatusCANCELLED  BackgroundJobStatus = "CANCELLED"
+	BackgroundJobStatusDEAD       BackgroundJobStatus = "DEAD"
+	BackgroundJobStatusFAILED     BackgroundJobStatus = "FAILED"
+	BackgroundJobStatusPENDING    BackgroundJobStatus = "PENDING"
+	BackgroundJobStatusPROCESSING BackgroundJobStatus = "PROCESSING"
+	BackgroundJobStatusSKIPPED    BackgroundJobStatus = "SKIPPED"
+	BackgroundJobStatusSUCCESS    BackgroundJobStatus = "SUCCESS"
+)
+
+// Valid indicates whether the value is a known member of the BackgroundJobStatus enum.
+func (e BackgroundJobStatus) Valid() bool {
+	switch e {
+	case BackgroundJobStatusCANCELLED:
+		return true
+	case BackgroundJobStatusDEAD:
+		return true
+	case BackgroundJobStatusFAILED:
+		return true
+	case BackgroundJobStatusPENDING:
+		return true
+	case BackgroundJobStatusPROCESSING:
+		return true
+	case BackgroundJobStatusSKIPPED:
+		return true
+	case BackgroundJobStatusSUCCESS:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BackgroundOutboxStatus.
+const (
+	BackgroundOutboxStatusDEAD       BackgroundOutboxStatus = "DEAD"
+	BackgroundOutboxStatusFAILED     BackgroundOutboxStatus = "FAILED"
+	BackgroundOutboxStatusPENDING    BackgroundOutboxStatus = "PENDING"
+	BackgroundOutboxStatusPROCESSING BackgroundOutboxStatus = "PROCESSING"
+	BackgroundOutboxStatusPUBLISHED  BackgroundOutboxStatus = "PUBLISHED"
+)
+
+// Valid indicates whether the value is a known member of the BackgroundOutboxStatus enum.
+func (e BackgroundOutboxStatus) Valid() bool {
+	switch e {
+	case BackgroundOutboxStatusDEAD:
+		return true
+	case BackgroundOutboxStatusFAILED:
+		return true
+	case BackgroundOutboxStatusPENDING:
+		return true
+	case BackgroundOutboxStatusPROCESSING:
+		return true
+	case BackgroundOutboxStatusPUBLISHED:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ComponentStatus.
 const (
 	ComponentStatusDisabled    ComponentStatus = "disabled"
@@ -895,6 +955,99 @@ type AuthenticatedUser struct {
 // AuthenticatedUserSystemRole defines model for AuthenticatedUser.SystemRole.
 type AuthenticatedUserSystemRole string
 
+// BackgroundJob defines model for BackgroundJob.
+type BackgroundJob struct {
+	AttemptCount            int                    `json:"attemptCount"`
+	AvailableAt             time.Time              `json:"availableAt"`
+	BackgroundJobId         openapi_types.UUID     `json:"backgroundJobId"`
+	CompletedAt             *time.Time             `json:"completedAt,omitempty"`
+	CreatedAt               time.Time              `json:"createdAt"`
+	DeduplicationKey        string                 `json:"deduplicationKey"`
+	HeartbeatAt             *time.Time             `json:"heartbeatAt,omitempty"`
+	JobType                 string                 `json:"jobType"`
+	LastErrorCode           *string                `json:"lastErrorCode,omitempty"`
+	LastErrorSummary        *string                `json:"lastErrorSummary,omitempty"`
+	LeaseUntil              *time.Time             `json:"leaseUntil,omitempty"`
+	LockedAt                *time.Time             `json:"lockedAt,omitempty"`
+	LockedBy                *string                `json:"lockedBy,omitempty"`
+	MaxAttempts             int                    `json:"maxAttempts"`
+	Payload                 map[string]interface{} `json:"payload"`
+	PayloadSchemaVersion    int                    `json:"payloadSchemaVersion"`
+	Priority                int                    `json:"priority"`
+	RowVersion              int64                  `json:"rowVersion"`
+	StartedAt               *time.Time             `json:"startedAt,omitempty"`
+	Status                  BackgroundJobStatus    `json:"status"`
+	TargetDocumentId        *openapi_types.UUID    `json:"targetDocumentId,omitempty"`
+	TargetDocumentVersionId *openapi_types.UUID    `json:"targetDocumentVersionId,omitempty"`
+	TargetStorageObjectId   *openapi_types.UUID    `json:"targetStorageObjectId,omitempty"`
+	UpdatedAt               time.Time              `json:"updatedAt"`
+}
+
+// BackgroundJobListResponse defines model for BackgroundJobListResponse.
+type BackgroundJobListResponse struct {
+	Items     []BackgroundJob `json:"items"`
+	Page      Page            `json:"page"`
+	PageSize  PageSize        `json:"pageSize"`
+	RequestId string          `json:"requestId"`
+	Total     int64           `json:"total"`
+}
+
+// BackgroundJobResponse defines model for BackgroundJobResponse.
+type BackgroundJobResponse struct {
+	Job       BackgroundJob `json:"job"`
+	RequestId string        `json:"requestId"`
+}
+
+// BackgroundJobStatus defines model for BackgroundJobStatus.
+type BackgroundJobStatus string
+
+// BackgroundOutboxEvent defines model for BackgroundOutboxEvent.
+type BackgroundOutboxEvent struct {
+	AggregateId        openapi_types.UUID     `json:"aggregateId"`
+	AggregateType      string                 `json:"aggregateType"`
+	AggregateVersion   int64                  `json:"aggregateVersion"`
+	AttemptCount       int                    `json:"attemptCount"`
+	AvailableAt        time.Time              `json:"availableAt"`
+	CausationId        *openapi_types.UUID    `json:"causationId,omitempty"`
+	CorrelationId      *openapi_types.UUID    `json:"correlationId,omitempty"`
+	CreatedAt          time.Time              `json:"createdAt"`
+	DeduplicationKey   string                 `json:"deduplicationKey"`
+	EventSchemaVersion int                    `json:"eventSchemaVersion"`
+	EventType          string                 `json:"eventType"`
+	LastErrorCode      *string                `json:"lastErrorCode,omitempty"`
+	LastErrorSummary   *string                `json:"lastErrorSummary,omitempty"`
+	LeaseUntil         *time.Time             `json:"leaseUntil,omitempty"`
+	LockedAt           *time.Time             `json:"lockedAt,omitempty"`
+	LockedBy           *string                `json:"lockedBy,omitempty"`
+	MaxAttempts        int                    `json:"maxAttempts"`
+	NextRetryAt        *time.Time             `json:"nextRetryAt,omitempty"`
+	OutboxEventId      openapi_types.UUID     `json:"outboxEventId"`
+	Payload            map[string]interface{} `json:"payload"`
+	Priority           int                    `json:"priority"`
+	PublishedAt        *time.Time             `json:"publishedAt,omitempty"`
+	RowVersion         int64                  `json:"rowVersion"`
+	Status             BackgroundOutboxStatus `json:"status"`
+	UpdatedAt          time.Time              `json:"updatedAt"`
+}
+
+// BackgroundOutboxEventListResponse defines model for BackgroundOutboxEventListResponse.
+type BackgroundOutboxEventListResponse struct {
+	Items     []BackgroundOutboxEvent `json:"items"`
+	Page      Page                    `json:"page"`
+	PageSize  PageSize                `json:"pageSize"`
+	RequestId string                  `json:"requestId"`
+	Total     int64                   `json:"total"`
+}
+
+// BackgroundOutboxEventResponse defines model for BackgroundOutboxEventResponse.
+type BackgroundOutboxEventResponse struct {
+	Event     BackgroundOutboxEvent `json:"event"`
+	RequestId string                `json:"requestId"`
+}
+
+// BackgroundOutboxStatus defines model for BackgroundOutboxStatus.
+type BackgroundOutboxStatus string
+
 // BatchPermissionEvaluationRequest defines model for BatchPermissionEvaluationRequest.
 type BatchPermissionEvaluationRequest struct {
 	Items []PermissionEvaluationRequest `json:"items"`
@@ -1398,6 +1551,12 @@ type ResetUserPasswordRequest struct {
 	RowVersion int64  `json:"rowVersion"`
 }
 
+// RetryBackgroundItemRequest defines model for RetryBackgroundItemRequest.
+type RetryBackgroundItemRequest struct {
+	Reason     string `json:"reason"`
+	RowVersion int64  `json:"rowVersion"`
+}
+
 // RevokeAdminDelegationRequest defines model for RevokeAdminDelegationRequest.
 type RevokeAdminDelegationRequest struct {
 	Reason     string `json:"reason"`
@@ -1622,6 +1781,9 @@ type UserStateChangeRequest struct {
 // UserStatus defines model for UserStatus.
 type UserStatus string
 
+// BackgroundJobIdPath defines model for BackgroundJobIdPath.
+type BackgroundJobIdPath = openapi_types.UUID
+
 // DelegationIdPath defines model for DelegationIdPath.
 type DelegationIdPath = openapi_types.UUID
 
@@ -1639,6 +1801,9 @@ type MembershipIdPath = openapi_types.UUID
 
 // OrganizationIdPath defines model for OrganizationIdPath.
 type OrganizationIdPath = openapi_types.UUID
+
+// OutboxEventIdPath defines model for OutboxEventIdPath.
+type OutboxEventIdPath = openapi_types.UUID
 
 // PageQuery defines model for PageQuery.
 type PageQuery = int
@@ -1706,6 +1871,28 @@ type ListAdminDelegationsParams struct {
 type CreateAdminDelegationParams struct {
 	// IdempotencyKey 可重试写请求的稳定幂等键。
 	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
+}
+
+// ListBackgroundJobsParams defines parameters for ListBackgroundJobs.
+type ListBackgroundJobsParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize *PageSizeQuery       `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+	Status   *BackgroundJobStatus `form:"status,omitempty" json:"status,omitempty"`
+	JobType  *string              `form:"jobType,omitempty" json:"jobType,omitempty"`
+}
+
+// ListBackgroundOutboxEventsParams defines parameters for ListBackgroundOutboxEvents.
+type ListBackgroundOutboxEventsParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize  *PageSizeQuery          `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+	Status    *BackgroundOutboxStatus `form:"status,omitempty" json:"status,omitempty"`
+	EventType *string                 `form:"eventType,omitempty" json:"eventType,omitempty"`
 }
 
 // ListOrganizationChangePlansParams defines parameters for ListOrganizationChangePlans.
@@ -1880,6 +2067,12 @@ type EvaluateAdminDelegationJSONRequestBody = AdminDelegationEvaluationRequest
 // RevokeAdminDelegationJSONRequestBody defines body for RevokeAdminDelegation for application/json ContentType.
 type RevokeAdminDelegationJSONRequestBody = RevokeAdminDelegationRequest
 
+// RetryBackgroundJobJSONRequestBody defines body for RetryBackgroundJob for application/json ContentType.
+type RetryBackgroundJobJSONRequestBody = RetryBackgroundItemRequest
+
+// RetryBackgroundOutboxEventJSONRequestBody defines body for RetryBackgroundOutboxEvent for application/json ContentType.
+type RetryBackgroundOutboxEventJSONRequestBody = RetryBackgroundItemRequest
+
 // CreateOrganizationChangePlanJSONRequestBody defines body for CreateOrganizationChangePlan for application/json ContentType.
 type CreateOrganizationChangePlanJSONRequestBody = CreateOrganizationChangePlanRequest
 
@@ -1999,6 +2192,18 @@ type ServerInterface interface {
 	// RevokeAdminDelegation 撤销管理委派
 	// (POST /api/v1/admin-delegations/{delegationId}/revoke)
 	RevokeAdminDelegation(c *gin.Context, delegationId DelegationIdPath)
+	// ListBackgroundJobs List background jobs for operations.
+	// (GET /api/v1/admin/background/jobs)
+	ListBackgroundJobs(c *gin.Context, params ListBackgroundJobsParams)
+	// RetryBackgroundJob Retry a failed or dead background job.
+	// (POST /api/v1/admin/background/jobs/{backgroundJobId}/retry)
+	RetryBackgroundJob(c *gin.Context, backgroundJobId BackgroundJobIdPath)
+	// ListBackgroundOutboxEvents List Outbox events for operations.
+	// (GET /api/v1/admin/background/outbox-events)
+	ListBackgroundOutboxEvents(c *gin.Context, params ListBackgroundOutboxEventsParams)
+	// RetryBackgroundOutboxEvent Retry a failed or dead Outbox event.
+	// (POST /api/v1/admin/background/outbox-events/{outboxEventId}/retry)
+	RetryBackgroundOutboxEvent(c *gin.Context, outboxEventId OutboxEventIdPath)
 	// ListOrganizationChangePlans 分页查询组织重组计划
 	// (GET /api/v1/admin/organization-change-plans)
 	ListOrganizationChangePlans(c *gin.Context, params ListOrganizationChangePlansParams)
@@ -2336,6 +2541,158 @@ func (siw *ServerInterfaceWrapper) RevokeAdminDelegation(c *gin.Context) {
 	}
 
 	siw.Handler.RevokeAdminDelegation(c, delegationId)
+}
+
+// ListBackgroundJobs operation middleware
+func (siw *ServerInterfaceWrapper) ListBackgroundJobs(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListBackgroundJobsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", c.Request.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter status: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "jobType" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "jobType", c.Request.URL.Query(), &params.JobType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter jobType: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListBackgroundJobs(c, params)
+}
+
+// RetryBackgroundJob operation middleware
+func (siw *ServerInterfaceWrapper) RetryBackgroundJob(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "backgroundJobId" -------------
+	var backgroundJobId BackgroundJobIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "backgroundJobId", c.Param("backgroundJobId"), &backgroundJobId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter backgroundJobId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.RetryBackgroundJob(c, backgroundJobId)
+}
+
+// ListBackgroundOutboxEvents operation middleware
+func (siw *ServerInterfaceWrapper) ListBackgroundOutboxEvents(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListBackgroundOutboxEventsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", c.Request.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter status: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "eventType" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "eventType", c.Request.URL.Query(), &params.EventType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter eventType: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListBackgroundOutboxEvents(c, params)
+}
+
+// RetryBackgroundOutboxEvent operation middleware
+func (siw *ServerInterfaceWrapper) RetryBackgroundOutboxEvent(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "outboxEventId" -------------
+	var outboxEventId OutboxEventIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "outboxEventId", c.Param("outboxEventId"), &outboxEventId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter outboxEventId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.RetryBackgroundOutboxEvent(c, outboxEventId)
 }
 
 // ListOrganizationChangePlans operation middleware
@@ -4230,6 +4587,10 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/api/v1/permissions/batch-evaluate", wrapper.BatchEvaluatePermissions)
 	router.POST(options.BaseURL+"/api/v1/permissions/resources/:resourceType/:resourceId/break-inheritance", wrapper.BreakPermissionInheritance)
 	router.POST(options.BaseURL+"/api/v1/permissions/resources/:resourceType/:resourceId/restore-inheritance", wrapper.RestorePermissionInheritance)
+	router.GET(options.BaseURL+"/api/v1/admin/background/outbox-events", wrapper.ListBackgroundOutboxEvents)
+	router.POST(options.BaseURL+"/api/v1/admin/background/outbox-events/:outboxEventId/retry", wrapper.RetryBackgroundOutboxEvent)
+	router.GET(options.BaseURL+"/api/v1/admin/background/jobs", wrapper.ListBackgroundJobs)
+	router.POST(options.BaseURL+"/api/v1/admin/background/jobs/:backgroundJobId/retry", wrapper.RetryBackgroundJob)
 }
 
 type AccountLockedResponseHeaders struct {
@@ -4684,6 +5045,368 @@ func (response RevokeAdminDelegation404JSONResponse) VisitRevokeAdminDelegationR
 type RevokeAdminDelegation409JSONResponse struct{ ConflictJSONResponse }
 
 func (response RevokeAdminDelegation409JSONResponse) VisitRevokeAdminDelegationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBackgroundJobsRequestObject struct {
+	Params ListBackgroundJobsParams
+}
+
+type ListBackgroundJobsResponseObject interface {
+	VisitListBackgroundJobsResponse(w http.ResponseWriter) error
+}
+
+type ListBackgroundJobs200JSONResponse BackgroundJobListResponse
+
+func (response ListBackgroundJobs200JSONResponse) VisitListBackgroundJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBackgroundJobs400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListBackgroundJobs400JSONResponse) VisitListBackgroundJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBackgroundJobs401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListBackgroundJobs401JSONResponse) VisitListBackgroundJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBackgroundJobs403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListBackgroundJobs403JSONResponse) VisitListBackgroundJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RetryBackgroundJobRequestObject struct {
+	BackgroundJobId BackgroundJobIdPath `json:"backgroundJobId"`
+	Body            *RetryBackgroundJobJSONRequestBody
+}
+
+type RetryBackgroundJobResponseObject interface {
+	VisitRetryBackgroundJobResponse(w http.ResponseWriter) error
+}
+
+type RetryBackgroundJob200JSONResponse BackgroundJobResponse
+
+func (response RetryBackgroundJob200JSONResponse) VisitRetryBackgroundJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RetryBackgroundJob400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response RetryBackgroundJob400JSONResponse) VisitRetryBackgroundJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RetryBackgroundJob401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response RetryBackgroundJob401JSONResponse) VisitRetryBackgroundJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RetryBackgroundJob403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RetryBackgroundJob403JSONResponse) VisitRetryBackgroundJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RetryBackgroundJob404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response RetryBackgroundJob404JSONResponse) VisitRetryBackgroundJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RetryBackgroundJob409JSONResponse struct{ ConflictJSONResponse }
+
+func (response RetryBackgroundJob409JSONResponse) VisitRetryBackgroundJobResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBackgroundOutboxEventsRequestObject struct {
+	Params ListBackgroundOutboxEventsParams
+}
+
+type ListBackgroundOutboxEventsResponseObject interface {
+	VisitListBackgroundOutboxEventsResponse(w http.ResponseWriter) error
+}
+
+type ListBackgroundOutboxEvents200JSONResponse BackgroundOutboxEventListResponse
+
+func (response ListBackgroundOutboxEvents200JSONResponse) VisitListBackgroundOutboxEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBackgroundOutboxEvents400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListBackgroundOutboxEvents400JSONResponse) VisitListBackgroundOutboxEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBackgroundOutboxEvents401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListBackgroundOutboxEvents401JSONResponse) VisitListBackgroundOutboxEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBackgroundOutboxEvents403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListBackgroundOutboxEvents403JSONResponse) VisitListBackgroundOutboxEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RetryBackgroundOutboxEventRequestObject struct {
+	OutboxEventId OutboxEventIdPath `json:"outboxEventId"`
+	Body          *RetryBackgroundOutboxEventJSONRequestBody
+}
+
+type RetryBackgroundOutboxEventResponseObject interface {
+	VisitRetryBackgroundOutboxEventResponse(w http.ResponseWriter) error
+}
+
+type RetryBackgroundOutboxEvent200JSONResponse BackgroundOutboxEventResponse
+
+func (response RetryBackgroundOutboxEvent200JSONResponse) VisitRetryBackgroundOutboxEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RetryBackgroundOutboxEvent400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response RetryBackgroundOutboxEvent400JSONResponse) VisitRetryBackgroundOutboxEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RetryBackgroundOutboxEvent401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response RetryBackgroundOutboxEvent401JSONResponse) VisitRetryBackgroundOutboxEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RetryBackgroundOutboxEvent403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RetryBackgroundOutboxEvent403JSONResponse) VisitRetryBackgroundOutboxEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RetryBackgroundOutboxEvent404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response RetryBackgroundOutboxEvent404JSONResponse) VisitRetryBackgroundOutboxEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RetryBackgroundOutboxEvent409JSONResponse struct{ ConflictJSONResponse }
+
+func (response RetryBackgroundOutboxEvent409JSONResponse) VisitRetryBackgroundOutboxEventResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -9836,6 +10559,18 @@ type StrictServerInterface interface {
 	// RevokeAdminDelegation 撤销管理委派
 	// (POST /api/v1/admin-delegations/{delegationId}/revoke)
 	RevokeAdminDelegation(ctx context.Context, request RevokeAdminDelegationRequestObject) (RevokeAdminDelegationResponseObject, error)
+	// ListBackgroundJobs List background jobs for operations.
+	// (GET /api/v1/admin/background/jobs)
+	ListBackgroundJobs(ctx context.Context, request ListBackgroundJobsRequestObject) (ListBackgroundJobsResponseObject, error)
+	// RetryBackgroundJob Retry a failed or dead background job.
+	// (POST /api/v1/admin/background/jobs/{backgroundJobId}/retry)
+	RetryBackgroundJob(ctx context.Context, request RetryBackgroundJobRequestObject) (RetryBackgroundJobResponseObject, error)
+	// ListBackgroundOutboxEvents List Outbox events for operations.
+	// (GET /api/v1/admin/background/outbox-events)
+	ListBackgroundOutboxEvents(ctx context.Context, request ListBackgroundOutboxEventsRequestObject) (ListBackgroundOutboxEventsResponseObject, error)
+	// RetryBackgroundOutboxEvent Retry a failed or dead Outbox event.
+	// (POST /api/v1/admin/background/outbox-events/{outboxEventId}/retry)
+	RetryBackgroundOutboxEvent(ctx context.Context, request RetryBackgroundOutboxEventRequestObject) (RetryBackgroundOutboxEventResponseObject, error)
 	// ListOrganizationChangePlans 分页查询组织重组计划
 	// (GET /api/v1/admin/organization-change-plans)
 	ListOrganizationChangePlans(ctx context.Context, request ListOrganizationChangePlansRequestObject) (ListOrganizationChangePlansResponseObject, error)
@@ -10208,6 +10943,124 @@ func (sh *strictHandler) RevokeAdminDelegation(ctx *gin.Context, delegationId De
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(RevokeAdminDelegationResponseObject); ok {
 		if err := validResponse.VisitRevokeAdminDelegationResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListBackgroundJobs operation middleware
+func (sh *strictHandler) ListBackgroundJobs(ctx *gin.Context, params ListBackgroundJobsParams) {
+	var request ListBackgroundJobsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListBackgroundJobs(ctx, request.(ListBackgroundJobsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListBackgroundJobs")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListBackgroundJobsResponseObject); ok {
+		if err := validResponse.VisitListBackgroundJobsResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RetryBackgroundJob operation middleware
+func (sh *strictHandler) RetryBackgroundJob(ctx *gin.Context, backgroundJobId BackgroundJobIdPath) {
+	var request RetryBackgroundJobRequestObject
+
+	request.BackgroundJobId = backgroundJobId
+
+	var body RetryBackgroundJobJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RetryBackgroundJob(ctx, request.(RetryBackgroundJobRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RetryBackgroundJob")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(RetryBackgroundJobResponseObject); ok {
+		if err := validResponse.VisitRetryBackgroundJobResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListBackgroundOutboxEvents operation middleware
+func (sh *strictHandler) ListBackgroundOutboxEvents(ctx *gin.Context, params ListBackgroundOutboxEventsParams) {
+	var request ListBackgroundOutboxEventsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListBackgroundOutboxEvents(ctx, request.(ListBackgroundOutboxEventsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListBackgroundOutboxEvents")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListBackgroundOutboxEventsResponseObject); ok {
+		if err := validResponse.VisitListBackgroundOutboxEventsResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RetryBackgroundOutboxEvent operation middleware
+func (sh *strictHandler) RetryBackgroundOutboxEvent(ctx *gin.Context, outboxEventId OutboxEventIdPath) {
+	var request RetryBackgroundOutboxEventRequestObject
+
+	request.OutboxEventId = outboxEventId
+
+	var body RetryBackgroundOutboxEventJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RetryBackgroundOutboxEvent(ctx, request.(RetryBackgroundOutboxEventRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RetryBackgroundOutboxEvent")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(RetryBackgroundOutboxEventResponseObject); ok {
+		if err := validResponse.VisitRetryBackgroundOutboxEventResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

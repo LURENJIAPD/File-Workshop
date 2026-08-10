@@ -8,6 +8,9 @@ import (
 	"net/http"
 	"time"
 
+	backgroundapplication "file-workshop/backend/internal/modules/background/application"
+	backgroundrepository "file-workshop/backend/internal/modules/background/repository"
+	backgroundtransport "file-workshop/backend/internal/modules/background/transport"
 	filesapplication "file-workshop/backend/internal/modules/files/application"
 	filesrepository "file-workshop/backend/internal/modules/files/repository"
 	filestransport "file-workshop/backend/internal/modules/files/transport"
@@ -107,7 +110,10 @@ func RunServer(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 	filesRepository := filesrepository.NewPostgreSQL(postgresPool)
 	filesService := filesapplication.NewService(filesRepository, filesRepository, permissionsService, time.Now)
 	filesHandler := filestransport.NewHandler(filesService, identityService, cfg.Auth)
-	router := httpserver.NewRouter(httpserver.NewAPIHandler(healthHandler, identityHandler, usersHandler, organizationsHandler, permissionsHandler, filesHandler), logger, cfg.Auth.AllowedOrigins)
+	backgroundRepository := backgroundrepository.NewPostgreSQL(postgresPool)
+	backgroundService := backgroundapplication.NewService(backgroundRepository, backgroundRepository, time.Now)
+	backgroundHandler := backgroundtransport.NewHandler(backgroundService, identityService, cfg.Auth)
+	router := httpserver.NewRouter(httpserver.NewAPIHandler(healthHandler, identityHandler, usersHandler, organizationsHandler, permissionsHandler, filesHandler, backgroundHandler), logger, cfg.Auth.AllowedOrigins)
 	server := httpserver.NewServer(cfg.HTTP, router)
 
 	serverErrors := make(chan error, 1)

@@ -28,6 +28,33 @@ type AdminDelegation struct {
 	RowVersion              int64
 }
 
+type BackgroundJob struct {
+	BackgroundJobID         pgtype.UUID
+	JobType                 string
+	TargetDocumentID        pgtype.UUID
+	TargetDocumentVersionID pgtype.UUID
+	TargetStorageObjectID   pgtype.UUID
+	PayloadSchemaVersion    int32
+	PayloadJson             []byte
+	DeduplicationKey        string
+	Priority                int32
+	Status                  string
+	AttemptCount            int32
+	MaxAttempts             int32
+	AvailableAt             pgtype.Timestamptz
+	LockedBy                pgtype.Text
+	LockedAt                pgtype.Timestamptz
+	LeaseUntil              pgtype.Timestamptz
+	HeartbeatAt             pgtype.Timestamptz
+	CreatedAt               pgtype.Timestamptz
+	UpdatedAt               pgtype.Timestamptz
+	StartedAt               pgtype.Timestamptz
+	CompletedAt             pgtype.Timestamptz
+	LastErrorCode           pgtype.Text
+	LastErrorSummary        pgtype.Text
+	RowVersion              int64
+}
+
 type Document struct {
 	DocumentID            pgtype.UUID
 	OwnerUserID           pgtype.UUID

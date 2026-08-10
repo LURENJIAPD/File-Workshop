@@ -91,3 +91,201 @@ SELECT status, count(*)::bigint AS count
 FROM outbox_events
 GROUP BY status
 ORDER BY status;
+
+-- name: CountOutboxEvents :one
+SELECT count(*)::bigint
+FROM outbox_events
+WHERE (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status')::text)
+  AND (sqlc.narg('event_type')::text IS NULL OR event_type = sqlc.narg('event_type')::text);
+
+-- name: ListOutboxEvents :many
+SELECT *
+FROM outbox_events
+WHERE (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status')::text)
+  AND (sqlc.narg('event_type')::text IS NULL OR event_type = sqlc.narg('event_type')::text)
+ORDER BY created_at DESC, outbox_event_id DESC
+LIMIT sqlc.arg('page_size')::integer OFFSET sqlc.arg('page_offset')::bigint;
+
+-- name: GetOutboxEvent :one
+SELECT *
+FROM outbox_events
+WHERE outbox_event_id = sqlc.arg('outbox_event_id')::uuid;
+
+-- name: RetryOutboxEvent :one
+UPDATE outbox_events
+SET status = 'PENDING',
+    attempt_count = 0,
+    available_at = sqlc.arg('available_at')::timestamptz,
+    locked_by = NULL,
+    locked_at = NULL,
+    lease_until = NULL,
+    next_retry_at = NULL,
+    published_at = NULL,
+    last_error_code = 'MANUAL_RETRY',
+    last_error_summary = sqlc.arg('reason')::text,
+    updated_at = sqlc.arg('available_at')::timestamptz,
+    row_version = row_version + 1
+WHERE outbox_event_id = sqlc.arg('outbox_event_id')::uuid
+  AND row_version = sqlc.arg('row_version')::bigint
+  AND status IN ('FAILED', 'DEAD')
+RETURNING *;
+
+-- name: InsertBackgroundJob :one
+INSERT INTO background_jobs (
+  background_job_id, job_type, target_document_id, target_document_version_id,
+  target_storage_object_id, payload_schema_version, payload_json,
+  deduplication_key, priority, max_attempts, available_at, created_at, updated_at
+) VALUES (
+  sqlc.arg('background_job_id')::uuid,
+  sqlc.arg('job_type')::varchar,
+  sqlc.narg('target_document_id')::uuid,
+  sqlc.narg('target_document_version_id')::uuid,
+  sqlc.narg('target_storage_object_id')::uuid,
+  sqlc.arg('payload_schema_version')::integer,
+  sqlc.arg('payload_json')::jsonb,
+  sqlc.arg('deduplication_key')::varchar,
+  sqlc.arg('priority')::integer,
+  sqlc.arg('max_attempts')::integer,
+  sqlc.arg('available_at')::timestamptz,
+  sqlc.arg('created_at')::timestamptz,
+  sqlc.arg('created_at')::timestamptz
+)
+ON CONFLICT (job_type, deduplication_key) WHERE status IN ('PENDING', 'PROCESSING', 'FAILED')
+DO UPDATE SET updated_at = EXCLUDED.updated_at
+RETURNING *;
+
+-- name: ClaimBackgroundJobsByType :many
+WITH candidates AS (
+  SELECT background_job_id
+  FROM background_jobs
+  WHERE job_type = sqlc.arg('job_type')::varchar
+    AND attempt_count < max_attempts
+    AND (
+      (status = 'PENDING' AND available_at <= sqlc.arg('now')::timestamptz)
+      OR (status = 'FAILED' AND available_at <= sqlc.arg('now')::timestamptz)
+      OR (status = 'PROCESSING' AND lease_until <= sqlc.arg('now')::timestamptz)
+    )
+  ORDER BY priority DESC, available_at, background_job_id
+  LIMIT sqlc.arg('batch_size')::integer
+  FOR UPDATE SKIP LOCKED
+)
+UPDATE background_jobs j
+SET status = 'PROCESSING',
+    attempt_count = j.attempt_count + 1,
+    locked_by = sqlc.arg('locked_by')::varchar,
+    locked_at = sqlc.arg('now')::timestamptz,
+    lease_until = sqlc.arg('lease_until')::timestamptz,
+    heartbeat_at = sqlc.arg('now')::timestamptz,
+    started_at = COALESCE(j.started_at, sqlc.arg('now')::timestamptz),
+    updated_at = sqlc.arg('now')::timestamptz,
+    row_version = j.row_version + 1
+FROM candidates c
+WHERE j.background_job_id = c.background_job_id
+RETURNING j.*;
+
+-- name: MarkBackgroundJobSuccess :execrows
+UPDATE background_jobs
+SET status = 'SUCCESS',
+    locked_by = NULL,
+    locked_at = NULL,
+    lease_until = NULL,
+    heartbeat_at = NULL,
+    completed_at = sqlc.arg('completed_at')::timestamptz,
+    last_error_code = NULL,
+    last_error_summary = NULL,
+    updated_at = sqlc.arg('completed_at')::timestamptz,
+    row_version = row_version + 1
+WHERE background_job_id = sqlc.arg('background_job_id')::uuid
+  AND status = 'PROCESSING'
+  AND locked_by = sqlc.arg('locked_by')::varchar
+  AND row_version = sqlc.arg('row_version')::bigint;
+
+-- name: MarkBackgroundJobFailed :execrows
+UPDATE background_jobs
+SET status = 'FAILED',
+    locked_by = NULL,
+    locked_at = NULL,
+    lease_until = NULL,
+    heartbeat_at = NULL,
+    available_at = sqlc.arg('next_retry_at')::timestamptz,
+    last_error_code = sqlc.arg('last_error_code')::varchar,
+    last_error_summary = sqlc.arg('last_error_summary')::text,
+    updated_at = sqlc.arg('now')::timestamptz,
+    row_version = row_version + 1
+WHERE background_job_id = sqlc.arg('background_job_id')::uuid
+  AND status = 'PROCESSING'
+  AND locked_by = sqlc.arg('locked_by')::varchar
+  AND row_version = sqlc.arg('row_version')::bigint
+  AND attempt_count < max_attempts;
+
+-- name: MarkBackgroundJobDead :execrows
+UPDATE background_jobs
+SET status = 'DEAD',
+    locked_by = NULL,
+    locked_at = NULL,
+    lease_until = NULL,
+    heartbeat_at = NULL,
+    completed_at = sqlc.arg('now')::timestamptz,
+    last_error_code = sqlc.arg('last_error_code')::varchar,
+    last_error_summary = sqlc.arg('last_error_summary')::text,
+    updated_at = sqlc.arg('now')::timestamptz,
+    row_version = row_version + 1
+WHERE background_job_id = sqlc.arg('background_job_id')::uuid
+  AND status = 'PROCESSING'
+  AND locked_by = sqlc.arg('locked_by')::varchar
+  AND row_version = sqlc.arg('row_version')::bigint;
+
+-- name: RenewBackgroundJobLease :execrows
+UPDATE background_jobs
+SET lease_until = sqlc.arg('lease_until')::timestamptz,
+    heartbeat_at = sqlc.arg('now')::timestamptz,
+    updated_at = sqlc.arg('now')::timestamptz,
+    row_version = row_version + 1
+WHERE background_job_id = sqlc.arg('background_job_id')::uuid
+  AND status = 'PROCESSING'
+  AND locked_by = sqlc.arg('locked_by')::varchar
+  AND row_version = sqlc.arg('row_version')::bigint;
+
+-- name: CountBackgroundJobs :one
+SELECT count(*)::bigint
+FROM background_jobs
+WHERE (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status')::text)
+  AND (sqlc.narg('job_type')::text IS NULL OR job_type = sqlc.narg('job_type')::text);
+
+-- name: ListBackgroundJobs :many
+SELECT *
+FROM background_jobs
+WHERE (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status')::text)
+  AND (sqlc.narg('job_type')::text IS NULL OR job_type = sqlc.narg('job_type')::text)
+ORDER BY created_at DESC, background_job_id DESC
+LIMIT sqlc.arg('page_size')::integer OFFSET sqlc.arg('page_offset')::bigint;
+
+-- name: GetBackgroundJob :one
+SELECT *
+FROM background_jobs
+WHERE background_job_id = sqlc.arg('background_job_id')::uuid;
+
+-- name: CountBackgroundJobsByStatus :many
+SELECT status, count(*)::bigint AS count
+FROM background_jobs
+GROUP BY status
+ORDER BY status;
+
+-- name: RetryBackgroundJob :one
+UPDATE background_jobs
+SET status = 'PENDING',
+    attempt_count = 0,
+    available_at = sqlc.arg('available_at')::timestamptz,
+    locked_by = NULL,
+    locked_at = NULL,
+    lease_until = NULL,
+    heartbeat_at = NULL,
+    completed_at = NULL,
+    last_error_code = 'MANUAL_RETRY',
+    last_error_summary = sqlc.arg('reason')::text,
+    updated_at = sqlc.arg('available_at')::timestamptz,
+    row_version = row_version + 1
+WHERE background_job_id = sqlc.arg('background_job_id')::uuid
+  AND row_version = sqlc.arg('row_version')::bigint
+  AND status IN ('FAILED', 'DEAD')
+RETURNING *;

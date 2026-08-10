@@ -24,7 +24,7 @@ func RunWorker(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 	defer postgresPool.Close()
 
 	repository := backgroundrepository.NewPostgreSQL(postgresPool)
-	runner, err := backgroundapplication.NewRunner(repository, nil, backgroundapplication.RunnerConfig{
+	runnerConfig := backgroundapplication.RunnerConfig{
 		WorkerID:            workerID(cfg),
 		Concurrency:         cfg.Worker.Concurrency,
 		BatchSize:           int32(cfg.Worker.BatchSize),
@@ -33,16 +33,27 @@ func RunWorker(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 		HandlerTimeout:      cfg.Worker.HandlerTimeout,
 		RetryInitialBackoff: cfg.Worker.RetryInitialBackoff,
 		RetryMaxBackoff:     cfg.Worker.RetryMaxBackoff,
-	}, logger, nil)
+	}
+	outboxRunner, err := backgroundapplication.NewRunner(repository, nil, runnerConfig, logger, nil)
 	if err != nil {
 		return fmt.Errorf("configure outbox worker: %w", err)
 	}
+	jobRunner, err := backgroundapplication.NewJobRunner(repository, nil, runnerConfig, logger, nil)
+	if err != nil {
+		return fmt.Errorf("configure background job worker: %w", err)
+	}
 	logger.InfoContext(ctx, "background worker started", "workerId", workerID(cfg), "concurrency", cfg.Worker.Concurrency, "batchSize", cfg.Worker.BatchSize)
-	if err := runner.Run(ctx); err != nil {
-		return err
+	errs := make(chan error, 2)
+	go func() { errs <- outboxRunner.Run(ctx) }()
+	go func() { errs <- jobRunner.Run(ctx) }()
+	var firstErr error
+	for range 2 {
+		if err := <-errs; err != nil && firstErr == nil {
+			firstErr = err
+		}
 	}
 	logger.InfoContext(ctx, "background worker stopped", "workerId", workerID(cfg))
-	return nil
+	return firstErr
 }
 
 func workerID(cfg config.Config) string {

@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.6
+> 文档版本：V0.7
 > 文档状态：按模块持续编制  
 > 最近更新：2026-08-10
-> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 16 后台任务基础周期
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 16 后台任务基础调度与运维接口
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -24,7 +24,7 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 | 04 | 权限与管理委派 | 已完成当前模块边界 | 14 | 2026-08-05 |
 | 05 | 文件目录 | 已完成当前模块边界 | 6 | 2026-08-10 |
 | 06～15 | 后续系统模块 | 未收录 | 0 | — |
-| 16 | 后台任务 | 基础 Worker 周期完成；暂无公开 REST API | 0 | 2026-08-10 |
+| 16 | 后台任务 | 已完成基础调度与管理员运维接口 | 4 | 2026-08-10 |
 
 ## 3. 全局接口约定
 
@@ -782,21 +782,22 @@ Space 授权只有在 `inheritToDescendants=true` 时才能作用于后代；Fol
 - `backend/tests/integration/files_http_test.go`
 - `backend/scripts/verify.ps1`
 
-## 10. 模块 16：后台任务基础周期
+## 10. 模块 16：后台任务
 
 ### 10.1 当前边界
 
-本周期完成的是后台任务模块的 Outbox Worker 基础框架，不新增公开 REST API，也不修改 `backend/api/openapi.yaml` 的路径数量。接口文档记录该模块边界，是为了让后续接口测试知道：当前已有可靠消费框架，但尚未提供运维查询、死信重放、取消或后台任务管理接口。
+本周期完成后台任务模块的基础调度与管理员运维接口。模块仍不实现具体业务处理器，例如审计归档、文件 Hash、病毒扫描、预览、搜索索引、生命周期清理或 AI 任务；这些处理器由对应业务模块后续注册。当前 REST API 只面向 `SYSTEM_ADMIN`，用于查看 Outbox/Job 积压与失败项，并对 `FAILED/DEAD` 单项执行受控重试。
 
 当前能力：
 
 - `cmd/worker` 可作为独立 Go 进程启动；
-- Worker 使用 PostgreSQL `outbox_events` 作为事实源；
-- 只领取已注册处理器声明支持的 `eventType`，未注册事件继续保留，不被空消费；
+- Worker 使用 PostgreSQL `outbox_events` 和 `background_jobs` 作为任务事实源；
+- 只领取已注册处理器声明支持的 `eventType/jobType`，未注册事件或任务继续保留，不被空消费；
 - 领取使用 `FOR UPDATE SKIP LOCKED`、状态条件、到期时间和租约；
-- 成功处理标记 `PUBLISHED`；
-- 可重试失败标记 `FAILED`，写入 `nextRetryAt/lastErrorCode/lastErrorSummary`；
+- 成功处理 Outbox 标记为 `PUBLISHED`，成功处理 Job 标记为 `SUCCESS`；
+- 可重试失败标记 `FAILED`，写入错误码、错误摘要和下一次可用时间；
 - 永久失败或重试耗尽标记 `DEAD`；
+- 管理员可分页查询 Outbox 事件和后台任务，并对 `FAILED/DEAD` 项按 `rowVersion` 受控重试；
 - 使用 `context.Context`、处理器超时和系统信号完成优雅停止；
 - Redis 不参与任务事实存储。
 
@@ -821,23 +822,59 @@ cd backend
 go run ./cmd/worker
 ```
 
-注意：当前没有注册具体业务消费者时，Worker 会启动但不会领取任何事件；这是为了避免模块 11 审计等消费者尚未实现时吞掉历史 Outbox。
+注意：当前没有注册具体业务消费者时，Worker 会启动但不会领取任何事件或任务；这是为了避免模块 11 审计等消费者尚未实现时吞掉历史 Outbox 或业务 Job。
 
-### 10.3 后续接口测试依据
+### 10.3 管理员运维接口
 
-后续若新增运维 REST API，必须同步 OpenAPI、实现和本文档，并至少覆盖：
+| 接口 | Operation ID | 成功响应 | 关键约束 |
+|---|---|---:|---|
+| `GET /api/v1/admin/background/outbox-events?page=1&pageSize=50` | `listBackgroundOutboxEvents` | `200/BackgroundOutboxEventListResponse` | 仅 `SYSTEM_ADMIN`；可按 `status/eventType` 筛选；分页统一使用 `page/pageSize` |
+| `POST /api/v1/admin/background/outbox-events/{outboxEventId}/retry` | `retryBackgroundOutboxEvent` | `200/BackgroundOutboxEventResponse` | 仅允许 `FAILED/DEAD`；请求必须包含 `rowVersion` 和 `reason`；成功后回到 `PENDING` 并清理锁与错误重试状态 |
+| `GET /api/v1/admin/background/jobs?page=1&pageSize=50` | `listBackgroundJobs` | `200/BackgroundJobListResponse` | 仅 `SYSTEM_ADMIN`；可按 `status/jobType` 筛选；分页统一使用 `page/pageSize` |
+| `POST /api/v1/admin/background/jobs/{backgroundJobId}/retry` | `retryBackgroundJob` | `200/BackgroundJobResponse` | 仅允许 `FAILED/DEAD`；请求必须包含 `rowVersion` 和 `reason`；成功后回到 `PENDING` 并清理锁、心跳、开始/完成和错误状态 |
 
-- 按状态查询 Outbox/Job 积压；
-- 查询失败原因和最近错误；
-- 受控重放 `FAILED/DEAD`；
-- 取消尚未执行的 `background_jobs`；
-- 权限限制：普通用户不得访问运维接口；
-- 分页统一使用 `page/pageSize`。
+重试请求示例：
+
+```json
+{
+  "rowVersion": 3,
+  "reason": "人工确认依赖已恢复，允许重新执行"
+}
+```
+
+列表响应均包含：
+
+```json
+{
+  "items": [],
+  "page": 1,
+  "pageSize": 50,
+  "total": 0,
+  "requestId": "019fd14d-c956-7f0e-a061-e5ee440d77b1"
+}
+```
+
+Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregateType/aggregateId/aggregateVersion/eventType/eventSchemaVersion/payload/deduplicationKey/correlationId/causationId/priority/status/attemptCount/maxAttempts/availableAt/lockedBy/lockedAt/leaseUntil/nextRetryAt/publishedAt/lastErrorCode/lastErrorSummary/createdAt/updatedAt/rowVersion`。
+
+后台任务响应字段严格来自 `background_jobs`：`backgroundJobId/jobType/targetDocumentId/targetDocumentVersionId/targetStorageObjectId/payloadSchemaVersion/payload/deduplicationKey/priority/status/attemptCount/maxAttempts/availableAt/lockedBy/lockedAt/leaseUntil/heartbeatAt/startedAt/completedAt/lastErrorCode/lastErrorSummary/createdAt/updatedAt/rowVersion`。
+
+### 10.4 错误码和接口测试依据
+
+除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN` 外，本模块使用：
+
+| HTTP | 错误码 | 含义 |
+|---:|---|---|
+| 404 | `BACKGROUND_ITEM_NOT_FOUND` | 指定 Outbox 事件或后台任务不存在 |
+| 409 | `BACKGROUND_STATE_CONFLICT` | 当前状态不是 `FAILED/DEAD`，或 `rowVersion` 已过期 |
+
+正式接口测试至少覆盖：按状态查询 Outbox/Job 积压；查询失败原因和最近错误；受控重放 `FAILED/DEAD`；普通用户访问运维接口被拒绝；分页统一使用 `page/pageSize`；非法状态、非法分页、缺少 `reason`、陈旧 `rowVersion` 和错误 Origin。
 
 现有自动化证据：
 
 - `backend/internal/modules/background/application/runner_test.go`
+- `backend/internal/modules/background/application/job_runner_test.go`
 - `backend/tests/integration/background_worker_test.go`
+- `backend/tests/integration/background_admin_http_test.go`
 - `backend/scripts/verify.ps1`
 
 ## 11. 文档维护与冻结规则

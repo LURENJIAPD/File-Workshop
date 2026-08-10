@@ -28,6 +28,8 @@ tags:
   - name: FileDirectory
     description: 文件夹树、Document 稳定身份和统一目录命名空间；不处理对象存储上传下载数据面。
 
+  - name: BackgroundAdministration
+    description: SYSTEM_ADMIN background job and Outbox operations.
 paths:
   /health/live:
     get:
@@ -1643,6 +1645,124 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
 
+  /api/v1/admin/background/outbox-events:
+    get:
+      operationId: listBackgroundOutboxEvents
+      tags: [BackgroundAdministration]
+      summary: List Outbox events for operations.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/BackgroundOutboxStatus" }
+        - name: eventType
+          in: query
+          required: false
+          schema: { type: string, minLength: 1, maxLength: 128 }
+      responses:
+        "200":
+          description: Outbox event list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackgroundOutboxEventListResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/v1/admin/background/outbox-events/{outboxEventId}/retry:
+    post:
+      operationId: retryBackgroundOutboxEvent
+      tags: [BackgroundAdministration]
+      summary: Retry a failed or dead Outbox event.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/OutboxEventIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RetryBackgroundItemRequest"
+      responses:
+        "200":
+          description: Outbox event moved back to PENDING.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackgroundOutboxEventResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/admin/background/jobs:
+    get:
+      operationId: listBackgroundJobs
+      tags: [BackgroundAdministration]
+      summary: List background jobs for operations.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/BackgroundJobStatus" }
+        - name: jobType
+          in: query
+          required: false
+          schema: { type: string, minLength: 1, maxLength: 128 }
+      responses:
+        "200":
+          description: Background job list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackgroundJobListResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/v1/admin/background/jobs/{backgroundJobId}/retry:
+    post:
+      operationId: retryBackgroundJob
+      tags: [BackgroundAdministration]
+      summary: Retry a failed or dead background job.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/BackgroundJobIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RetryBackgroundItemRequest"
+      responses:
+        "200":
+          description: Background job moved back to PENDING.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackgroundJobResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1759,6 +1879,16 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    OutboxEventIdPath:
+      name: outboxEventId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    BackgroundJobIdPath:
+      name: backgroundJobId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
 
   headers:
     RequestId:
@@ -1866,6 +1996,129 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
 
   schemas:
+    BackgroundOutboxStatus:
+      type: string
+      enum: [PENDING, PROCESSING, PUBLISHED, FAILED, DEAD]
+
+    BackgroundJobStatus:
+      type: string
+      enum: [PENDING, PROCESSING, SUCCESS, FAILED, DEAD, CANCELLED, SKIPPED]
+
+    BackgroundOutboxEvent:
+      type: object
+      additionalProperties: false
+      required: [outboxEventId, aggregateType, aggregateId, aggregateVersion, eventType, eventSchemaVersion, payload, deduplicationKey, priority, status, attemptCount, maxAttempts, availableAt, createdAt, updatedAt, rowVersion]
+      properties:
+        outboxEventId: { type: string, format: uuid }
+        aggregateType: { type: string, minLength: 1, maxLength: 64 }
+        aggregateId: { type: string, format: uuid }
+        aggregateVersion: { type: integer, format: int64, minimum: 1 }
+        eventType: { type: string, minLength: 1, maxLength: 128 }
+        eventSchemaVersion: { type: integer, minimum: 1 }
+        payload:
+          type: object
+          additionalProperties: true
+        deduplicationKey: { type: string, minLength: 1, maxLength: 256 }
+        correlationId: { type: string, format: uuid }
+        causationId: { type: string, format: uuid }
+        priority: { type: integer }
+        status: { $ref: "#/components/schemas/BackgroundOutboxStatus" }
+        attemptCount: { type: integer, minimum: 0 }
+        maxAttempts: { type: integer, minimum: 1 }
+        availableAt: { type: string, format: date-time }
+        lockedBy: { type: string, maxLength: 256 }
+        lockedAt: { type: string, format: date-time }
+        leaseUntil: { type: string, format: date-time }
+        nextRetryAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        publishedAt: { type: string, format: date-time }
+        lastErrorCode: { type: string, maxLength: 64 }
+        lastErrorSummary: { type: string, maxLength: 512 }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    BackgroundJob:
+      type: object
+      additionalProperties: false
+      required: [backgroundJobId, jobType, payloadSchemaVersion, payload, deduplicationKey, priority, status, attemptCount, maxAttempts, availableAt, createdAt, updatedAt, rowVersion]
+      properties:
+        backgroundJobId: { type: string, format: uuid }
+        jobType: { type: string, minLength: 1, maxLength: 128 }
+        targetDocumentId: { type: string, format: uuid }
+        targetDocumentVersionId: { type: string, format: uuid }
+        targetStorageObjectId: { type: string, format: uuid }
+        payloadSchemaVersion: { type: integer, minimum: 1 }
+        payload:
+          type: object
+          additionalProperties: true
+        deduplicationKey: { type: string, minLength: 1, maxLength: 256 }
+        priority: { type: integer }
+        status: { $ref: "#/components/schemas/BackgroundJobStatus" }
+        attemptCount: { type: integer, minimum: 0 }
+        maxAttempts: { type: integer, minimum: 1 }
+        availableAt: { type: string, format: date-time }
+        lockedBy: { type: string, maxLength: 256 }
+        lockedAt: { type: string, format: date-time }
+        leaseUntil: { type: string, format: date-time }
+        heartbeatAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        startedAt: { type: string, format: date-time }
+        completedAt: { type: string, format: date-time }
+        lastErrorCode: { type: string, maxLength: 64 }
+        lastErrorSummary: { type: string, maxLength: 512 }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    BackgroundOutboxEventListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/BackgroundOutboxEvent" }
+        page: { $ref: "#/components/schemas/Page" }
+        pageSize: { $ref: "#/components/schemas/PageSize" }
+        total: { type: integer, format: int64, minimum: 0 }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    BackgroundOutboxEventResponse:
+      type: object
+      additionalProperties: false
+      required: [event, requestId]
+      properties:
+        event: { $ref: "#/components/schemas/BackgroundOutboxEvent" }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    BackgroundJobListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/BackgroundJob" }
+        page: { $ref: "#/components/schemas/Page" }
+        pageSize: { $ref: "#/components/schemas/PageSize" }
+        total: { type: integer, format: int64, minimum: 0 }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    BackgroundJobResponse:
+      type: object
+      additionalProperties: false
+      required: [job, requestId]
+      properties:
+        job: { $ref: "#/components/schemas/BackgroundJob" }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    RetryBackgroundItemRequest:
+      type: object
+      additionalProperties: false
+      required: [rowVersion, reason]
+      properties:
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+        reason: { type: string, minLength: 1, maxLength: 256 }
+
     DirectoryEntryType:
       type: string
       enum: [FOLDER, DOCUMENT]
