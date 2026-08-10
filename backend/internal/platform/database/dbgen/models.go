@@ -28,6 +28,21 @@ type AdminDelegation struct {
 	RowVersion              int64
 }
 
+type AuditChainHead struct {
+	ChainID            string
+	PartitionDate      pgtype.Date
+	LastSequenceNumber int64
+	LastEventID        pgtype.UUID
+	LastHash           []byte
+	BatchRoot          []byte
+	AnchorLocation     pgtype.Text
+	Status             string
+	VerifiedAt         pgtype.Timestamptz
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
+	RowVersion         int64
+}
+
 type BackgroundJob struct {
 	BackgroundJobID         pgtype.UUID
 	JobType                 string

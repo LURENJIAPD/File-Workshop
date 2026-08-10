@@ -112,6 +112,126 @@ func (e AdminDelegationStatus) Valid() bool {
 	}
 }
 
+// Defines values for AuditActorType.
+const (
+	AuditActorTypeAGENT     AuditActorType = "AGENT"
+	AuditActorTypeMIGRATION AuditActorType = "MIGRATION"
+	AuditActorTypeSERVICE   AuditActorType = "SERVICE"
+	AuditActorTypeSYSTEM    AuditActorType = "SYSTEM"
+	AuditActorTypeUSER      AuditActorType = "USER"
+)
+
+// Valid indicates whether the value is a known member of the AuditActorType enum.
+func (e AuditActorType) Valid() bool {
+	switch e {
+	case AuditActorTypeAGENT:
+		return true
+	case AuditActorTypeMIGRATION:
+		return true
+	case AuditActorTypeSERVICE:
+		return true
+	case AuditActorTypeSYSTEM:
+		return true
+	case AuditActorTypeUSER:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AuditChainStatus.
+const (
+	AuditChainStatusACTIVE  AuditChainStatus = "ACTIVE"
+	AuditChainStatusINVALID AuditChainStatus = "INVALID"
+	AuditChainStatusSEALED  AuditChainStatus = "SEALED"
+)
+
+// Valid indicates whether the value is a known member of the AuditChainStatus enum.
+func (e AuditChainStatus) Valid() bool {
+	switch e {
+	case AuditChainStatusACTIVE:
+		return true
+	case AuditChainStatusINVALID:
+		return true
+	case AuditChainStatusSEALED:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AuditResult.
+const (
+	AuditResultDENIED  AuditResult = "DENIED"
+	AuditResultFAILURE AuditResult = "FAILURE"
+	AuditResultSUCCESS AuditResult = "SUCCESS"
+)
+
+// Valid indicates whether the value is a known member of the AuditResult enum.
+func (e AuditResult) Valid() bool {
+	switch e {
+	case AuditResultDENIED:
+		return true
+	case AuditResultFAILURE:
+		return true
+	case AuditResultSUCCESS:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AuditRiskLevel.
+const (
+	CRITICAL AuditRiskLevel = "CRITICAL"
+	HIGH     AuditRiskLevel = "HIGH"
+	NORMAL   AuditRiskLevel = "NORMAL"
+)
+
+// Valid indicates whether the value is a known member of the AuditRiskLevel enum.
+func (e AuditRiskLevel) Valid() bool {
+	switch e {
+	case CRITICAL:
+		return true
+	case HIGH:
+		return true
+	case NORMAL:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AuditSourceChannel.
+const (
+	AuditSourceChannelAGENT     AuditSourceChannel = "AGENT"
+	AuditSourceChannelAPI       AuditSourceChannel = "API"
+	AuditSourceChannelMIGRATION AuditSourceChannel = "MIGRATION"
+	AuditSourceChannelSYSTEM    AuditSourceChannel = "SYSTEM"
+	AuditSourceChannelWEB       AuditSourceChannel = "WEB"
+	AuditSourceChannelWEBDAV    AuditSourceChannel = "WEBDAV"
+)
+
+// Valid indicates whether the value is a known member of the AuditSourceChannel enum.
+func (e AuditSourceChannel) Valid() bool {
+	switch e {
+	case AuditSourceChannelAGENT:
+		return true
+	case AuditSourceChannelAPI:
+		return true
+	case AuditSourceChannelMIGRATION:
+		return true
+	case AuditSourceChannelSYSTEM:
+		return true
+	case AuditSourceChannelWEB:
+		return true
+	case AuditSourceChannelWEBDAV:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AuthTokenResponseTokenType.
 const (
 	Bearer AuthTokenResponseTokenType = "Bearer"
@@ -618,22 +738,22 @@ func (e PermissionEvaluationResultSource) Valid() bool {
 
 // Defines values for PermissionGrantSource.
 const (
-	MANUAL    PermissionGrantSource = "MANUAL"
-	MIGRATION PermissionGrantSource = "MIGRATION"
-	SYSTEM    PermissionGrantSource = "SYSTEM"
-	TEMPLATE  PermissionGrantSource = "TEMPLATE"
+	PermissionGrantSourceMANUAL    PermissionGrantSource = "MANUAL"
+	PermissionGrantSourceMIGRATION PermissionGrantSource = "MIGRATION"
+	PermissionGrantSourceSYSTEM    PermissionGrantSource = "SYSTEM"
+	PermissionGrantSourceTEMPLATE  PermissionGrantSource = "TEMPLATE"
 )
 
 // Valid indicates whether the value is a known member of the PermissionGrantSource enum.
 func (e PermissionGrantSource) Valid() bool {
 	switch e {
-	case MANUAL:
+	case PermissionGrantSourceMANUAL:
 		return true
-	case MIGRATION:
+	case PermissionGrantSourceMIGRATION:
 		return true
-	case SYSTEM:
+	case PermissionGrantSourceSYSTEM:
 		return true
-	case TEMPLATE:
+	case PermissionGrantSourceTEMPLATE:
 		return true
 	default:
 		return false
@@ -926,6 +1046,111 @@ type AdminDelegationScope string
 
 // AdminDelegationStatus defines model for AdminDelegationStatus.
 type AdminDelegationStatus string
+
+// AuditActorType defines model for AuditActorType.
+type AuditActorType string
+
+// AuditChainHead defines model for AuditChainHead.
+type AuditChainHead struct {
+	AnchorLocation     *string            `json:"anchorLocation,omitempty"`
+	BatchRoot          *[]byte            `json:"batchRoot,omitempty"`
+	ChainId            string             `json:"chainId"`
+	CreatedAt          time.Time          `json:"createdAt"`
+	LastEventId        openapi_types.UUID `json:"lastEventId"`
+	LastHash           []byte             `json:"lastHash"`
+	LastSequenceNumber int64              `json:"lastSequenceNumber"`
+	PartitionDate      openapi_types.Date `json:"partitionDate"`
+	RowVersion         int64              `json:"rowVersion"`
+	Status             AuditChainStatus   `json:"status"`
+	UpdatedAt          time.Time          `json:"updatedAt"`
+	VerifiedAt         *time.Time         `json:"verifiedAt,omitempty"`
+}
+
+// AuditChainStatus defines model for AuditChainStatus.
+type AuditChainStatus string
+
+// AuditEvent defines model for AuditEvent.
+type AuditEvent struct {
+	Action                string                 `json:"action"`
+	ActorDisplayName      *string                `json:"actorDisplayName,omitempty"`
+	ActorEmployeeNo       *string                `json:"actorEmployeeNo,omitempty"`
+	ActorId               *openapi_types.UUID    `json:"actorId,omitempty"`
+	ActorType             AuditActorType         `json:"actorType"`
+	AdminDelegationId     *openapi_types.UUID    `json:"adminDelegationId,omitempty"`
+	AuditEventId          openapi_types.UUID     `json:"auditEventId"`
+	ChainId               *string                `json:"chainId,omitempty"`
+	CorrelationId         *openapi_types.UUID    `json:"correlationId,omitempty"`
+	CreatedAt             time.Time              `json:"createdAt"`
+	DocumentId            *openapi_types.UUID    `json:"documentId,omitempty"`
+	DocumentVersionId     *openapi_types.UUID    `json:"documentVersionId,omitempty"`
+	EffectiveRole         *string                `json:"effectiveRole,omitempty"`
+	EventHash             *[]byte                `json:"eventHash,omitempty"`
+	EventType             string                 `json:"eventType"`
+	FailureCode           *string                `json:"failureCode,omitempty"`
+	HashSchemaVersion     *int                   `json:"hashSchemaVersion,omitempty"`
+	IpAddress             *string                `json:"ipAddress,omitempty"`
+	Metadata              map[string]interface{} `json:"metadata"`
+	MetadataSchemaVersion int                    `json:"metadataSchemaVersion"`
+	OrganizationId        *openapi_types.UUID    `json:"organizationId,omitempty"`
+	PartitionDate         openapi_types.Date     `json:"partitionDate"`
+	PreviousHash          *[]byte                `json:"previousHash,omitempty"`
+	Reason                *string                `json:"reason,omitempty"`
+	RequestId             openapi_types.UUID     `json:"requestId"`
+	ResourceId            *openapi_types.UUID    `json:"resourceId,omitempty"`
+	ResourceName          *string                `json:"resourceName,omitempty"`
+	ResourceType          *string                `json:"resourceType,omitempty"`
+	Result                AuditResult            `json:"result"`
+	RiskLevel             AuditRiskLevel         `json:"riskLevel"`
+	SequenceNumber        *int64                 `json:"sequenceNumber,omitempty"`
+	ShareId               *openapi_types.UUID    `json:"shareId,omitempty"`
+	SourceChannel         AuditSourceChannel     `json:"sourceChannel"`
+	SpaceId               *openapi_types.UUID    `json:"spaceId,omitempty"`
+	TraceId               *string                `json:"traceId,omitempty"`
+	UserAgent             *string                `json:"userAgent,omitempty"`
+}
+
+// AuditEventListResponse defines model for AuditEventListResponse.
+type AuditEventListResponse struct {
+	Items     []AuditEvent `json:"items"`
+	Page      int          `json:"page"`
+	PageSize  int          `json:"pageSize"`
+	RequestId string       `json:"requestId"`
+	Total     int64        `json:"total"`
+}
+
+// AuditEventResponse defines model for AuditEventResponse.
+type AuditEventResponse struct {
+	Event     AuditEvent `json:"event"`
+	RequestId string     `json:"requestId"`
+}
+
+// AuditIntegrityResponse defines model for AuditIntegrityResponse.
+type AuditIntegrityResponse struct {
+	Items     []AuditChainHead `json:"items"`
+	Page      int              `json:"page"`
+	PageSize  int              `json:"pageSize"`
+	RequestId string           `json:"requestId"`
+	Total     int64            `json:"total"`
+}
+
+// AuditIntegrityVerificationResponse defines model for AuditIntegrityVerificationResponse.
+type AuditIntegrityVerificationResponse struct {
+	ChainId       string             `json:"chainId"`
+	CheckedEvents int                `json:"checkedEvents"`
+	FailureReason *string            `json:"failureReason,omitempty"`
+	PartitionDate openapi_types.Date `json:"partitionDate"`
+	RequestId     string             `json:"requestId"`
+	Verified      bool               `json:"verified"`
+}
+
+// AuditResult defines model for AuditResult.
+type AuditResult string
+
+// AuditRiskLevel defines model for AuditRiskLevel.
+type AuditRiskLevel string
+
+// AuditSourceChannel defines model for AuditSourceChannel.
+type AuditSourceChannel string
 
 // AuthTokenResponse defines model for AuthTokenResponse.
 type AuthTokenResponse struct {
@@ -1781,6 +2006,15 @@ type UserStateChangeRequest struct {
 // UserStatus defines model for UserStatus.
 type UserStatus string
 
+// VerifyAuditIntegrityRequest defines model for VerifyAuditIntegrityRequest.
+type VerifyAuditIntegrityRequest struct {
+	ChainId       string             `json:"chainId"`
+	PartitionDate openapi_types.Date `json:"partitionDate"`
+}
+
+// AuditEventIdPath defines model for AuditEventIdPath.
+type AuditEventIdPath = openapi_types.UUID
+
 // BackgroundJobIdPath defines model for BackgroundJobIdPath.
 type BackgroundJobIdPath = openapi_types.UUID
 
@@ -1992,6 +2226,44 @@ type ProvisionUserPersonalSpaceParams struct {
 	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
 }
 
+// ListAuditEventsParams defines parameters for ListAuditEvents.
+type ListAuditEventsParams struct {
+	DateFrom openapi_types.Date `form:"dateFrom" json:"dateFrom"`
+	DateTo   openapi_types.Date `form:"dateTo" json:"dateTo"`
+
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize     *PageSizeQuery      `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+	EventType    *string             `form:"eventType,omitempty" json:"eventType,omitempty"`
+	RiskLevel    *AuditRiskLevel     `form:"riskLevel,omitempty" json:"riskLevel,omitempty"`
+	ActorType    *AuditActorType     `form:"actorType,omitempty" json:"actorType,omitempty"`
+	ActorId      *openapi_types.UUID `form:"actorId,omitempty" json:"actorId,omitempty"`
+	ResourceType *string             `form:"resourceType,omitempty" json:"resourceType,omitempty"`
+	ResourceId   *openapi_types.UUID `form:"resourceId,omitempty" json:"resourceId,omitempty"`
+	Result       *AuditResult        `form:"result,omitempty" json:"result,omitempty"`
+	RequestId    *openapi_types.UUID `form:"requestId,omitempty" json:"requestId,omitempty"`
+}
+
+// GetAuditEventParams defines parameters for GetAuditEvent.
+type GetAuditEventParams struct {
+	PartitionDate openapi_types.Date `form:"partitionDate" json:"partitionDate"`
+}
+
+// GetAuditIntegrityParams defines parameters for GetAuditIntegrity.
+type GetAuditIntegrityParams struct {
+	DateFrom openapi_types.Date `form:"dateFrom" json:"dateFrom"`
+	DateTo   openapi_types.Date `form:"dateTo" json:"dateTo"`
+
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize *PageSizeQuery    `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+	Status   *AuditChainStatus `form:"status,omitempty" json:"status,omitempty"`
+}
+
 // ListOrganizationAdministratorsParams defines parameters for ListOrganizationAdministrators.
 type ListOrganizationAdministratorsParams struct {
 	// Page 从 1 开始的页码。
@@ -2135,6 +2407,9 @@ type ResetUserPasswordJSONRequestBody = ResetUserPasswordRequest
 
 // ProvisionUserPersonalSpaceJSONRequestBody defines body for ProvisionUserPersonalSpace for application/json ContentType.
 type ProvisionUserPersonalSpaceJSONRequestBody = ProvisionPersonalSpaceRequest
+
+// VerifyAuditIntegrityJSONRequestBody defines body for VerifyAuditIntegrity for application/json ContentType.
+type VerifyAuditIntegrityJSONRequestBody = VerifyAuditIntegrityRequest
 
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
@@ -2294,6 +2569,18 @@ type ServerInterface interface {
 	// ProvisionUserPersonalSpace 为用户幂等创建个人空间
 	// (POST /api/v1/admin/users/{userId}/personal-space)
 	ProvisionUserPersonalSpace(c *gin.Context, userId UserIdPath, params ProvisionUserPersonalSpaceParams)
+	// ListAuditEvents List audit events.
+	// (GET /api/v1/audit/events)
+	ListAuditEvents(c *gin.Context, params ListAuditEventsParams)
+	// GetAuditEvent Get audit event detail.
+	// (GET /api/v1/audit/events/{auditEventId})
+	GetAuditEvent(c *gin.Context, auditEventId AuditEventIdPath, params GetAuditEventParams)
+	// GetAuditIntegrity List audit hash chain heads.
+	// (GET /api/v1/audit/integrity)
+	GetAuditIntegrity(c *gin.Context, params GetAuditIntegrityParams)
+	// VerifyAuditIntegrity Verify one audit hash chain.
+	// (POST /api/v1/audit/integrity/verify)
+	VerifyAuditIntegrity(c *gin.Context)
 	// Login 使用用户名和密码登录
 	// (POST /api/v1/auth/login)
 	Login(c *gin.Context)
@@ -3755,6 +4042,229 @@ func (siw *ServerInterfaceWrapper) ProvisionUserPersonalSpace(c *gin.Context) {
 	siw.Handler.ProvisionUserPersonalSpace(c, userId, params)
 }
 
+// ListAuditEvents operation middleware
+func (siw *ServerInterfaceWrapper) ListAuditEvents(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListAuditEventsParams
+
+	// ------------- Required query parameter "dateFrom" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "dateFrom", c.Request.URL.Query(), &params.DateFrom, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter dateFrom: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Required query parameter "dateTo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "dateTo", c.Request.URL.Query(), &params.DateTo, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter dateTo: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "eventType" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "eventType", c.Request.URL.Query(), &params.EventType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter eventType: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "riskLevel" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "riskLevel", c.Request.URL.Query(), &params.RiskLevel, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter riskLevel: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "actorType" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "actorType", c.Request.URL.Query(), &params.ActorType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter actorType: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "actorId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "actorId", c.Request.URL.Query(), &params.ActorId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter actorId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "resourceType" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "resourceType", c.Request.URL.Query(), &params.ResourceType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter resourceType: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "resourceId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "resourceId", c.Request.URL.Query(), &params.ResourceId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter resourceId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "result" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "result", c.Request.URL.Query(), &params.Result, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter result: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "requestId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "requestId", c.Request.URL.Query(), &params.RequestId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter requestId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListAuditEvents(c, params)
+}
+
+// GetAuditEvent operation middleware
+func (siw *ServerInterfaceWrapper) GetAuditEvent(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "auditEventId" -------------
+	var auditEventId AuditEventIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "auditEventId", c.Param("auditEventId"), &auditEventId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter auditEventId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAuditEventParams
+
+	// ------------- Required query parameter "partitionDate" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "partitionDate", c.Request.URL.Query(), &params.PartitionDate, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter partitionDate: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetAuditEvent(c, auditEventId, params)
+}
+
+// GetAuditIntegrity operation middleware
+func (siw *ServerInterfaceWrapper) GetAuditIntegrity(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAuditIntegrityParams
+
+	// ------------- Required query parameter "dateFrom" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "dateFrom", c.Request.URL.Query(), &params.DateFrom, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter dateFrom: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Required query parameter "dateTo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "dateTo", c.Request.URL.Query(), &params.DateTo, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter dateTo: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", c.Request.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter status: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetAuditIntegrity(c, params)
+}
+
+// VerifyAuditIntegrity operation middleware
+func (siw *ServerInterfaceWrapper) VerifyAuditIntegrity(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.VerifyAuditIntegrity(c)
+}
+
 // Login operation middleware
 func (siw *ServerInterfaceWrapper) Login(c *gin.Context) {
 
@@ -4587,6 +5097,10 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/api/v1/permissions/batch-evaluate", wrapper.BatchEvaluatePermissions)
 	router.POST(options.BaseURL+"/api/v1/permissions/resources/:resourceType/:resourceId/break-inheritance", wrapper.BreakPermissionInheritance)
 	router.POST(options.BaseURL+"/api/v1/permissions/resources/:resourceType/:resourceId/restore-inheritance", wrapper.RestorePermissionInheritance)
+	router.GET(options.BaseURL+"/api/v1/audit/events", wrapper.ListAuditEvents)
+	router.GET(options.BaseURL+"/api/v1/audit/events/:auditEventId", wrapper.GetAuditEvent)
+	router.GET(options.BaseURL+"/api/v1/audit/integrity", wrapper.GetAuditIntegrity)
+	router.POST(options.BaseURL+"/api/v1/audit/integrity/verify", wrapper.VerifyAuditIntegrity)
 	router.GET(options.BaseURL+"/api/v1/admin/background/outbox-events", wrapper.ListBackgroundOutboxEvents)
 	router.POST(options.BaseURL+"/api/v1/admin/background/outbox-events/:outboxEventId/retry", wrapper.RetryBackgroundOutboxEvent)
 	router.GET(options.BaseURL+"/api/v1/admin/background/jobs", wrapper.ListBackgroundJobs)
@@ -8324,6 +8838,350 @@ func (response ProvisionUserPersonalSpace409JSONResponse) VisitProvisionUserPers
 	return err
 }
 
+type ListAuditEventsRequestObject struct {
+	Params ListAuditEventsParams
+}
+
+type ListAuditEventsResponseObject interface {
+	VisitListAuditEventsResponse(w http.ResponseWriter) error
+}
+
+type ListAuditEvents200JSONResponse AuditEventListResponse
+
+func (response ListAuditEvents200JSONResponse) VisitListAuditEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAuditEvents400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListAuditEvents400JSONResponse) VisitListAuditEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAuditEvents401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListAuditEvents401JSONResponse) VisitListAuditEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAuditEvents403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListAuditEvents403JSONResponse) VisitListAuditEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditEventRequestObject struct {
+	AuditEventId AuditEventIdPath `json:"auditEventId"`
+	Params       GetAuditEventParams
+}
+
+type GetAuditEventResponseObject interface {
+	VisitGetAuditEventResponse(w http.ResponseWriter) error
+}
+
+type GetAuditEvent200JSONResponse AuditEventResponse
+
+func (response GetAuditEvent200JSONResponse) VisitGetAuditEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditEvent400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response GetAuditEvent400JSONResponse) VisitGetAuditEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditEvent401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response GetAuditEvent401JSONResponse) VisitGetAuditEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditEvent403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetAuditEvent403JSONResponse) VisitGetAuditEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditEvent404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetAuditEvent404JSONResponse) VisitGetAuditEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditIntegrityRequestObject struct {
+	Params GetAuditIntegrityParams
+}
+
+type GetAuditIntegrityResponseObject interface {
+	VisitGetAuditIntegrityResponse(w http.ResponseWriter) error
+}
+
+type GetAuditIntegrity200JSONResponse AuditIntegrityResponse
+
+func (response GetAuditIntegrity200JSONResponse) VisitGetAuditIntegrityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditIntegrity400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response GetAuditIntegrity400JSONResponse) VisitGetAuditIntegrityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditIntegrity401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response GetAuditIntegrity401JSONResponse) VisitGetAuditIntegrityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditIntegrity403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetAuditIntegrity403JSONResponse) VisitGetAuditIntegrityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyAuditIntegrityRequestObject struct {
+	Body *VerifyAuditIntegrityJSONRequestBody
+}
+
+type VerifyAuditIntegrityResponseObject interface {
+	VisitVerifyAuditIntegrityResponse(w http.ResponseWriter) error
+}
+
+type VerifyAuditIntegrity200JSONResponse AuditIntegrityVerificationResponse
+
+func (response VerifyAuditIntegrity200JSONResponse) VisitVerifyAuditIntegrityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyAuditIntegrity400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response VerifyAuditIntegrity400JSONResponse) VisitVerifyAuditIntegrityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyAuditIntegrity401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response VerifyAuditIntegrity401JSONResponse) VisitVerifyAuditIntegrityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyAuditIntegrity403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response VerifyAuditIntegrity403JSONResponse) VisitVerifyAuditIntegrityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyAuditIntegrity404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response VerifyAuditIntegrity404JSONResponse) VisitVerifyAuditIntegrityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyAuditIntegrity409JSONResponse struct{ ConflictJSONResponse }
+
+func (response VerifyAuditIntegrity409JSONResponse) VisitVerifyAuditIntegrityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type LoginRequestObject struct {
 	Body *LoginJSONRequestBody
 }
@@ -10661,6 +11519,18 @@ type StrictServerInterface interface {
 	// ProvisionUserPersonalSpace 为用户幂等创建个人空间
 	// (POST /api/v1/admin/users/{userId}/personal-space)
 	ProvisionUserPersonalSpace(ctx context.Context, request ProvisionUserPersonalSpaceRequestObject) (ProvisionUserPersonalSpaceResponseObject, error)
+	// ListAuditEvents List audit events.
+	// (GET /api/v1/audit/events)
+	ListAuditEvents(ctx context.Context, request ListAuditEventsRequestObject) (ListAuditEventsResponseObject, error)
+	// GetAuditEvent Get audit event detail.
+	// (GET /api/v1/audit/events/{auditEventId})
+	GetAuditEvent(ctx context.Context, request GetAuditEventRequestObject) (GetAuditEventResponseObject, error)
+	// GetAuditIntegrity List audit hash chain heads.
+	// (GET /api/v1/audit/integrity)
+	GetAuditIntegrity(ctx context.Context, request GetAuditIntegrityRequestObject) (GetAuditIntegrityResponseObject, error)
+	// VerifyAuditIntegrity Verify one audit hash chain.
+	// (POST /api/v1/audit/integrity/verify)
+	VerifyAuditIntegrity(ctx context.Context, request VerifyAuditIntegrityRequestObject) (VerifyAuditIntegrityResponseObject, error)
 	// Login 使用用户名和密码登录
 	// (POST /api/v1/auth/login)
 	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
@@ -11994,6 +12864,116 @@ func (sh *strictHandler) ProvisionUserPersonalSpace(ctx *gin.Context, userId Use
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(ProvisionUserPersonalSpaceResponseObject); ok {
 		if err := validResponse.VisitProvisionUserPersonalSpaceResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAuditEvents operation middleware
+func (sh *strictHandler) ListAuditEvents(ctx *gin.Context, params ListAuditEventsParams) {
+	var request ListAuditEventsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAuditEvents(ctx, request.(ListAuditEventsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAuditEvents")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListAuditEventsResponseObject); ok {
+		if err := validResponse.VisitListAuditEventsResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAuditEvent operation middleware
+func (sh *strictHandler) GetAuditEvent(ctx *gin.Context, auditEventId AuditEventIdPath, params GetAuditEventParams) {
+	var request GetAuditEventRequestObject
+
+	request.AuditEventId = auditEventId
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAuditEvent(ctx, request.(GetAuditEventRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAuditEvent")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetAuditEventResponseObject); ok {
+		if err := validResponse.VisitGetAuditEventResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAuditIntegrity operation middleware
+func (sh *strictHandler) GetAuditIntegrity(ctx *gin.Context, params GetAuditIntegrityParams) {
+	var request GetAuditIntegrityRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAuditIntegrity(ctx, request.(GetAuditIntegrityRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAuditIntegrity")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetAuditIntegrityResponseObject); ok {
+		if err := validResponse.VisitGetAuditIntegrityResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// VerifyAuditIntegrity operation middleware
+func (sh *strictHandler) VerifyAuditIntegrity(ctx *gin.Context) {
+	var request VerifyAuditIntegrityRequestObject
+
+	var body VerifyAuditIntegrityJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.VerifyAuditIntegrity(ctx, request.(VerifyAuditIntegrityRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "VerifyAuditIntegrity")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(VerifyAuditIntegrityResponseObject); ok {
+		if err := validResponse.VisitVerifyAuditIntegrityResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

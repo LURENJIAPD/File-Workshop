@@ -21,6 +21,8 @@ type Querier interface {
 	CompletePermissionIdempotency(ctx context.Context, arg *CompletePermissionIdempotencyParams) error
 	CompleteUserIdempotencyRecord(ctx context.Context, arg *CompleteUserIdempotencyRecordParams) error
 	ConsumeSpaceQuotaReservation(ctx context.Context, arg *ConsumeSpaceQuotaReservationParams) (int64, error)
+	CountAuditChainHeads(ctx context.Context, arg *CountAuditChainHeadsParams) (int64, error)
+	CountAuditEvents(ctx context.Context, arg *CountAuditEventsParams) (int64, error)
 	CountBackgroundJobs(ctx context.Context, arg *CountBackgroundJobsParams) (int64, error)
 	CountBackgroundJobsByStatus(ctx context.Context) ([]*CountBackgroundJobsByStatusRow, error)
 	CountDirectPermissionGrants(ctx context.Context, arg *CountDirectPermissionGrantsParams) (int64, error)
@@ -45,6 +47,8 @@ type Querier interface {
 	FindEffectiveAdminDelegation(ctx context.Context, arg *FindEffectiveAdminDelegationParams) (*FindEffectiveAdminDelegationRow, error)
 	GetAdminDelegationWithCapabilities(ctx context.Context, adminDelegationID pgtype.UUID) (*GetAdminDelegationWithCapabilitiesRow, error)
 	GetAdminDelegationWithCapabilitiesForUpdate(ctx context.Context, adminDelegationID pgtype.UUID) (*GetAdminDelegationWithCapabilitiesForUpdateRow, error)
+	GetAuditChainHeadForUpdate(ctx context.Context, arg *GetAuditChainHeadForUpdateParams) (*AuditChainHead, error)
+	GetAuditEvent(ctx context.Context, arg *GetAuditEventParams) (*GetAuditEventRow, error)
 	GetBackgroundJob(ctx context.Context, backgroundJobID pgtype.UUID) (*BackgroundJob, error)
 	GetCurrentSessionIdentity(ctx context.Context, userSessionID pgtype.UUID) (*GetCurrentSessionIdentityRow, error)
 	GetDatabaseHealth(ctx context.Context) (*GetDatabaseHealthRow, error)
@@ -94,6 +98,8 @@ type Querier interface {
 	IncrementUserOrganizationMembershipVersion(ctx context.Context, arg *IncrementUserOrganizationMembershipVersionParams) error
 	InsertAdminDelegation(ctx context.Context, arg *InsertAdminDelegationParams) (*AdminDelegation, error)
 	InsertAdminDelegationCapability(ctx context.Context, arg *InsertAdminDelegationCapabilityParams) error
+	InsertAuditChainHead(ctx context.Context, arg *InsertAuditChainHeadParams) error
+	InsertAuditEvent(ctx context.Context, arg *InsertAuditEventParams) error
 	InsertBackgroundJob(ctx context.Context, arg *InsertBackgroundJobParams) (*BackgroundJob, error)
 	InsertFileDocument(ctx context.Context, arg *InsertFileDocumentParams) (*Document, error)
 	InsertFileFolder(ctx context.Context, arg *InsertFileFolderParams) error
@@ -119,6 +125,9 @@ type Querier interface {
 	InsertUserOutboxEvent(ctx context.Context, arg *InsertUserOutboxEventParams) error
 	InvalidateDescendantAdminDelegations(ctx context.Context, arg *InvalidateDescendantAdminDelegationsParams) ([]pgtype.UUID, error)
 	ListActivePermissionUserOrganizations(ctx context.Context, arg *ListActivePermissionUserOrganizationsParams) ([]pgtype.UUID, error)
+	ListAuditChainEventsForVerify(ctx context.Context, arg *ListAuditChainEventsForVerifyParams) ([]*ListAuditChainEventsForVerifyRow, error)
+	ListAuditChainHeads(ctx context.Context, arg *ListAuditChainHeadsParams) ([]*AuditChainHead, error)
+	ListAuditEvents(ctx context.Context, arg *ListAuditEventsParams) ([]*ListAuditEventsRow, error)
 	ListBackgroundJobs(ctx context.Context, arg *ListBackgroundJobsParams) ([]*BackgroundJob, error)
 	ListCandidatePermissionGrants(ctx context.Context, arg *ListCandidatePermissionGrantsParams) ([]*ListCandidatePermissionGrantsRow, error)
 	ListDirectPermissionGrants(ctx context.Context, arg *ListDirectPermissionGrantsParams) ([]*ListDirectPermissionGrantsRow, error)
@@ -137,6 +146,8 @@ type Querier interface {
 	LockActiveSystemAdministrators(ctx context.Context) ([]pgtype.UUID, error)
 	LockOrganizationTreeMutation(ctx context.Context) error
 	LockSystemAdminMutation(ctx context.Context) error
+	MarkAuditChainInvalid(ctx context.Context, arg *MarkAuditChainInvalidParams) (int64, error)
+	MarkAuditChainVerified(ctx context.Context, arg *MarkAuditChainVerifiedParams) (int64, error)
 	MarkBackgroundJobDead(ctx context.Context, arg *MarkBackgroundJobDeadParams) (int64, error)
 	MarkBackgroundJobFailed(ctx context.Context, arg *MarkBackgroundJobFailedParams) (int64, error)
 	MarkBackgroundJobSuccess(ctx context.Context, arg *MarkBackgroundJobSuccessParams) (int64, error)
@@ -183,6 +194,7 @@ type Querier interface {
 	TryCreateOrganizationIdempotencyRecord(ctx context.Context, arg *TryCreateOrganizationIdempotencyRecordParams) (int64, error)
 	TryCreatePermissionIdempotency(ctx context.Context, arg *TryCreatePermissionIdempotencyParams) (int64, error)
 	TryCreateUserIdempotencyRecord(ctx context.Context, arg *TryCreateUserIdempotencyRecordParams) (int64, error)
+	UpdateAuditChainHead(ctx context.Context, arg *UpdateAuditChainHeadParams) (int64, error)
 	UpdateFileDescendantPaths(ctx context.Context, arg *UpdateFileDescendantPathsParams) error
 	UpdateFileDocumentExtension(ctx context.Context, arg *UpdateFileDocumentExtensionParams) error
 	UpdateFileSpaceRootFolder(ctx context.Context, arg *UpdateFileSpaceRootFolderParams) error

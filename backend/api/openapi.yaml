@@ -28,6 +28,8 @@ tags:
   - name: FileDirectory
     description: 文件夹树、Document 稳定身份和统一目录命名空间；不处理对象存储上传下载数据面。
 
+  - name: Audit
+    description: Audit event query, integrity status and controlled verification.
   - name: BackgroundAdministration
     description: SYSTEM_ADMIN background job and Outbox operations.
 paths:
@@ -1645,6 +1647,156 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
 
+
+  /api/v1/audit/events:
+    get:
+      operationId: listAuditEvents
+      tags: [Audit]
+      summary: List audit events.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - name: dateFrom
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: dateTo
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+        - name: eventType
+          in: query
+          required: false
+          schema: { type: string, minLength: 1, maxLength: 128 }
+        - name: riskLevel
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/AuditRiskLevel" }
+        - name: actorType
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/AuditActorType" }
+        - name: actorId
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+        - name: resourceType
+          in: query
+          required: false
+          schema: { type: string, minLength: 1, maxLength: 32 }
+        - name: resourceId
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+        - name: result
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/AuditResult" }
+        - name: requestId
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Audit event list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditEventListResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/v1/audit/events/{auditEventId}:
+    get:
+      operationId: getAuditEvent
+      tags: [Audit]
+      summary: Get audit event detail.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/AuditEventIdPath"
+        - name: partitionDate
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Audit event detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditEventResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/audit/integrity:
+    get:
+      operationId: getAuditIntegrity
+      tags: [Audit]
+      summary: List audit hash chain heads.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - name: dateFrom
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: dateTo
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/AuditChainStatus" }
+      responses:
+        "200":
+          description: Audit integrity chain heads.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditIntegrityResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/v1/audit/integrity/verify:
+    post:
+      operationId: verifyAuditIntegrity
+      tags: [Audit]
+      summary: Verify one audit hash chain.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyAuditIntegrityRequest"
+      responses:
+        "200":
+          description: Audit chain verification result.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditIntegrityVerificationResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
   /api/v1/admin/background/outbox-events:
     get:
       operationId: listBackgroundOutboxEvents
@@ -1879,6 +2031,11 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    AuditEventIdPath:
+      name: auditEventId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
     OutboxEventIdPath:
       name: outboxEventId
       in: path
@@ -1996,6 +2153,143 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
 
   schemas:
+
+    AuditRiskLevel:
+      type: string
+      enum: [NORMAL, HIGH, CRITICAL]
+
+    AuditActorType:
+      type: string
+      enum: [USER, SYSTEM, AGENT, MIGRATION, SERVICE]
+
+    AuditResult:
+      type: string
+      enum: [SUCCESS, FAILURE, DENIED]
+
+    AuditSourceChannel:
+      type: string
+      enum: [WEB, API, WEBDAV, AGENT, MIGRATION, SYSTEM]
+
+    AuditChainStatus:
+      type: string
+      enum: [ACTIVE, SEALED, INVALID]
+
+    AuditEvent:
+      type: object
+      additionalProperties: false
+      required: [auditEventId, eventType, riskLevel, actorType, action, result, sourceChannel, requestId, metadataSchemaVersion, metadata, partitionDate, createdAt]
+      properties:
+        auditEventId: { type: string, format: uuid }
+        eventType: { type: string, minLength: 1, maxLength: 128 }
+        riskLevel: { $ref: "#/components/schemas/AuditRiskLevel" }
+        actorType: { $ref: "#/components/schemas/AuditActorType" }
+        actorId: { type: string, format: uuid }
+        actorDisplayName: { type: string, maxLength: 256 }
+        actorEmployeeNo: { type: string, maxLength: 128 }
+        effectiveRole: { type: string, maxLength: 32 }
+        adminDelegationId: { type: string, format: uuid }
+        shareId: { type: string, format: uuid }
+        resourceType: { type: string, maxLength: 32 }
+        resourceId: { type: string, format: uuid }
+        resourceName: { type: string, maxLength: 512 }
+        spaceId: { type: string, format: uuid }
+        organizationId: { type: string, format: uuid }
+        documentId: { type: string, format: uuid }
+        documentVersionId: { type: string, format: uuid }
+        action: { type: string, minLength: 1, maxLength: 128 }
+        result: { $ref: "#/components/schemas/AuditResult" }
+        failureCode: { type: string, maxLength: 64 }
+        sourceChannel: { $ref: "#/components/schemas/AuditSourceChannel" }
+        ipAddress: { type: string }
+        userAgent: { type: string }
+        requestId: { type: string, format: uuid }
+        traceId: { type: string, maxLength: 128 }
+        correlationId: { type: string, format: uuid }
+        reason: { type: string }
+        metadataSchemaVersion: { type: integer, minimum: 1 }
+        metadata:
+          type: object
+          additionalProperties: true
+        hashSchemaVersion: { type: integer, minimum: 1 }
+        chainId: { type: string, maxLength: 128 }
+        sequenceNumber: { type: integer, format: int64, minimum: 1 }
+        previousHash: { type: string, format: byte }
+        eventHash: { type: string, format: byte }
+        partitionDate: { type: string, format: date }
+        createdAt: { type: string, format: date-time }
+
+    AuditEventListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AuditEvent" }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 200 }
+        total: { type: integer, format: int64, minimum: 0 }
+        requestId: { type: string }
+
+    AuditEventResponse:
+      type: object
+      additionalProperties: false
+      required: [event, requestId]
+      properties:
+        event: { $ref: "#/components/schemas/AuditEvent" }
+        requestId: { type: string }
+
+    AuditChainHead:
+      type: object
+      additionalProperties: false
+      required: [chainId, partitionDate, lastSequenceNumber, lastEventId, lastHash, status, createdAt, updatedAt, rowVersion]
+      properties:
+        chainId: { type: string, minLength: 1, maxLength: 128 }
+        partitionDate: { type: string, format: date }
+        lastSequenceNumber: { type: integer, format: int64, minimum: 0 }
+        lastEventId: { type: string, format: uuid }
+        lastHash: { type: string, format: byte }
+        batchRoot: { type: string, format: byte }
+        anchorLocation: { type: string, maxLength: 1024 }
+        status: { $ref: "#/components/schemas/AuditChainStatus" }
+        verifiedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    AuditIntegrityResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AuditChainHead" }
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 200 }
+        total: { type: integer, format: int64, minimum: 0 }
+        requestId: { type: string }
+
+    VerifyAuditIntegrityRequest:
+      type: object
+      additionalProperties: false
+      required: [chainId, partitionDate]
+      properties:
+        chainId: { type: string, minLength: 1, maxLength: 128 }
+        partitionDate: { type: string, format: date }
+
+    AuditIntegrityVerificationResponse:
+      type: object
+      additionalProperties: false
+      required: [chainId, partitionDate, verified, checkedEvents, requestId]
+      properties:
+        chainId: { type: string }
+        partitionDate: { type: string, format: date }
+        verified: { type: boolean }
+        checkedEvents: { type: integer, minimum: 0 }
+        failureReason: { type: string }
+        requestId: { type: string }
+
     BackgroundOutboxStatus:
       type: string
       enum: [PENDING, PROCESSING, PUBLISHED, FAILED, DEAD]

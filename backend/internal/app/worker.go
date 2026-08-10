@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 
+	auditapplication "file-workshop/backend/internal/modules/audit/application"
+	auditrepository "file-workshop/backend/internal/modules/audit/repository"
 	backgroundapplication "file-workshop/backend/internal/modules/background/application"
 	backgroundrepository "file-workshop/backend/internal/modules/background/repository"
 	"file-workshop/backend/internal/platform/config"
@@ -24,6 +26,8 @@ func RunWorker(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 	defer postgresPool.Close()
 
 	repository := backgroundrepository.NewPostgreSQL(postgresPool)
+	auditRepository := auditrepository.NewPostgreSQL(postgresPool)
+	auditService := auditapplication.NewService(auditRepository, nil)
 	runnerConfig := backgroundapplication.RunnerConfig{
 		WorkerID:            workerID(cfg),
 		Concurrency:         cfg.Worker.Concurrency,
@@ -34,7 +38,7 @@ func RunWorker(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 		RetryInitialBackoff: cfg.Worker.RetryInitialBackoff,
 		RetryMaxBackoff:     cfg.Worker.RetryMaxBackoff,
 	}
-	outboxRunner, err := backgroundapplication.NewRunner(repository, nil, runnerConfig, logger, nil)
+	outboxRunner, err := backgroundapplication.NewRunner(repository, []backgroundapplication.OutboxHandler{auditService}, runnerConfig, logger, nil)
 	if err != nil {
 		return fmt.Errorf("configure outbox worker: %w", err)
 	}

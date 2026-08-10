@@ -822,7 +822,7 @@ cd backend
 go run ./cmd/worker
 ```
 
-注意：当前没有注册具体业务消费者时，Worker 会启动但不会领取任何事件或任务；这是为了避免模块 11 审计等消费者尚未实现时吞掉历史 Outbox 或业务 Job。
+注意：模块 11 审计消费者已注册用户、组织、权限和文件目录模块当前产生的 Outbox 事件；未注册事件类型和未注册 Job 类型仍会继续保留，不会被空消费。
 
 ### 10.3 管理员运维接口
 
@@ -877,7 +877,85 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 - `backend/tests/integration/background_admin_http_test.go`
 - `backend/scripts/verify.ps1`
 
-## 11. 文档维护与冻结规则
+## 11. 模块 11：审计
+
+### 11.1 当前边界
+
+本周期完成审计模块的基础查询、详情、完整性状态和哈希链校验能力，并将用户、组织、权限、文件目录模块当前产生的 Outbox 事件注册为审计消费者。当前不实现审计导出、归档、WORM、批次锚定和安全告警；这些能力依赖后续对象存储与归档周期。
+
+当前审计写入链路为：
+
+1. 业务模块在自身事务内写入业务事实和 `outbox_events`；
+2. `cmd/worker` 只领取已注册的 Outbox 事件类型；
+3. 审计消费者按数据库设计写入 `audit_events`；
+4. 高风险事件写入 `audit_chain_heads` 哈希链，使用 `partition_date + chain_id` 定位链；
+5. 写入失败由后台任务框架按可重试失败处理，不静默吞掉。
+
+所有 REST 查询接口当前仅允许 `SYSTEM_ADMIN` 访问。分页统一使用 `page/pageSize`，默认 `1/50`，最大 `pageSize=200`。
+
+### 11.2 审计接口
+
+| 接口 | Operation ID | 成功响应 | 关键约束 |
+|---|---|---:|---|
+| `GET /api/v1/audit/events?dateFrom=2026-08-10&dateTo=2026-08-10&page=1&pageSize=50` | `listAuditEvents` | `200/AuditEventListResponse` | 仅 `SYSTEM_ADMIN`；`dateFrom/dateTo` 必填；支持 `eventType/riskLevel/actorType/actorId/resourceType/resourceId/result/requestId` 筛选；排序为 `createdAt DESC, auditEventId DESC` |
+| `GET /api/v1/audit/events/{auditEventId}?partitionDate=2026-08-10` | `getAuditEvent` | `200/AuditEventResponse` | 仅 `SYSTEM_ADMIN`；必须携带 `partitionDate`，因为 `audit_events` 按 `partition_date` 分区并以 `(partition_date, audit_event_id)` 定位 |
+| `GET /api/v1/audit/integrity?dateFrom=2026-08-10&dateTo=2026-08-10&page=1&pageSize=50` | `getAuditIntegrity` | `200/AuditIntegrityResponse` | 仅 `SYSTEM_ADMIN`；返回 `audit_chain_heads`；可按 `status=ACTIVE/SEALED/INVALID` 筛选 |
+| `POST /api/v1/audit/integrity/verify` | `verifyAuditIntegrity` | `200/AuditIntegrityVerificationResponse` | 仅 `SYSTEM_ADMIN`；请求体包含 `chainId/partitionDate`；按链内 `sequenceNumber` 重新计算 SHA-256 哈希并更新 `verifiedAt`，发现不一致时标记链为 `INVALID` |
+
+完整性校验请求示例：
+
+```json
+{
+  "chainId": "fw-audit:20260810:USER_ROLE_CHANGED",
+  "partitionDate": "2026-08-10"
+}
+```
+
+列表响应示例：
+
+```json
+{
+  "items": [],
+  "page": 1,
+  "pageSize": 50,
+  "total": 0,
+  "requestId": "019fcc32-0bc6-7d82-aa70-62d5324b1fbb"
+}
+```
+
+### 11.3 字段与映射
+
+`AuditEvent` 字段严格来自 `audit_events` 和 OpenAPI：`auditEventId/eventType/riskLevel/actorType/actorId/actorDisplayName/actorEmployeeNo/effectiveRole/adminDelegationId/shareId/resourceType/resourceId/resourceName/spaceId/organizationId/documentId/documentVersionId/action/result/failureCode/sourceChannel/ipAddress/userAgent/requestId/traceId/correlationId/reason/metadataSchemaVersion/metadata/hashSchemaVersion/chainId/sequenceNumber/previousHash/eventHash/partitionDate/createdAt`。
+
+Outbox 审计消费者的映射规则：
+
+- `eventType/action` 使用 Outbox `event_type`；
+- `resourceType/resourceId` 使用 Outbox `aggregate_type/aggregate_id`；
+- `requestId` 优先使用 Outbox `correlation_id`；缺失时使用 `outbox_event_id` 兜底，并在 `metadata.requestIdFallback=true` 标记；
+- payload 中存在 `actorUserId` 时映射为 `actorType=USER/actorId`，否则为 `SYSTEM`；
+- payload 中存在 `reason/spaceId/organizationId/documentId/documentVersionId` 时按同名字段映射；
+- `metadata` 保留 `outboxEventId/aggregateType/aggregateId/aggregateVersion/eventSchemaVersion/deduplicationKey/sourcePayload/mappedBy` 等追踪信息；
+- `USER_ROLE_CHANGED`、`AUTH_PASSWORD_CHANGED`、权限与管理委派变更等高风险事件进入哈希链；`AUTH_ACCOUNT_LOCKED` 视为 `CRITICAL`。
+
+### 11.4 错误码和接口测试依据
+
+除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN` 外，本模块使用：
+
+| HTTP | 错误码 | 含义 |
+|---:|---|---|
+| 404 | `AUDIT_NOT_FOUND` | 审计事件、链头或指定分区内链事件不存在 |
+| 409 | `AUDIT_STATE_CONFLICT` | 审计链状态不允许继续写入或校验操作 |
+
+正式接口测试至少覆盖：未登录拒绝；普通用户拒绝；系统管理员按日期分页查询；非法 `page/pageSize`；缺失或倒置 `dateFrom/dateTo`；按事件类型、风险级别、主体、资源和 Request ID 筛选；按 `partitionDate + auditEventId` 读取详情；高风险事件进入哈希链；完整链校验通过；篡改或缺失事件导致校验失败并标记 `INVALID`；Outbox 缺失 `correlationId` 时 requestId 兜底且 metadata 可追踪。
+
+现有自动化证据：
+
+- `backend/internal/modules/audit/application/outbox_handler_test.go`
+- `backend/internal/modules/audit/domain/hash_test.go`
+- `backend/scripts/verify.ps1`
+- `go test ./internal/modules/audit/... ./...`
+
+## 12. 文档维护与冻结规则
 
 1. 新模块先更新 `backend/api/openapi.yaml`，再生成代码和实现。
 2. 模块开发完成时，在本文档追加对应模块章节和接口测试要点，并更新第 2 章状态。

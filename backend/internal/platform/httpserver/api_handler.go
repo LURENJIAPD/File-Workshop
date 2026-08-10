@@ -94,6 +94,13 @@ type BackgroundAPI interface {
 	RetryBackgroundJob(context.Context, api.RetryBackgroundJobRequestObject) (api.RetryBackgroundJobResponseObject, error)
 }
 
+type AuditAPI interface {
+	ListAuditEvents(context.Context, api.ListAuditEventsRequestObject) (api.ListAuditEventsResponseObject, error)
+	GetAuditEvent(context.Context, api.GetAuditEventRequestObject) (api.GetAuditEventResponseObject, error)
+	GetAuditIntegrity(context.Context, api.GetAuditIntegrityRequestObject) (api.GetAuditIntegrityResponseObject, error)
+	VerifyAuditIntegrity(context.Context, api.VerifyAuditIntegrityRequestObject) (api.VerifyAuditIntegrityResponseObject, error)
+}
+
 type APIHandler struct {
 	health        HealthAPI
 	identity      IdentityAPI
@@ -102,12 +109,14 @@ type APIHandler struct {
 	permissions   PermissionsAPI
 	files         FilesAPI
 	background    BackgroundAPI
+	audit         AuditAPI
 }
 
 func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organizations OrganizationsAPI, optionalHandlers ...any) *APIHandler {
 	var permissions PermissionsAPI
 	var files FilesAPI
 	var background BackgroundAPI
+	var audit AuditAPI
 	for _, optional := range optionalHandlers {
 		if handler, ok := optional.(PermissionsAPI); ok {
 			permissions = handler
@@ -118,8 +127,24 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 		if handler, ok := optional.(BackgroundAPI); ok {
 			background = handler
 		}
+		if handler, ok := optional.(AuditAPI); ok {
+			audit = handler
+		}
 	}
-	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions, files: files, background: background}
+	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions, files: files, background: background, audit: audit}
+}
+
+func (h *APIHandler) ListAuditEvents(ctx context.Context, request api.ListAuditEventsRequestObject) (api.ListAuditEventsResponseObject, error) {
+	return h.audit.ListAuditEvents(ctx, request)
+}
+func (h *APIHandler) GetAuditEvent(ctx context.Context, request api.GetAuditEventRequestObject) (api.GetAuditEventResponseObject, error) {
+	return h.audit.GetAuditEvent(ctx, request)
+}
+func (h *APIHandler) GetAuditIntegrity(ctx context.Context, request api.GetAuditIntegrityRequestObject) (api.GetAuditIntegrityResponseObject, error) {
+	return h.audit.GetAuditIntegrity(ctx, request)
+}
+func (h *APIHandler) VerifyAuditIntegrity(ctx context.Context, request api.VerifyAuditIntegrityRequestObject) (api.VerifyAuditIntegrityResponseObject, error) {
+	return h.audit.VerifyAuditIntegrity(ctx, request)
 }
 
 func (h *APIHandler) ListBackgroundOutboxEvents(ctx context.Context, request api.ListBackgroundOutboxEventsRequestObject) (api.ListBackgroundOutboxEventsResponseObject, error) {
