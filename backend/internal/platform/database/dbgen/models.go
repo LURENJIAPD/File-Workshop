@@ -86,6 +86,40 @@ type Document struct {
 	RowVersion            int64
 }
 
+type DocumentLock struct {
+	DocumentLockID   pgtype.UUID
+	DocumentID       pgtype.UUID
+	UserID           pgtype.UUID
+	TokenHash        []byte
+	FencingToken     int64
+	Source           string
+	Status           string
+	AcquiredAt       pgtype.Timestamptz
+	HeartbeatAt      pgtype.Timestamptz
+	ExpiresAt        pgtype.Timestamptz
+	ReleasedAt       pgtype.Timestamptz
+	ReleasedByUserID pgtype.UUID
+	ReleaseReason    pgtype.Text
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+	RowVersion       int64
+}
+
+type DocumentVersion struct {
+	DocumentVersionID     pgtype.UUID
+	DocumentID            pgtype.UUID
+	VersionNumber         int64
+	StorageObjectID       pgtype.UUID
+	SizeBytes             int64
+	Sha256                []byte
+	MimeType              string
+	ChangeNote            pgtype.Text
+	SourceType            string
+	RestoredFromVersionID pgtype.UUID
+	CreatedByUserID       pgtype.UUID
+	CreatedAt             pgtype.Timestamptz
+}
+
 type NamespaceEntry struct {
 	NamespaceEntryID pgtype.UUID
 	SpaceID          pgtype.UUID

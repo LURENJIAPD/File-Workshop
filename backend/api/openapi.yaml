@@ -31,6 +31,9 @@ tags:
   - name: FileTransfer
     description: 上传会话、分片预签名和对象存储控制面；二进制数据默认直传 S3 兼容对象存储。
 
+  - name: VersionConcurrency
+    description: 不可变文件版本、历史版本恢复和文件级租约锁；恢复创建新版本，不覆盖历史。
+
   - name: Audit
     description: Audit event query, integrity status and controlled verification.
   - name: BackgroundAdministration
@@ -318,6 +321,196 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UploadSessionResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/documents/{documentId}/versions:
+    get:
+      operationId: listDocumentVersions
+      tags: [VersionConcurrency]
+      summary: 分页查询文档版本
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/DocumentIdPath"
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/PageSizeQuery"
+      responses:
+        "200":
+          description: 文档版本列表。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentVersionListResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/v1/documents/{documentId}/versions/{documentVersionId}/restore:
+    post:
+      operationId: restoreDocumentVersion
+      tags: [VersionConcurrency]
+      summary: 将历史版本恢复为新版本
+      description: 恢复不会修改历史版本；服务端复制历史版本的存储对象引用，创建新的 document_versions 行并切换 documents.current_version_id。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/DocumentIdPath"
+        - $ref: "#/components/parameters/DocumentVersionIdPath"
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RestoreDocumentVersionRequest"
+      responses:
+        "201":
+          description: 历史版本已恢复为新的当前版本。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentVersionResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/documents/{documentId}/lock:
+    get:
+      operationId: getDocumentLock
+      tags: [VersionConcurrency]
+      summary: 查询文档当前锁状态
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/DocumentIdPath"
+      responses:
+        "200":
+          description: 文档锁状态；无活动锁时 lock 为 null。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentLockResponse"
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      operationId: acquireDocumentLock
+      tags: [VersionConcurrency]
+      summary: 获取文件级租约锁
+      description: 获取锁会生成一次性明文 lockToken 并只返回本次响应；数据库仅保存 SHA-256 摘要和单调 fencingToken。
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/DocumentIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcquireDocumentLockRequest"
+      responses:
+        "201":
+          description: 锁已获取。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcquireDocumentLockResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      operationId: releaseDocumentLock
+      tags: [VersionConcurrency]
+      summary: 释放文件级租约锁
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/DocumentIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReleaseDocumentLockRequest"
+      responses:
+        "200":
+          description: 锁已释放。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentLockResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/documents/{documentId}/lock/heartbeat:
+    post:
+      operationId: heartbeatDocumentLock
+      tags: [VersionConcurrency]
+      summary: 续租文件级租约锁
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/DocumentIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeartbeatDocumentLockRequest"
+      responses:
+        "200":
+          description: 锁已续租。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentLockResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/v1/documents/{documentId}/lock/force-release:
+    post:
+      operationId: forceReleaseDocumentLock
+      tags: [VersionConcurrency]
+      summary: 强制释放文件级租约锁
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - $ref: "#/components/parameters/DocumentIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForceReleaseDocumentLockRequest"
+      responses:
+        "200":
+          description: 锁已被强制释放。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentLockResponse"
         "400": { $ref: "#/components/responses/InvalidRequest" }
         "401": { $ref: "#/components/responses/AuthRequired" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -2115,6 +2308,20 @@ components:
       schema:
         type: string
         format: uuid
+    DocumentIdPath:
+      name: documentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    DocumentVersionIdPath:
+      name: documentVersionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     PlanIdPath:
       name: planId
       in: path
@@ -2269,6 +2476,144 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
 
   schemas:
+
+    DocumentVersionSourceType:
+      type: string
+      enum: [WEB, WEBDAV, MIGRATION, AGENT, RESTORE]
+
+    DocumentVersion:
+      type: object
+      additionalProperties: false
+      required: [documentVersionId, documentId, versionNumber, storageObjectId, sizeBytes, sha256Hex, mimeType, sourceType, createdByUserId, createdAt]
+      properties:
+        documentVersionId: { type: string, format: uuid }
+        documentId: { type: string, format: uuid }
+        versionNumber: { type: integer, format: int64 }
+        storageObjectId: { type: string, format: uuid }
+        sizeBytes: { type: integer, format: int64 }
+        sha256Hex:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+        mimeType: { type: string }
+        changeNote: { type: string }
+        sourceType: { $ref: "#/components/schemas/DocumentVersionSourceType" }
+        restoredFromVersionId: { type: string, format: uuid }
+        createdByUserId: { type: string, format: uuid }
+        createdAt: { type: string, format: date-time }
+
+    DocumentVersionListResponse:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total, requestId]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/DocumentVersion" }
+        page: { $ref: "#/components/schemas/Page" }
+        pageSize: { $ref: "#/components/schemas/PageSize" }
+        total: { type: integer, format: int64 }
+        requestId: { type: string }
+
+    DocumentVersionResponse:
+      type: object
+      additionalProperties: false
+      required: [version, requestId]
+      properties:
+        version: { $ref: "#/components/schemas/DocumentVersion" }
+        requestId: { type: string }
+
+    RestoreDocumentVersionRequest:
+      type: object
+      additionalProperties: false
+      required: [rowVersion]
+      properties:
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+        changeNote: { type: string, minLength: 1, maxLength: 2000 }
+
+    DocumentLockSource:
+      type: string
+      enum: [WEB, WEBDAV, OFFICE, AGENT]
+
+    DocumentLockStatus:
+      type: string
+      enum: [ACTIVE, RELEASED, EXPIRED, FORCED]
+
+    DocumentLock:
+      type: object
+      additionalProperties: false
+      required: [documentLockId, documentId, userId, fencingToken, source, status, acquiredAt, heartbeatAt, expiresAt, createdAt, updatedAt, rowVersion]
+      properties:
+        documentLockId: { type: string, format: uuid }
+        documentId: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        fencingToken: { type: integer, format: int64 }
+        source: { $ref: "#/components/schemas/DocumentLockSource" }
+        status: { $ref: "#/components/schemas/DocumentLockStatus" }
+        acquiredAt: { type: string, format: date-time }
+        heartbeatAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        releasedAt: { type: string, format: date-time }
+        releasedByUserId: { type: string, format: uuid }
+        releaseReason: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        rowVersion: { type: integer, format: int64 }
+
+    DocumentLockResponse:
+      type: object
+      additionalProperties: false
+      required: [requestId]
+      properties:
+        lock:
+          anyOf:
+            - $ref: "#/components/schemas/DocumentLock"
+            - type: "null"
+        requestId: { type: string }
+
+    AcquireDocumentLockRequest:
+      type: object
+      additionalProperties: false
+      required: [source]
+      properties:
+        source: { $ref: "#/components/schemas/DocumentLockSource" }
+        ttlSeconds: { type: integer, minimum: 60, maximum: 86400 }
+
+    AcquireDocumentLockResponse:
+      type: object
+      additionalProperties: false
+      required: [lock, lockToken, requestId]
+      properties:
+        lock: { $ref: "#/components/schemas/DocumentLock" }
+        lockToken:
+          type: string
+          description: 仅本次响应返回的明文锁令牌；服务端只保存 SHA-256 摘要。
+        requestId: { type: string }
+
+    HeartbeatDocumentLockRequest:
+      type: object
+      additionalProperties: false
+      required: [lockToken, rowVersion]
+      properties:
+        lockToken: { type: string, minLength: 32, maxLength: 512 }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+        ttlSeconds: { type: integer, minimum: 60, maximum: 86400 }
+
+    ReleaseDocumentLockRequest:
+      type: object
+      additionalProperties: false
+      required: [lockToken, rowVersion]
+      properties:
+        lockToken: { type: string, minLength: 32, maxLength: 512 }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+        reason: { type: string, minLength: 1, maxLength: 512 }
+
+    ForceReleaseDocumentLockRequest:
+      type: object
+      additionalProperties: false
+      required: [reason, rowVersion]
+      properties:
+        reason: { type: string, minLength: 1, maxLength: 512 }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
 
     UploadIntent:
       type: string

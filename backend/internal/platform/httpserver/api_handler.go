@@ -94,6 +94,16 @@ type UploadsAPI interface {
 	AbortUploadSession(context.Context, api.AbortUploadSessionRequestObject) (api.AbortUploadSessionResponseObject, error)
 }
 
+type VersionsAPI interface {
+	ListDocumentVersions(context.Context, api.ListDocumentVersionsRequestObject) (api.ListDocumentVersionsResponseObject, error)
+	RestoreDocumentVersion(context.Context, api.RestoreDocumentVersionRequestObject) (api.RestoreDocumentVersionResponseObject, error)
+	GetDocumentLock(context.Context, api.GetDocumentLockRequestObject) (api.GetDocumentLockResponseObject, error)
+	AcquireDocumentLock(context.Context, api.AcquireDocumentLockRequestObject) (api.AcquireDocumentLockResponseObject, error)
+	HeartbeatDocumentLock(context.Context, api.HeartbeatDocumentLockRequestObject) (api.HeartbeatDocumentLockResponseObject, error)
+	ReleaseDocumentLock(context.Context, api.ReleaseDocumentLockRequestObject) (api.ReleaseDocumentLockResponseObject, error)
+	ForceReleaseDocumentLock(context.Context, api.ForceReleaseDocumentLockRequestObject) (api.ForceReleaseDocumentLockResponseObject, error)
+}
+
 type BackgroundAPI interface {
 	ListBackgroundOutboxEvents(context.Context, api.ListBackgroundOutboxEventsRequestObject) (api.ListBackgroundOutboxEventsResponseObject, error)
 	RetryBackgroundOutboxEvent(context.Context, api.RetryBackgroundOutboxEventRequestObject) (api.RetryBackgroundOutboxEventResponseObject, error)
@@ -116,6 +126,7 @@ type APIHandler struct {
 	permissions   PermissionsAPI
 	files         FilesAPI
 	uploads       UploadsAPI
+	versions      VersionsAPI
 	background    BackgroundAPI
 	audit         AuditAPI
 }
@@ -124,6 +135,7 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 	var permissions PermissionsAPI
 	var files FilesAPI
 	var uploads UploadsAPI
+	var versions VersionsAPI
 	var background BackgroundAPI
 	var audit AuditAPI
 	for _, optional := range optionalHandlers {
@@ -136,6 +148,9 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 		if handler, ok := optional.(UploadsAPI); ok {
 			uploads = handler
 		}
+		if handler, ok := optional.(VersionsAPI); ok {
+			versions = handler
+		}
 		if handler, ok := optional.(BackgroundAPI); ok {
 			background = handler
 		}
@@ -143,7 +158,7 @@ func NewAPIHandler(health HealthAPI, identity IdentityAPI, users UsersAPI, organ
 			audit = handler
 		}
 	}
-	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions, files: files, uploads: uploads, background: background, audit: audit}
+	return &APIHandler{health: health, identity: identity, users: users, organizations: organizations, permissions: permissions, files: files, uploads: uploads, versions: versions, background: background, audit: audit}
 }
 
 func (h *APIHandler) ListAuditEvents(ctx context.Context, request api.ListAuditEventsRequestObject) (api.ListAuditEventsResponseObject, error) {
@@ -202,6 +217,28 @@ func (h *APIHandler) PresignUploadPart(ctx context.Context, request api.PresignU
 }
 func (h *APIHandler) AbortUploadSession(ctx context.Context, request api.AbortUploadSessionRequestObject) (api.AbortUploadSessionResponseObject, error) {
 	return h.uploads.AbortUploadSession(ctx, request)
+}
+
+func (h *APIHandler) ListDocumentVersions(ctx context.Context, request api.ListDocumentVersionsRequestObject) (api.ListDocumentVersionsResponseObject, error) {
+	return h.versions.ListDocumentVersions(ctx, request)
+}
+func (h *APIHandler) RestoreDocumentVersion(ctx context.Context, request api.RestoreDocumentVersionRequestObject) (api.RestoreDocumentVersionResponseObject, error) {
+	return h.versions.RestoreDocumentVersion(ctx, request)
+}
+func (h *APIHandler) GetDocumentLock(ctx context.Context, request api.GetDocumentLockRequestObject) (api.GetDocumentLockResponseObject, error) {
+	return h.versions.GetDocumentLock(ctx, request)
+}
+func (h *APIHandler) AcquireDocumentLock(ctx context.Context, request api.AcquireDocumentLockRequestObject) (api.AcquireDocumentLockResponseObject, error) {
+	return h.versions.AcquireDocumentLock(ctx, request)
+}
+func (h *APIHandler) HeartbeatDocumentLock(ctx context.Context, request api.HeartbeatDocumentLockRequestObject) (api.HeartbeatDocumentLockResponseObject, error) {
+	return h.versions.HeartbeatDocumentLock(ctx, request)
+}
+func (h *APIHandler) ReleaseDocumentLock(ctx context.Context, request api.ReleaseDocumentLockRequestObject) (api.ReleaseDocumentLockResponseObject, error) {
+	return h.versions.ReleaseDocumentLock(ctx, request)
+}
+func (h *APIHandler) ForceReleaseDocumentLock(ctx context.Context, request api.ForceReleaseDocumentLockRequestObject) (api.ForceReleaseDocumentLockResponseObject, error) {
+	return h.versions.ForceReleaseDocumentLock(ctx, request)
 }
 
 func (h *APIHandler) ListAdminDelegations(ctx context.Context, request api.ListAdminDelegationsRequestObject) (api.ListAdminDelegationsResponseObject, error) {

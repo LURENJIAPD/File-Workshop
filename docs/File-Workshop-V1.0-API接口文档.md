@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.8
+> 文档版本：V0.9
 > 文档状态：按模块持续编制  
 > 最近更新：2026-08-10
-> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 16 后台任务基础调度与运维接口
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 16 后台任务基础调度与运维接口
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -24,7 +24,8 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 | 04 | 权限与管理委派 | 已完成当前模块边界 | 14 | 2026-08-05 |
 | 05 | 文件目录 | 已完成当前模块边界 | 6 | 2026-08-10 |
 | 06 | 文件传输与存储 | 已收录上传控制面当前边界 | 4 | 2026-08-10 |
-| 07～15 | 后续系统模块 | 未收录 | 0 | — |
+| 07 | 版本与并发 | 已收录版本与锁基础接口 | 7 | 2026-08-10 |
+| 08～15 | 后续系统模块 | 未收录 | 0 | — |
 | 16 | 后台任务 | 已完成基础调度与管理员运维接口 | 4 | 2026-08-10 |
 
 ## 3. 全局接口约定
@@ -922,9 +923,94 @@ POST /api/v1/uploads/0198a8e9-0c8a-7d21-9ea9-e9e70d477eed/parts/1/presign
 - `backend/internal/platform/objectstorage/s3_test.go`
 - `backend/scripts/verify.ps1`
 
-## 11. 模块 16：后台任务
+## 11. 模块 07：版本与并发
 
 ### 11.1 当前边界
+
+本周期完成不依赖真实对象存储集群的版本与锁基础能力。版本恢复通过复用历史版本的 `storage_object_id` 创建新的 `document_versions` 行并切换 `documents.current_version_id`；不会修改历史版本。文件锁使用数据库 `document_lock_counters/document_locks`，明文 `lockToken` 只在获取锁成功响应中返回一次，数据库仅保存 SHA-256 摘要。
+
+当前能力：
+
+- 分页查询文档版本；
+- 恢复历史版本为新版本；
+- 查询当前活动锁；
+- 获取文件级租约锁；
+- 续租锁；
+- 释放本人持有的锁；
+- 强制释放活动锁。
+
+尚未完成：上传完成时创建真实版本、下载当前/历史版本、WebDAV LOCK/UNLOCK 兼容适配、Office/CAD 客户端兼容测试和大规模锁竞争压力测试。
+
+### 11.2 接口清单
+
+| 接口 | Operation ID | 成功响应 | 关键约束 |
+|---|---|---:|---|
+| `GET /api/v1/documents/{documentId}/versions?page=1&pageSize=50` | `listDocumentVersions` | `200/DocumentVersionListResponse` | 需要 `READ_METADATA`；分页统一使用 `page/pageSize` |
+| `POST /api/v1/documents/{documentId}/versions/{documentVersionId}/restore` | `restoreDocumentVersion` | `201/DocumentVersionResponse` | 要求 `Idempotency-Key`、`rowVersion`；需要 `MANAGE_VERSION`；恢复创建新版本 |
+| `GET /api/v1/documents/{documentId}/lock` | `getDocumentLock` | `200/DocumentLockResponse` | 需要 `READ_METADATA`；无活动锁时 `lock=null` |
+| `POST /api/v1/documents/{documentId}/lock` | `acquireDocumentLock` | `201/AcquireDocumentLockResponse` | 需要 `LOCK`；返回一次性 `lockToken` 和单调 `fencingToken` |
+| `POST /api/v1/documents/{documentId}/lock/heartbeat` | `heartbeatDocumentLock` | `200/DocumentLockResponse` | 请求体含 `lockToken/rowVersion`；仅锁持有者可续租 |
+| `DELETE /api/v1/documents/{documentId}/lock` | `releaseDocumentLock` | `200/DocumentLockResponse` | 请求体含 `lockToken/rowVersion`；仅锁持有者可释放 |
+| `POST /api/v1/documents/{documentId}/lock/force-release` | `forceReleaseDocumentLock` | `200/DocumentLockResponse` | 请求体含 `reason/rowVersion`；当前仅 `SYSTEM_ADMIN` 可强制释放 |
+
+### 11.3 字段和示例
+
+`DocumentVersion` 字段严格来自 `document_versions`：`documentVersionId/documentId/versionNumber/storageObjectId/sizeBytes/sha256Hex/mimeType/changeNote/sourceType/restoredFromVersionId/createdByUserId/createdAt`。
+
+恢复请求示例：
+
+```json
+{
+  "rowVersion": 3,
+  "changeNote": "恢复到已确认的工艺图纸版本"
+}
+```
+
+获取锁响应示例：
+
+```json
+{
+  "lock": {
+    "documentLockId": "0198b100-0000-7000-8000-000000000090",
+    "documentId": "0198b100-0000-7000-8000-000000000001",
+    "userId": "0198b100-0000-7000-8000-000000000010",
+    "fencingToken": 1,
+    "source": "WEB",
+    "status": "ACTIVE",
+    "acquiredAt": "2026-08-10T03:00:00Z",
+    "heartbeatAt": "2026-08-10T03:00:00Z",
+    "expiresAt": "2026-08-10T03:15:00Z",
+    "createdAt": "2026-08-10T03:00:00Z",
+    "updatedAt": "2026-08-10T03:00:00Z",
+    "rowVersion": 1
+  },
+  "lockToken": "一次性明文锁令牌",
+  "requestId": "019fcc32-0bc6-7d82-aa70-62d5324b1fbb"
+}
+```
+
+### 11.4 错误码和接口测试依据
+
+除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN/AUTH_ORIGIN_REJECTED` 外，本模块使用：
+
+| HTTP | 错误码 | 含义 |
+|---:|---|---|
+| 404 | `DOCUMENT_VERSION_NOT_FOUND` | 文档、版本或锁不存在 |
+| 409 | `VERSION_CONFLICT` | 版本或锁状态冲突 |
+| 409 | `ROW_VERSION_CONFLICT` | `rowVersion` 已过期 |
+| 409 | `IDEMPOTENCY_CONFLICT` | 同一幂等键对应不同请求 |
+| 409 | `FILE_LOCKED` | 文档已有未过期活动锁 |
+
+正式接口测试至少覆盖：未登录拒绝；普通用户越权；分页默认值、非法值和最大值；恢复历史版本创建新版本且不修改旧版本；恢复遇到活动锁时拒绝；幂等重放和冲突；活动锁查询；获取锁返回一次性令牌但不暴露摘要；已有锁再次获取失败；续租要求持有者和正确 `lockToken`；陈旧 `rowVersion` 失败；释放后可重新获取；强制释放必须有原因且仅系统管理员可执行。
+
+现有自动化证据：
+
+- `backend/internal/modules/versions/application/service_test.go`
+- `backend/scripts/verify.ps1`
+
+## 12. 模块 16：后台任务
+
+### 12.1 当前边界
 
 本周期完成后台任务模块的基础调度与管理员运维接口。模块仍不实现具体业务处理器，例如审计归档、文件 Hash、病毒扫描、预览、搜索索引、生命周期清理或 AI 任务；这些处理器由对应业务模块后续注册。当前 REST API 只面向 `SYSTEM_ADMIN`，用于查看 Outbox/Job 积压与失败项，并对 `FAILED/DEAD` 单项执行受控重试。
 
@@ -941,7 +1027,7 @@ POST /api/v1/uploads/0198a8e9-0c8a-7d21-9ea9-e9e70d477eed/parts/1/presign
 - 使用 `context.Context`、处理器超时和系统信号完成优雅停止；
 - Redis 不参与任务事实存储。
 
-### 11.2 配置项
+### 12.2 配置项
 
 | 环境变量 | 默认值 | 含义 |
 |---|---:|---|
@@ -964,7 +1050,7 @@ go run ./cmd/worker
 
 注意：模块 11 审计消费者已注册用户、组织、权限和文件目录模块当前产生的 Outbox 事件；未注册事件类型和未注册 Job 类型仍会继续保留，不会被空消费。
 
-### 11.3 管理员运维接口
+### 12.3 管理员运维接口
 
 | 接口 | Operation ID | 成功响应 | 关键约束 |
 |---|---|---:|---|
@@ -998,7 +1084,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 
 后台任务响应字段严格来自 `background_jobs`：`backgroundJobId/jobType/targetDocumentId/targetDocumentVersionId/targetStorageObjectId/payloadSchemaVersion/payload/deduplicationKey/priority/status/attemptCount/maxAttempts/availableAt/lockedBy/lockedAt/leaseUntil/heartbeatAt/startedAt/completedAt/lastErrorCode/lastErrorSummary/createdAt/updatedAt/rowVersion`。
 
-### 11.4 错误码和接口测试依据
+### 12.4 错误码和接口测试依据
 
 除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN` 外，本模块使用：
 
@@ -1017,9 +1103,9 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 - `backend/tests/integration/background_admin_http_test.go`
 - `backend/scripts/verify.ps1`
 
-## 12. 模块 11：审计
+## 13. 模块 11：审计
 
-### 12.1 当前边界
+### 13.1 当前边界
 
 本周期完成审计模块的基础查询、详情、完整性状态和哈希链校验能力，并将用户、组织、权限、文件目录模块当前产生的 Outbox 事件注册为审计消费者。当前不实现审计导出、归档、WORM、批次锚定和安全告警；这些能力依赖后续对象存储与归档周期。
 
@@ -1033,7 +1119,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 
 所有 REST 查询接口当前仅允许 `SYSTEM_ADMIN` 访问。分页统一使用 `page/pageSize`，默认 `1/50`，最大 `pageSize=200`。
 
-### 12.2 审计接口
+### 13.2 审计接口
 
 | 接口 | Operation ID | 成功响应 | 关键约束 |
 |---|---|---:|---|
@@ -1063,7 +1149,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 }
 ```
 
-### 12.3 字段与映射
+### 13.3 字段与映射
 
 `AuditEvent` 字段严格来自 `audit_events` 和 OpenAPI：`auditEventId/eventType/riskLevel/actorType/actorId/actorDisplayName/actorEmployeeNo/effectiveRole/adminDelegationId/shareId/resourceType/resourceId/resourceName/spaceId/organizationId/documentId/documentVersionId/action/result/failureCode/sourceChannel/ipAddress/userAgent/requestId/traceId/correlationId/reason/metadataSchemaVersion/metadata/hashSchemaVersion/chainId/sequenceNumber/previousHash/eventHash/partitionDate/createdAt`。
 
@@ -1077,7 +1163,7 @@ Outbox 审计消费者的映射规则：
 - `metadata` 保留 `outboxEventId/aggregateType/aggregateId/aggregateVersion/eventSchemaVersion/deduplicationKey/sourcePayload/mappedBy` 等追踪信息；
 - `USER_ROLE_CHANGED`、`AUTH_PASSWORD_CHANGED`、权限与管理委派变更等高风险事件进入哈希链；`AUTH_ACCOUNT_LOCKED` 视为 `CRITICAL`。
 
-### 12.4 错误码和接口测试依据
+### 13.4 错误码和接口测试依据
 
 除公共 `INVALID_REQUEST/AUTH_REQUIRED/AUTH_FORBIDDEN` 外，本模块使用：
 
@@ -1095,7 +1181,7 @@ Outbox 审计消费者的映射规则：
 - `backend/scripts/verify.ps1`
 - `go test ./internal/modules/audit/... ./...`
 
-## 13. 文档维护与冻结规则
+## 14. 文档维护与冻结规则
 
 1. 新模块先更新 `backend/api/openapi.yaml`，再生成代码和实现。
 2. 模块开发完成时，在本文档追加对应模块章节和接口测试要点，并更新第 2 章状态。

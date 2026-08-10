@@ -27,6 +27,7 @@ type Querier interface {
 	CountBackgroundJobs(ctx context.Context, arg *CountBackgroundJobsParams) (int64, error)
 	CountBackgroundJobsByStatus(ctx context.Context) ([]*CountBackgroundJobsByStatusRow, error)
 	CountDirectPermissionGrants(ctx context.Context, arg *CountDirectPermissionGrantsParams) (int64, error)
+	CountDocumentVersions(ctx context.Context, documentID pgtype.UUID) (int64, error)
 	CountFileChildEntries(ctx context.Context, arg *CountFileChildEntriesParams) (int64, error)
 	CountManagedUserSessions(ctx context.Context, userID pgtype.UUID) (int64, error)
 	CountManagedUsers(ctx context.Context, arg *CountManagedUsersParams) (int64, error)
@@ -44,8 +45,13 @@ type Querier interface {
 	DeactivateMembership(ctx context.Context, arg *DeactivateMembershipParams) (*UserOrganization, error)
 	DeleteOrganizationExternalClosureLinks(ctx context.Context, ancestorOrganizationID pgtype.UUID) error
 	DeletePermissionGrantActions(ctx context.Context, permissionGrantID pgtype.UUID) error
+	EnsureDocumentLockCounter(ctx context.Context, arg *EnsureDocumentLockCounterParams) error
+	ExpireDocumentLocks(ctx context.Context, arg *ExpireDocumentLocksParams) error
 	FileFolderIsDescendantOf(ctx context.Context, arg *FileFolderIsDescendantOfParams) (bool, error)
 	FindEffectiveAdminDelegation(ctx context.Context, arg *FindEffectiveAdminDelegationParams) (*FindEffectiveAdminDelegationRow, error)
+	ForceReleaseDocumentLock(ctx context.Context, arg *ForceReleaseDocumentLockParams) (*DocumentLock, error)
+	GetActiveDocumentLock(ctx context.Context, documentID pgtype.UUID) (*DocumentLock, error)
+	GetActiveDocumentLockForUpdate(ctx context.Context, documentID pgtype.UUID) (*DocumentLock, error)
 	GetAdminDelegationWithCapabilities(ctx context.Context, adminDelegationID pgtype.UUID) (*GetAdminDelegationWithCapabilitiesRow, error)
 	GetAdminDelegationWithCapabilitiesForUpdate(ctx context.Context, adminDelegationID pgtype.UUID) (*GetAdminDelegationWithCapabilitiesForUpdateRow, error)
 	GetAuditChainHeadForUpdate(ctx context.Context, arg *GetAuditChainHeadForUpdateParams) (*AuditChainHead, error)
@@ -54,6 +60,7 @@ type Querier interface {
 	GetCurrentSessionIdentity(ctx context.Context, userSessionID pgtype.UUID) (*GetCurrentSessionIdentityRow, error)
 	GetDatabaseHealth(ctx context.Context) (*GetDatabaseHealthRow, error)
 	GetDocumentAuthorizationResource(ctx context.Context, documentID pgtype.UUID) (*GetDocumentAuthorizationResourceRow, error)
+	GetDocumentVersion(ctx context.Context, arg *GetDocumentVersionParams) (*DocumentVersion, error)
 	GetFileIdempotencyRecord(ctx context.Context, arg *GetFileIdempotencyRecordParams) (*GetFileIdempotencyRecordRow, error)
 	GetFileNamespaceEntry(ctx context.Context, namespaceEntryID pgtype.UUID) (*GetFileNamespaceEntryRow, error)
 	GetFileNamespaceEntryForUpdate(ctx context.Context, namespaceEntryID pgtype.UUID) (*GetFileNamespaceEntryForUpdateRow, error)
@@ -90,7 +97,11 @@ type Querier interface {
 	GetUploadSession(ctx context.Context, uploadSessionID pgtype.UUID) (*UploadSession, error)
 	GetUploadSessionForUpdate(ctx context.Context, uploadSessionID pgtype.UUID) (*UploadSession, error)
 	GetUserIdempotencyRecordForUpdate(ctx context.Context, arg *GetUserIdempotencyRecordForUpdateParams) (*GetUserIdempotencyRecordForUpdateRow, error)
+	GetVersionDocumentContext(ctx context.Context, documentID pgtype.UUID) (*GetVersionDocumentContextRow, error)
+	GetVersionDocumentForUpdate(ctx context.Context, documentID pgtype.UUID) (*Document, error)
+	HeartbeatDocumentLock(ctx context.Context, arg *HeartbeatDocumentLockParams) (*DocumentLock, error)
 	IncrementDocumentACLVersion(ctx context.Context, arg *IncrementDocumentACLVersionParams) error
+	IncrementDocumentLockCounter(ctx context.Context, arg *IncrementDocumentLockCounterParams) (int64, error)
 	IncrementFolderACLVersion(ctx context.Context, arg *IncrementFolderACLVersionParams) error
 	IncrementGlobalAuthorizationVersion(ctx context.Context, arg *IncrementGlobalAuthorizationVersionParams) error
 	IncrementOrganizationDelegationVersion(ctx context.Context, arg *IncrementOrganizationDelegationVersionParams) error
@@ -106,6 +117,7 @@ type Querier interface {
 	InsertAuditChainHead(ctx context.Context, arg *InsertAuditChainHeadParams) error
 	InsertAuditEvent(ctx context.Context, arg *InsertAuditEventParams) error
 	InsertBackgroundJob(ctx context.Context, arg *InsertBackgroundJobParams) (*BackgroundJob, error)
+	InsertDocumentLock(ctx context.Context, arg *InsertDocumentLockParams) (*DocumentLock, error)
 	InsertFileDocument(ctx context.Context, arg *InsertFileDocumentParams) (*Document, error)
 	InsertFileFolder(ctx context.Context, arg *InsertFileFolderParams) error
 	InsertFileNamespaceEntry(ctx context.Context, arg *InsertFileNamespaceEntryParams) (*NamespaceEntry, error)
@@ -126,9 +138,11 @@ type Querier interface {
 	InsertPermissionOutboxEvent(ctx context.Context, arg *InsertPermissionOutboxEventParams) error
 	InsertPrincipalSecurityVersions(ctx context.Context, arg *InsertPrincipalSecurityVersionsParams) error
 	InsertQuotaReservation(ctx context.Context, arg *InsertQuotaReservationParams) (*QuotaReservation, error)
+	InsertRestoredDocumentVersion(ctx context.Context, arg *InsertRestoredDocumentVersionParams) (*DocumentVersion, error)
 	InsertSpace(ctx context.Context, arg *InsertSpaceParams) (*Space, error)
 	InsertUploadSession(ctx context.Context, arg *InsertUploadSessionParams) (*UploadSession, error)
 	InsertUserOutboxEvent(ctx context.Context, arg *InsertUserOutboxEventParams) error
+	InsertVersionOutboxEvent(ctx context.Context, arg *InsertVersionOutboxEventParams) error
 	InvalidateDescendantAdminDelegations(ctx context.Context, arg *InvalidateDescendantAdminDelegationsParams) ([]pgtype.UUID, error)
 	ListActivePermissionUserOrganizations(ctx context.Context, arg *ListActivePermissionUserOrganizationsParams) ([]pgtype.UUID, error)
 	ListAuditChainEventsForVerify(ctx context.Context, arg *ListAuditChainEventsForVerifyParams) ([]*ListAuditChainEventsForVerifyRow, error)
@@ -137,6 +151,7 @@ type Querier interface {
 	ListBackgroundJobs(ctx context.Context, arg *ListBackgroundJobsParams) ([]*BackgroundJob, error)
 	ListCandidatePermissionGrants(ctx context.Context, arg *ListCandidatePermissionGrantsParams) ([]*ListCandidatePermissionGrantsRow, error)
 	ListDirectPermissionGrants(ctx context.Context, arg *ListDirectPermissionGrantsParams) ([]*ListDirectPermissionGrantsRow, error)
+	ListDocumentVersions(ctx context.Context, arg *ListDocumentVersionsParams) ([]*DocumentVersion, error)
 	ListFileChildEntries(ctx context.Context, arg *ListFileChildEntriesParams) ([]*ListFileChildEntriesRow, error)
 	ListFolderAuthorizationAncestors(ctx context.Context, resourceID pgtype.UUID) ([]*ListFolderAuthorizationAncestorsRow, error)
 	ListManagedUserSessions(ctx context.Context, arg *ListManagedUserSessionsParams) ([]*UserSession, error)
@@ -170,6 +185,7 @@ type Querier interface {
 	OrganizationDeletionBlocked(ctx context.Context, arg *OrganizationDeletionBlockedParams) (bool, error)
 	OrganizationWouldCreateCycle(ctx context.Context, arg *OrganizationWouldCreateCycleParams) (bool, error)
 	PermissionOrganizationExists(ctx context.Context, organizationID pgtype.UUID) (bool, error)
+	ReleaseDocumentLock(ctx context.Context, arg *ReleaseDocumentLockParams) (*DocumentLock, error)
 	ReleaseSpaceQuotaReservation(ctx context.Context, arg *ReleaseSpaceQuotaReservationParams) (int64, error)
 	RenameFileNamespaceEntry(ctx context.Context, arg *RenameFileNamespaceEntryParams) (*NamespaceEntry, error)
 	RenewBackgroundJobLease(ctx context.Context, arg *RenewBackgroundJobLeaseParams) (int64, error)
@@ -186,6 +202,7 @@ type Querier interface {
 	RevokeOwnedUserSessionTokens(ctx context.Context, arg *RevokeOwnedUserSessionTokensParams) error
 	RevokePermissionGrant(ctx context.Context, arg *RevokePermissionGrantParams) (*PermissionGrant, error)
 	RevokeUserSession(ctx context.Context, arg *RevokeUserSessionParams) error
+	SetDocumentCurrentVersion(ctx context.Context, arg *SetDocumentCurrentVersionParams) (int64, error)
 	SetManagedUserStatus(ctx context.Context, arg *SetManagedUserStatusParams) (*SetManagedUserStatusRow, error)
 	SetOrganizationChangePlanStatus(ctx context.Context, arg *SetOrganizationChangePlanStatusParams) (*OrganizationChangePlan, error)
 	SetOrganizationStatus(ctx context.Context, arg *SetOrganizationStatusParams) (*Organization, error)

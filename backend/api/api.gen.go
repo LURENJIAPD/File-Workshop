@@ -433,6 +433,81 @@ func (e DocumentAvailabilityStatus) Valid() bool {
 	}
 }
 
+// Defines values for DocumentLockSource.
+const (
+	DocumentLockSourceAGENT  DocumentLockSource = "AGENT"
+	DocumentLockSourceOFFICE DocumentLockSource = "OFFICE"
+	DocumentLockSourceWEB    DocumentLockSource = "WEB"
+	DocumentLockSourceWEBDAV DocumentLockSource = "WEBDAV"
+)
+
+// Valid indicates whether the value is a known member of the DocumentLockSource enum.
+func (e DocumentLockSource) Valid() bool {
+	switch e {
+	case DocumentLockSourceAGENT:
+		return true
+	case DocumentLockSourceOFFICE:
+		return true
+	case DocumentLockSourceWEB:
+		return true
+	case DocumentLockSourceWEBDAV:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentLockStatus.
+const (
+	DocumentLockStatusACTIVE   DocumentLockStatus = "ACTIVE"
+	DocumentLockStatusEXPIRED  DocumentLockStatus = "EXPIRED"
+	DocumentLockStatusFORCED   DocumentLockStatus = "FORCED"
+	DocumentLockStatusRELEASED DocumentLockStatus = "RELEASED"
+)
+
+// Valid indicates whether the value is a known member of the DocumentLockStatus enum.
+func (e DocumentLockStatus) Valid() bool {
+	switch e {
+	case DocumentLockStatusACTIVE:
+		return true
+	case DocumentLockStatusEXPIRED:
+		return true
+	case DocumentLockStatusFORCED:
+		return true
+	case DocumentLockStatusRELEASED:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DocumentVersionSourceType.
+const (
+	DocumentVersionSourceTypeAGENT     DocumentVersionSourceType = "AGENT"
+	DocumentVersionSourceTypeMIGRATION DocumentVersionSourceType = "MIGRATION"
+	DocumentVersionSourceTypeRESTORE   DocumentVersionSourceType = "RESTORE"
+	DocumentVersionSourceTypeWEB       DocumentVersionSourceType = "WEB"
+	DocumentVersionSourceTypeWEBDAV    DocumentVersionSourceType = "WEBDAV"
+)
+
+// Valid indicates whether the value is a known member of the DocumentVersionSourceType enum.
+func (e DocumentVersionSourceType) Valid() bool {
+	switch e {
+	case DocumentVersionSourceTypeAGENT:
+		return true
+	case DocumentVersionSourceTypeMIGRATION:
+		return true
+	case DocumentVersionSourceTypeRESTORE:
+		return true
+	case DocumentVersionSourceTypeWEB:
+		return true
+	case DocumentVersionSourceTypeWEBDAV:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for HealthStatus.
 const (
 	HealthStatusDegraded    HealthStatus = "degraded"
@@ -1024,6 +1099,21 @@ type AbortUploadSessionRequest struct {
 	RowVersion int64  `json:"rowVersion"`
 }
 
+// AcquireDocumentLockRequest defines model for AcquireDocumentLockRequest.
+type AcquireDocumentLockRequest struct {
+	Source     DocumentLockSource `json:"source"`
+	TtlSeconds *int               `json:"ttlSeconds,omitempty"`
+}
+
+// AcquireDocumentLockResponse defines model for AcquireDocumentLockResponse.
+type AcquireDocumentLockResponse struct {
+	Lock DocumentLock `json:"lock"`
+
+	// LockToken 仅本次响应返回的明文锁令牌；服务端只保存 SHA-256 摘要。
+	LockToken string `json:"lockToken"`
+	RequestId string `json:"requestId"`
+}
+
 // AddOrganizationChangeOperationRequest defines model for AddOrganizationChangeOperationRequest.
 type AddOrganizationChangeOperationRequest struct {
 	Operation              map[string]interface{}          `json:"operation"`
@@ -1529,12 +1619,83 @@ type DirectoryLifecycleStatus string
 // DocumentAvailabilityStatus defines model for DocumentAvailabilityStatus.
 type DocumentAvailabilityStatus string
 
+// DocumentLock defines model for DocumentLock.
+type DocumentLock struct {
+	AcquiredAt       time.Time           `json:"acquiredAt"`
+	CreatedAt        time.Time           `json:"createdAt"`
+	DocumentId       openapi_types.UUID  `json:"documentId"`
+	DocumentLockId   openapi_types.UUID  `json:"documentLockId"`
+	ExpiresAt        time.Time           `json:"expiresAt"`
+	FencingToken     int64               `json:"fencingToken"`
+	HeartbeatAt      time.Time           `json:"heartbeatAt"`
+	ReleaseReason    *string             `json:"releaseReason,omitempty"`
+	ReleasedAt       *time.Time          `json:"releasedAt,omitempty"`
+	ReleasedByUserId *openapi_types.UUID `json:"releasedByUserId,omitempty"`
+	RowVersion       int64               `json:"rowVersion"`
+	Source           DocumentLockSource  `json:"source"`
+	Status           DocumentLockStatus  `json:"status"`
+	UpdatedAt        time.Time           `json:"updatedAt"`
+	UserId           openapi_types.UUID  `json:"userId"`
+}
+
+// DocumentLockResponse defines model for DocumentLockResponse.
+type DocumentLockResponse struct {
+	Lock      *DocumentLock `json:"lock,omitempty"`
+	RequestId string        `json:"requestId"`
+}
+
+// DocumentLockSource defines model for DocumentLockSource.
+type DocumentLockSource string
+
+// DocumentLockStatus defines model for DocumentLockStatus.
+type DocumentLockStatus string
+
+// DocumentVersion defines model for DocumentVersion.
+type DocumentVersion struct {
+	ChangeNote            *string                   `json:"changeNote,omitempty"`
+	CreatedAt             time.Time                 `json:"createdAt"`
+	CreatedByUserId       openapi_types.UUID        `json:"createdByUserId"`
+	DocumentId            openapi_types.UUID        `json:"documentId"`
+	DocumentVersionId     openapi_types.UUID        `json:"documentVersionId"`
+	MimeType              string                    `json:"mimeType"`
+	RestoredFromVersionId *openapi_types.UUID       `json:"restoredFromVersionId,omitempty"`
+	Sha256Hex             string                    `json:"sha256Hex"`
+	SizeBytes             int64                     `json:"sizeBytes"`
+	SourceType            DocumentVersionSourceType `json:"sourceType"`
+	StorageObjectId       openapi_types.UUID        `json:"storageObjectId"`
+	VersionNumber         int64                     `json:"versionNumber"`
+}
+
+// DocumentVersionListResponse defines model for DocumentVersionListResponse.
+type DocumentVersionListResponse struct {
+	Items     []DocumentVersion `json:"items"`
+	Page      Page              `json:"page"`
+	PageSize  PageSize          `json:"pageSize"`
+	RequestId string            `json:"requestId"`
+	Total     int64             `json:"total"`
+}
+
+// DocumentVersionResponse defines model for DocumentVersionResponse.
+type DocumentVersionResponse struct {
+	RequestId string          `json:"requestId"`
+	Version   DocumentVersion `json:"version"`
+}
+
+// DocumentVersionSourceType defines model for DocumentVersionSourceType.
+type DocumentVersionSourceType string
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
 	Code      string                  `json:"code"`
 	Details   *map[string]interface{} `json:"details,omitempty"`
 	Message   string                  `json:"message"`
 	RequestId string                  `json:"requestId"`
+}
+
+// ForceReleaseDocumentLockRequest defines model for ForceReleaseDocumentLockRequest.
+type ForceReleaseDocumentLockRequest struct {
+	Reason     string `json:"reason"`
+	RowVersion int64  `json:"rowVersion"`
 }
 
 // HealthResponse defines model for HealthResponse.
@@ -1548,6 +1709,13 @@ type HealthResponse struct {
 
 // HealthStatus defines model for HealthStatus.
 type HealthStatus string
+
+// HeartbeatDocumentLockRequest defines model for HeartbeatDocumentLockRequest.
+type HeartbeatDocumentLockRequest struct {
+	LockToken  string `json:"lockToken"`
+	RowVersion int64  `json:"rowVersion"`
+	TtlSeconds *int   `json:"ttlSeconds,omitempty"`
+}
 
 // LoginRequest defines model for LoginRequest.
 type LoginRequest struct {
@@ -1847,6 +2015,13 @@ type ProvisionPersonalSpaceRequest struct {
 	QuotaBytes int64                   `json:"quotaBytes"`
 }
 
+// ReleaseDocumentLockRequest defines model for ReleaseDocumentLockRequest.
+type ReleaseDocumentLockRequest struct {
+	LockToken  string  `json:"lockToken"`
+	Reason     *string `json:"reason,omitempty"`
+	RowVersion int64   `json:"rowVersion"`
+}
+
 // RemoveOrganizationMemberRequest defines model for RemoveOrganizationMemberRequest.
 type RemoveOrganizationMemberRequest struct {
 	Reason     string `json:"reason"`
@@ -1863,6 +2038,12 @@ type RenameDirectoryEntryRequest struct {
 type ResetUserPasswordRequest struct {
 	Password   string `json:"password"`
 	RowVersion int64  `json:"rowVersion"`
+}
+
+// RestoreDocumentVersionRequest defines model for RestoreDocumentVersionRequest.
+type RestoreDocumentVersionRequest struct {
+	ChangeNote *string `json:"changeNote,omitempty"`
+	RowVersion int64   `json:"rowVersion"`
 }
 
 // RetryBackgroundItemRequest defines model for RetryBackgroundItemRequest.
@@ -2154,6 +2335,12 @@ type DelegationIdPath = openapi_types.UUID
 // DirectoryEntryIdPath defines model for DirectoryEntryIdPath.
 type DirectoryEntryIdPath = openapi_types.UUID
 
+// DocumentIdPath defines model for DocumentIdPath.
+type DocumentIdPath = openapi_types.UUID
+
+// DocumentVersionIdPath defines model for DocumentVersionIdPath.
+type DocumentVersionIdPath = openapi_types.UUID
+
 // GrantIdPath defines model for GrantIdPath.
 type GrantIdPath = openapi_types.UUID
 
@@ -2397,6 +2584,21 @@ type GetAuditIntegrityParams struct {
 	Status   *AuditChainStatus `form:"status,omitempty" json:"status,omitempty"`
 }
 
+// ListDocumentVersionsParams defines parameters for ListDocumentVersions.
+type ListDocumentVersionsParams struct {
+	// Page 从 1 开始的页码。
+	Page *PageQuery `form:"page,omitempty" json:"page,omitempty"`
+
+	// PageSize 每页数量，最大 200。
+	PageSize *PageSizeQuery `form:"pageSize,omitempty" json:"pageSize,omitempty"`
+}
+
+// RestoreDocumentVersionParams defines parameters for RestoreDocumentVersion.
+type RestoreDocumentVersionParams struct {
+	// IdempotencyKey 可重试写请求的稳定幂等键。
+	IdempotencyKey IdempotencyKeyHeader `json:"Idempotency-Key"`
+}
+
 // ListOrganizationAdministratorsParams defines parameters for ListOrganizationAdministrators.
 type ListOrganizationAdministratorsParams struct {
 	// Page 从 1 开始的页码。
@@ -2552,6 +2754,21 @@ type VerifyAuditIntegrityJSONRequestBody = VerifyAuditIntegrityRequest
 
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
+
+// ReleaseDocumentLockJSONRequestBody defines body for ReleaseDocumentLock for application/json ContentType.
+type ReleaseDocumentLockJSONRequestBody = ReleaseDocumentLockRequest
+
+// AcquireDocumentLockJSONRequestBody defines body for AcquireDocumentLock for application/json ContentType.
+type AcquireDocumentLockJSONRequestBody = AcquireDocumentLockRequest
+
+// ForceReleaseDocumentLockJSONRequestBody defines body for ForceReleaseDocumentLock for application/json ContentType.
+type ForceReleaseDocumentLockJSONRequestBody = ForceReleaseDocumentLockRequest
+
+// HeartbeatDocumentLockJSONRequestBody defines body for HeartbeatDocumentLock for application/json ContentType.
+type HeartbeatDocumentLockJSONRequestBody = HeartbeatDocumentLockRequest
+
+// RestoreDocumentVersionJSONRequestBody defines body for RestoreDocumentVersion for application/json ContentType.
+type RestoreDocumentVersionJSONRequestBody = RestoreDocumentVersionRequest
 
 // RenameDirectoryEntryJSONRequestBody defines body for RenameDirectoryEntry for application/json ContentType.
 type RenameDirectoryEntryJSONRequestBody = RenameDirectoryEntryRequest
@@ -2738,6 +2955,27 @@ type ServerInterface interface {
 	// GetCurrentSession 获取当前认证会话
 	// (GET /api/v1/auth/session)
 	GetCurrentSession(c *gin.Context)
+	// ReleaseDocumentLock 释放文件级租约锁
+	// (DELETE /api/v1/documents/{documentId}/lock)
+	ReleaseDocumentLock(c *gin.Context, documentId DocumentIdPath)
+	// GetDocumentLock 查询文档当前锁状态
+	// (GET /api/v1/documents/{documentId}/lock)
+	GetDocumentLock(c *gin.Context, documentId DocumentIdPath)
+	// AcquireDocumentLock 获取文件级租约锁
+	// (POST /api/v1/documents/{documentId}/lock)
+	AcquireDocumentLock(c *gin.Context, documentId DocumentIdPath)
+	// ForceReleaseDocumentLock 强制释放文件级租约锁
+	// (POST /api/v1/documents/{documentId}/lock/force-release)
+	ForceReleaseDocumentLock(c *gin.Context, documentId DocumentIdPath)
+	// HeartbeatDocumentLock 续租文件级租约锁
+	// (POST /api/v1/documents/{documentId}/lock/heartbeat)
+	HeartbeatDocumentLock(c *gin.Context, documentId DocumentIdPath)
+	// ListDocumentVersions 分页查询文档版本
+	// (GET /api/v1/documents/{documentId}/versions)
+	ListDocumentVersions(c *gin.Context, documentId DocumentIdPath, params ListDocumentVersionsParams)
+	// RestoreDocumentVersion 将历史版本恢复为新版本
+	// (POST /api/v1/documents/{documentId}/versions/{documentVersionId}/restore)
+	RestoreDocumentVersion(c *gin.Context, documentId DocumentIdPath, documentVersionId DocumentVersionIdPath, params RestoreDocumentVersionParams)
 	// GetDirectoryEntry 获取目录项详情
 	// (GET /api/v1/entries/{entryId})
 	GetDirectoryEntry(c *gin.Context, entryId DirectoryEntryIdPath)
@@ -4474,6 +4712,236 @@ func (siw *ServerInterfaceWrapper) GetCurrentSession(c *gin.Context) {
 	siw.Handler.GetCurrentSession(c)
 }
 
+// ReleaseDocumentLock operation middleware
+func (siw *ServerInterfaceWrapper) ReleaseDocumentLock(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "documentId" -------------
+	var documentId DocumentIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "documentId", c.Param("documentId"), &documentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter documentId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ReleaseDocumentLock(c, documentId)
+}
+
+// GetDocumentLock operation middleware
+func (siw *ServerInterfaceWrapper) GetDocumentLock(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "documentId" -------------
+	var documentId DocumentIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "documentId", c.Param("documentId"), &documentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter documentId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetDocumentLock(c, documentId)
+}
+
+// AcquireDocumentLock operation middleware
+func (siw *ServerInterfaceWrapper) AcquireDocumentLock(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "documentId" -------------
+	var documentId DocumentIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "documentId", c.Param("documentId"), &documentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter documentId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.AcquireDocumentLock(c, documentId)
+}
+
+// ForceReleaseDocumentLock operation middleware
+func (siw *ServerInterfaceWrapper) ForceReleaseDocumentLock(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "documentId" -------------
+	var documentId DocumentIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "documentId", c.Param("documentId"), &documentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter documentId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ForceReleaseDocumentLock(c, documentId)
+}
+
+// HeartbeatDocumentLock operation middleware
+func (siw *ServerInterfaceWrapper) HeartbeatDocumentLock(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "documentId" -------------
+	var documentId DocumentIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "documentId", c.Param("documentId"), &documentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter documentId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.HeartbeatDocumentLock(c, documentId)
+}
+
+// ListDocumentVersions operation middleware
+func (siw *ServerInterfaceWrapper) ListDocumentVersions(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "documentId" -------------
+	var documentId DocumentIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "documentId", c.Param("documentId"), &documentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter documentId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListDocumentVersionsParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", c.Request.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter page: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "pageSize" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "pageSize", c.Request.URL.Query(), &params.PageSize, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter pageSize: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ListDocumentVersions(c, documentId, params)
+}
+
+// RestoreDocumentVersion operation middleware
+func (siw *ServerInterfaceWrapper) RestoreDocumentVersion(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "documentId" -------------
+	var documentId DocumentIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "documentId", c.Param("documentId"), &documentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter documentId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Path parameter "documentVersionId" -------------
+	var documentVersionId DocumentVersionIdPath
+
+	err = runtime.BindStyledParameterWithOptions("simple", "documentVersionId", c.Param("documentVersionId"), &documentVersionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter documentVersionId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RestoreDocumentVersionParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "Idempotency-Key" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Idempotency-Key")]; found {
+		var IdempotencyKey IdempotencyKeyHeader
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for Idempotency-Key, got %d", n), http.StatusBadRequest)
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Idempotency-Key", valueList[0], &IdempotencyKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter Idempotency-Key: %w", err), http.StatusBadRequest)
+			return
+		}
+
+		params.IdempotencyKey = IdempotencyKey
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter Idempotency-Key is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.RestoreDocumentVersion(c, documentId, documentVersionId, params)
+}
+
 // GetDirectoryEntry operation middleware
 func (siw *ServerInterfaceWrapper) GetDirectoryEntry(c *gin.Context) {
 
@@ -5329,6 +5797,13 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/api/v1/uploads/:uploadSessionId", wrapper.GetUploadSession)
 	router.POST(options.BaseURL+"/api/v1/uploads/:uploadSessionId/parts/:partNumber/presign", wrapper.PresignUploadPart)
 	router.POST(options.BaseURL+"/api/v1/uploads/:uploadSessionId/abort", wrapper.AbortUploadSession)
+	router.GET(options.BaseURL+"/api/v1/documents/:documentId/versions", wrapper.ListDocumentVersions)
+	router.POST(options.BaseURL+"/api/v1/documents/:documentId/versions/:documentVersionId/restore", wrapper.RestoreDocumentVersion)
+	router.DELETE(options.BaseURL+"/api/v1/documents/:documentId/lock", wrapper.ReleaseDocumentLock)
+	router.GET(options.BaseURL+"/api/v1/documents/:documentId/lock", wrapper.GetDocumentLock)
+	router.POST(options.BaseURL+"/api/v1/documents/:documentId/lock", wrapper.AcquireDocumentLock)
+	router.POST(options.BaseURL+"/api/v1/documents/:documentId/lock/heartbeat", wrapper.HeartbeatDocumentLock)
+	router.POST(options.BaseURL+"/api/v1/documents/:documentId/lock/force-release", wrapper.ForceReleaseDocumentLock)
 	router.GET(options.BaseURL+"/api/v1/entries/:entryId", wrapper.GetDirectoryEntry)
 	router.PATCH(options.BaseURL+"/api/v1/entries/:entryId", wrapper.RenameDirectoryEntry)
 	router.POST(options.BaseURL+"/api/v1/entries/:entryId/move", wrapper.MoveDirectoryEntry)
@@ -9767,6 +10242,712 @@ func (response GetCurrentSession401JSONResponse) VisitGetCurrentSessionResponse(
 	return err
 }
 
+type ReleaseDocumentLockRequestObject struct {
+	DocumentId DocumentIdPath `json:"documentId"`
+	Body       *ReleaseDocumentLockJSONRequestBody
+}
+
+type ReleaseDocumentLockResponseObject interface {
+	VisitReleaseDocumentLockResponse(w http.ResponseWriter) error
+}
+
+type ReleaseDocumentLock200JSONResponse DocumentLockResponse
+
+func (response ReleaseDocumentLock200JSONResponse) VisitReleaseDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReleaseDocumentLock400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ReleaseDocumentLock400JSONResponse) VisitReleaseDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReleaseDocumentLock401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ReleaseDocumentLock401JSONResponse) VisitReleaseDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReleaseDocumentLock403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ReleaseDocumentLock403JSONResponse) VisitReleaseDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReleaseDocumentLock404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response ReleaseDocumentLock404JSONResponse) VisitReleaseDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReleaseDocumentLock409JSONResponse struct{ ConflictJSONResponse }
+
+func (response ReleaseDocumentLock409JSONResponse) VisitReleaseDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDocumentLockRequestObject struct {
+	DocumentId DocumentIdPath `json:"documentId"`
+}
+
+type GetDocumentLockResponseObject interface {
+	VisitGetDocumentLockResponse(w http.ResponseWriter) error
+}
+
+type GetDocumentLock200JSONResponse DocumentLockResponse
+
+func (response GetDocumentLock200JSONResponse) VisitGetDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDocumentLock401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response GetDocumentLock401JSONResponse) VisitGetDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDocumentLock403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetDocumentLock403JSONResponse) VisitGetDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDocumentLock404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetDocumentLock404JSONResponse) VisitGetDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcquireDocumentLockRequestObject struct {
+	DocumentId DocumentIdPath `json:"documentId"`
+	Body       *AcquireDocumentLockJSONRequestBody
+}
+
+type AcquireDocumentLockResponseObject interface {
+	VisitAcquireDocumentLockResponse(w http.ResponseWriter) error
+}
+
+type AcquireDocumentLock201JSONResponse AcquireDocumentLockResponse
+
+func (response AcquireDocumentLock201JSONResponse) VisitAcquireDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcquireDocumentLock400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response AcquireDocumentLock400JSONResponse) VisitAcquireDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcquireDocumentLock401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response AcquireDocumentLock401JSONResponse) VisitAcquireDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcquireDocumentLock403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response AcquireDocumentLock403JSONResponse) VisitAcquireDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcquireDocumentLock404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response AcquireDocumentLock404JSONResponse) VisitAcquireDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AcquireDocumentLock409JSONResponse struct{ ConflictJSONResponse }
+
+func (response AcquireDocumentLock409JSONResponse) VisitAcquireDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ForceReleaseDocumentLockRequestObject struct {
+	DocumentId DocumentIdPath `json:"documentId"`
+	Body       *ForceReleaseDocumentLockJSONRequestBody
+}
+
+type ForceReleaseDocumentLockResponseObject interface {
+	VisitForceReleaseDocumentLockResponse(w http.ResponseWriter) error
+}
+
+type ForceReleaseDocumentLock200JSONResponse DocumentLockResponse
+
+func (response ForceReleaseDocumentLock200JSONResponse) VisitForceReleaseDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ForceReleaseDocumentLock400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ForceReleaseDocumentLock400JSONResponse) VisitForceReleaseDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ForceReleaseDocumentLock401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ForceReleaseDocumentLock401JSONResponse) VisitForceReleaseDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ForceReleaseDocumentLock403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ForceReleaseDocumentLock403JSONResponse) VisitForceReleaseDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ForceReleaseDocumentLock404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response ForceReleaseDocumentLock404JSONResponse) VisitForceReleaseDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ForceReleaseDocumentLock409JSONResponse struct{ ConflictJSONResponse }
+
+func (response ForceReleaseDocumentLock409JSONResponse) VisitForceReleaseDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type HeartbeatDocumentLockRequestObject struct {
+	DocumentId DocumentIdPath `json:"documentId"`
+	Body       *HeartbeatDocumentLockJSONRequestBody
+}
+
+type HeartbeatDocumentLockResponseObject interface {
+	VisitHeartbeatDocumentLockResponse(w http.ResponseWriter) error
+}
+
+type HeartbeatDocumentLock200JSONResponse DocumentLockResponse
+
+func (response HeartbeatDocumentLock200JSONResponse) VisitHeartbeatDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type HeartbeatDocumentLock400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response HeartbeatDocumentLock400JSONResponse) VisitHeartbeatDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type HeartbeatDocumentLock401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response HeartbeatDocumentLock401JSONResponse) VisitHeartbeatDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type HeartbeatDocumentLock403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response HeartbeatDocumentLock403JSONResponse) VisitHeartbeatDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type HeartbeatDocumentLock404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response HeartbeatDocumentLock404JSONResponse) VisitHeartbeatDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type HeartbeatDocumentLock409JSONResponse struct{ ConflictJSONResponse }
+
+func (response HeartbeatDocumentLock409JSONResponse) VisitHeartbeatDocumentLockResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDocumentVersionsRequestObject struct {
+	DocumentId DocumentIdPath `json:"documentId"`
+	Params     ListDocumentVersionsParams
+}
+
+type ListDocumentVersionsResponseObject interface {
+	VisitListDocumentVersionsResponse(w http.ResponseWriter) error
+}
+
+type ListDocumentVersions200JSONResponse DocumentVersionListResponse
+
+func (response ListDocumentVersions200JSONResponse) VisitListDocumentVersionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDocumentVersions400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response ListDocumentVersions400JSONResponse) VisitListDocumentVersionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDocumentVersions401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response ListDocumentVersions401JSONResponse) VisitListDocumentVersionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDocumentVersions403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListDocumentVersions403JSONResponse) VisitListDocumentVersionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDocumentVersions404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response ListDocumentVersions404JSONResponse) VisitListDocumentVersionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreDocumentVersionRequestObject struct {
+	DocumentId        DocumentIdPath        `json:"documentId"`
+	DocumentVersionId DocumentVersionIdPath `json:"documentVersionId"`
+	Params            RestoreDocumentVersionParams
+	Body              *RestoreDocumentVersionJSONRequestBody
+}
+
+type RestoreDocumentVersionResponseObject interface {
+	VisitRestoreDocumentVersionResponse(w http.ResponseWriter) error
+}
+
+type RestoreDocumentVersion201JSONResponse DocumentVersionResponse
+
+func (response RestoreDocumentVersion201JSONResponse) VisitRestoreDocumentVersionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreDocumentVersion400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response RestoreDocumentVersion400JSONResponse) VisitRestoreDocumentVersionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreDocumentVersion401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response RestoreDocumentVersion401JSONResponse) VisitRestoreDocumentVersionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreDocumentVersion403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RestoreDocumentVersion403JSONResponse) VisitRestoreDocumentVersionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreDocumentVersion404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response RestoreDocumentVersion404JSONResponse) VisitRestoreDocumentVersionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreDocumentVersion409JSONResponse struct{ ConflictJSONResponse }
+
+func (response RestoreDocumentVersion409JSONResponse) VisitRestoreDocumentVersionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetDirectoryEntryRequestObject struct {
 	EntryId DirectoryEntryIdPath `json:"entryId"`
 }
@@ -12228,6 +13409,27 @@ type StrictServerInterface interface {
 	// GetCurrentSession 获取当前认证会话
 	// (GET /api/v1/auth/session)
 	GetCurrentSession(ctx context.Context, request GetCurrentSessionRequestObject) (GetCurrentSessionResponseObject, error)
+	// ReleaseDocumentLock 释放文件级租约锁
+	// (DELETE /api/v1/documents/{documentId}/lock)
+	ReleaseDocumentLock(ctx context.Context, request ReleaseDocumentLockRequestObject) (ReleaseDocumentLockResponseObject, error)
+	// GetDocumentLock 查询文档当前锁状态
+	// (GET /api/v1/documents/{documentId}/lock)
+	GetDocumentLock(ctx context.Context, request GetDocumentLockRequestObject) (GetDocumentLockResponseObject, error)
+	// AcquireDocumentLock 获取文件级租约锁
+	// (POST /api/v1/documents/{documentId}/lock)
+	AcquireDocumentLock(ctx context.Context, request AcquireDocumentLockRequestObject) (AcquireDocumentLockResponseObject, error)
+	// ForceReleaseDocumentLock 强制释放文件级租约锁
+	// (POST /api/v1/documents/{documentId}/lock/force-release)
+	ForceReleaseDocumentLock(ctx context.Context, request ForceReleaseDocumentLockRequestObject) (ForceReleaseDocumentLockResponseObject, error)
+	// HeartbeatDocumentLock 续租文件级租约锁
+	// (POST /api/v1/documents/{documentId}/lock/heartbeat)
+	HeartbeatDocumentLock(ctx context.Context, request HeartbeatDocumentLockRequestObject) (HeartbeatDocumentLockResponseObject, error)
+	// ListDocumentVersions 分页查询文档版本
+	// (GET /api/v1/documents/{documentId}/versions)
+	ListDocumentVersions(ctx context.Context, request ListDocumentVersionsRequestObject) (ListDocumentVersionsResponseObject, error)
+	// RestoreDocumentVersion 将历史版本恢复为新版本
+	// (POST /api/v1/documents/{documentId}/versions/{documentVersionId}/restore)
+	RestoreDocumentVersion(ctx context.Context, request RestoreDocumentVersionRequestObject) (RestoreDocumentVersionResponseObject, error)
 	// GetDirectoryEntry 获取目录项详情
 	// (GET /api/v1/entries/{entryId})
 	GetDirectoryEntry(ctx context.Context, request GetDirectoryEntryRequestObject) (GetDirectoryEntryResponseObject, error)
@@ -13774,6 +14976,226 @@ func (sh *strictHandler) GetCurrentSession(ctx *gin.Context) {
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(GetCurrentSessionResponseObject); ok {
 		if err := validResponse.VisitGetCurrentSessionResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ReleaseDocumentLock operation middleware
+func (sh *strictHandler) ReleaseDocumentLock(ctx *gin.Context, documentId DocumentIdPath) {
+	var request ReleaseDocumentLockRequestObject
+
+	request.DocumentId = documentId
+
+	var body ReleaseDocumentLockJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ReleaseDocumentLock(ctx, request.(ReleaseDocumentLockRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReleaseDocumentLock")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ReleaseDocumentLockResponseObject); ok {
+		if err := validResponse.VisitReleaseDocumentLockResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetDocumentLock operation middleware
+func (sh *strictHandler) GetDocumentLock(ctx *gin.Context, documentId DocumentIdPath) {
+	var request GetDocumentLockRequestObject
+
+	request.DocumentId = documentId
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetDocumentLock(ctx, request.(GetDocumentLockRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetDocumentLock")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetDocumentLockResponseObject); ok {
+		if err := validResponse.VisitGetDocumentLockResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AcquireDocumentLock operation middleware
+func (sh *strictHandler) AcquireDocumentLock(ctx *gin.Context, documentId DocumentIdPath) {
+	var request AcquireDocumentLockRequestObject
+
+	request.DocumentId = documentId
+
+	var body AcquireDocumentLockJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.AcquireDocumentLock(ctx, request.(AcquireDocumentLockRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AcquireDocumentLock")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(AcquireDocumentLockResponseObject); ok {
+		if err := validResponse.VisitAcquireDocumentLockResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ForceReleaseDocumentLock operation middleware
+func (sh *strictHandler) ForceReleaseDocumentLock(ctx *gin.Context, documentId DocumentIdPath) {
+	var request ForceReleaseDocumentLockRequestObject
+
+	request.DocumentId = documentId
+
+	var body ForceReleaseDocumentLockJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ForceReleaseDocumentLock(ctx, request.(ForceReleaseDocumentLockRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ForceReleaseDocumentLock")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ForceReleaseDocumentLockResponseObject); ok {
+		if err := validResponse.VisitForceReleaseDocumentLockResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// HeartbeatDocumentLock operation middleware
+func (sh *strictHandler) HeartbeatDocumentLock(ctx *gin.Context, documentId DocumentIdPath) {
+	var request HeartbeatDocumentLockRequestObject
+
+	request.DocumentId = documentId
+
+	var body HeartbeatDocumentLockJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.HeartbeatDocumentLock(ctx, request.(HeartbeatDocumentLockRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "HeartbeatDocumentLock")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(HeartbeatDocumentLockResponseObject); ok {
+		if err := validResponse.VisitHeartbeatDocumentLockResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListDocumentVersions operation middleware
+func (sh *strictHandler) ListDocumentVersions(ctx *gin.Context, documentId DocumentIdPath, params ListDocumentVersionsParams) {
+	var request ListDocumentVersionsRequestObject
+
+	request.DocumentId = documentId
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListDocumentVersions(ctx, request.(ListDocumentVersionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListDocumentVersions")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(ListDocumentVersionsResponseObject); ok {
+		if err := validResponse.VisitListDocumentVersionsResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RestoreDocumentVersion operation middleware
+func (sh *strictHandler) RestoreDocumentVersion(ctx *gin.Context, documentId DocumentIdPath, documentVersionId DocumentVersionIdPath, params RestoreDocumentVersionParams) {
+	var request RestoreDocumentVersionRequestObject
+
+	request.DocumentId = documentId
+	request.DocumentVersionId = documentVersionId
+	request.Params = params
+
+	var body RestoreDocumentVersionJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RestoreDocumentVersion(ctx, request.(RestoreDocumentVersionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RestoreDocumentVersion")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(RestoreDocumentVersionResponseObject); ok {
+		if err := validResponse.VisitRestoreDocumentVersionResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

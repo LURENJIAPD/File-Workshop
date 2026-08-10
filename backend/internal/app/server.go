@@ -35,6 +35,9 @@ import (
 	usersapplication "file-workshop/backend/internal/modules/users/application"
 	usersrepository "file-workshop/backend/internal/modules/users/repository"
 	userstransport "file-workshop/backend/internal/modules/users/transport"
+	versionsapplication "file-workshop/backend/internal/modules/versions/application"
+	versionsrepository "file-workshop/backend/internal/modules/versions/repository"
+	versionstransport "file-workshop/backend/internal/modules/versions/transport"
 	"file-workshop/backend/internal/platform/cache"
 	"file-workshop/backend/internal/platform/config"
 	"file-workshop/backend/internal/platform/database"
@@ -118,13 +121,16 @@ func RunServer(ctx context.Context, cfg config.Config, logger *slog.Logger) erro
 	uploadsRepository := uploadsrepository.NewPostgreSQL(postgresPool)
 	uploadsService := uploadsapplication.NewService(uploadsRepository, uploadsRepository, permissionsService, objectStorageClient, uploadsapplication.Config{Bucket: cfg.ObjectStorage.Bucket, PresignTTL: cfg.ObjectStorage.PresignTTL}, time.Now)
 	uploadsHandler := uploadstransport.NewHandler(uploadsService, identityService, cfg.Auth)
+	versionsRepository := versionsrepository.NewPostgreSQL(postgresPool)
+	versionsService := versionsapplication.NewService(versionsRepository, versionsRepository, permissionsService, time.Now)
+	versionsHandler := versionstransport.NewHandler(versionsService, identityService, cfg.Auth)
 	backgroundRepository := backgroundrepository.NewPostgreSQL(postgresPool)
 	backgroundService := backgroundapplication.NewService(backgroundRepository, backgroundRepository, time.Now)
 	backgroundHandler := backgroundtransport.NewHandler(backgroundService, identityService, cfg.Auth)
 	auditRepository := auditrepository.NewPostgreSQL(postgresPool)
 	auditService := auditapplication.NewService(auditRepository, time.Now)
 	auditHandler := audittransport.NewHandler(auditService, identityService, cfg.Auth)
-	router := httpserver.NewRouter(httpserver.NewAPIHandler(healthHandler, identityHandler, usersHandler, organizationsHandler, permissionsHandler, filesHandler, uploadsHandler, backgroundHandler, auditHandler), logger, cfg.Auth.AllowedOrigins)
+	router := httpserver.NewRouter(httpserver.NewAPIHandler(healthHandler, identityHandler, usersHandler, organizationsHandler, permissionsHandler, filesHandler, uploadsHandler, versionsHandler, backgroundHandler, auditHandler), logger, cfg.Auth.AllowedOrigins)
 	server := httpserver.NewServer(cfg.HTTP, router)
 
 	serverErrors := make(chan error, 1)
