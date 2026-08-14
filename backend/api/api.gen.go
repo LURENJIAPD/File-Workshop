@@ -1778,6 +1778,35 @@ type BatchBackgroundJobOperationResponse struct {
 	Succeeded int                                     `json:"succeeded"`
 }
 
+// BatchBackgroundOutboxEventOperationItemRequest defines model for BatchBackgroundOutboxEventOperationItemRequest.
+type BatchBackgroundOutboxEventOperationItemRequest struct {
+	OutboxEventId openapi_types.UUID `json:"outboxEventId"`
+	RowVersion    int64              `json:"rowVersion"`
+}
+
+// BatchBackgroundOutboxEventOperationItemResult defines model for BatchBackgroundOutboxEventOperationItemResult.
+type BatchBackgroundOutboxEventOperationItemResult struct {
+	ErrorCode     *string                `json:"errorCode,omitempty"`
+	ErrorMessage  *string                `json:"errorMessage,omitempty"`
+	Event         *BackgroundOutboxEvent `json:"event,omitempty"`
+	OutboxEventId openapi_types.UUID     `json:"outboxEventId"`
+	Success       bool                   `json:"success"`
+}
+
+// BatchBackgroundOutboxEventOperationRequest defines model for BatchBackgroundOutboxEventOperationRequest.
+type BatchBackgroundOutboxEventOperationRequest struct {
+	Items  []BatchBackgroundOutboxEventOperationItemRequest `json:"items"`
+	Reason string                                           `json:"reason"`
+}
+
+// BatchBackgroundOutboxEventOperationResponse defines model for BatchBackgroundOutboxEventOperationResponse.
+type BatchBackgroundOutboxEventOperationResponse struct {
+	Failed    int                                             `json:"failed"`
+	Items     []BatchBackgroundOutboxEventOperationItemResult `json:"items"`
+	RequestId string                                          `json:"requestId"`
+	Succeeded int                                             `json:"succeeded"`
+}
+
 // BatchPermissionEvaluationRequest defines model for BatchPermissionEvaluationRequest.
 type BatchPermissionEvaluationRequest struct {
 	Items []PermissionEvaluationRequest `json:"items"`
@@ -3466,6 +3495,9 @@ type CancelBackgroundJobJSONRequestBody = CancelBackgroundJobRequest
 // RetryBackgroundJobJSONRequestBody defines body for RetryBackgroundJob for application/json ContentType.
 type RetryBackgroundJobJSONRequestBody = RetryBackgroundItemRequest
 
+// BatchRetryBackgroundOutboxEventsJSONRequestBody defines body for BatchRetryBackgroundOutboxEvents for application/json ContentType.
+type BatchRetryBackgroundOutboxEventsJSONRequestBody = BatchBackgroundOutboxEventOperationRequest
+
 // RetryBackgroundOutboxEventJSONRequestBody defines body for RetryBackgroundOutboxEvent for application/json ContentType.
 type RetryBackgroundOutboxEventJSONRequestBody = RetryBackgroundItemRequest
 
@@ -3675,6 +3707,9 @@ type ServerInterface interface {
 	// ListBackgroundOutboxEvents List Outbox events for operations.
 	// (GET /api/v1/admin/background/outbox-events)
 	ListBackgroundOutboxEvents(c *gin.Context, params ListBackgroundOutboxEventsParams)
+	// BatchRetryBackgroundOutboxEvents Retry failed or dead Outbox events in a controlled batch.
+	// (POST /api/v1/admin/background/outbox-events/batch-retry)
+	BatchRetryBackgroundOutboxEvents(c *gin.Context)
 	// RetryBackgroundOutboxEvent Retry a failed or dead Outbox event.
 	// (POST /api/v1/admin/background/outbox-events/{outboxEventId}/retry)
 	RetryBackgroundOutboxEvent(c *gin.Context, outboxEventId OutboxEventIdPath)
@@ -4350,6 +4385,19 @@ func (siw *ServerInterfaceWrapper) ListBackgroundOutboxEvents(c *gin.Context) {
 	}
 
 	siw.Handler.ListBackgroundOutboxEvents(c, params)
+}
+
+// BatchRetryBackgroundOutboxEvents operation middleware
+func (siw *ServerInterfaceWrapper) BatchRetryBackgroundOutboxEvents(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.BatchRetryBackgroundOutboxEvents(c)
 }
 
 // RetryBackgroundOutboxEvent operation middleware
@@ -7592,6 +7640,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/api/v1/audit/integrity", wrapper.GetAuditIntegrity)
 	router.POST(options.BaseURL+"/api/v1/audit/integrity/verify", wrapper.VerifyAuditIntegrity)
 	router.GET(options.BaseURL+"/api/v1/admin/background/outbox-events", wrapper.ListBackgroundOutboxEvents)
+	router.POST(options.BaseURL+"/api/v1/admin/background/outbox-events/batch-retry", wrapper.BatchRetryBackgroundOutboxEvents)
 	router.POST(options.BaseURL+"/api/v1/admin/background/outbox-events/:outboxEventId/retry", wrapper.RetryBackgroundOutboxEvent)
 	router.GET(options.BaseURL+"/api/v1/admin/background/summary", wrapper.GetBackgroundAdministrationSummary)
 	router.GET(options.BaseURL+"/api/v1/admin/background/failure-summary", wrapper.GetBackgroundFailureSummary)
@@ -8839,6 +8888,79 @@ func (response ListBackgroundOutboxEvents401JSONResponse) VisitListBackgroundOut
 type ListBackgroundOutboxEvents403JSONResponse struct{ ForbiddenJSONResponse }
 
 func (response ListBackgroundOutboxEvents403JSONResponse) VisitListBackgroundOutboxEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BatchRetryBackgroundOutboxEventsRequestObject struct {
+	Body *BatchRetryBackgroundOutboxEventsJSONRequestBody
+}
+
+type BatchRetryBackgroundOutboxEventsResponseObject interface {
+	VisitBatchRetryBackgroundOutboxEventsResponse(w http.ResponseWriter) error
+}
+
+type BatchRetryBackgroundOutboxEvents200JSONResponse BatchBackgroundOutboxEventOperationResponse
+
+func (response BatchRetryBackgroundOutboxEvents200JSONResponse) VisitBatchRetryBackgroundOutboxEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BatchRetryBackgroundOutboxEvents400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response BatchRetryBackgroundOutboxEvents400JSONResponse) VisitBatchRetryBackgroundOutboxEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BatchRetryBackgroundOutboxEvents401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response BatchRetryBackgroundOutboxEvents401JSONResponse) VisitBatchRetryBackgroundOutboxEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BatchRetryBackgroundOutboxEvents403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response BatchRetryBackgroundOutboxEvents403JSONResponse) VisitBatchRetryBackgroundOutboxEventsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -17301,6 +17423,9 @@ type StrictServerInterface interface {
 	// ListBackgroundOutboxEvents List Outbox events for operations.
 	// (GET /api/v1/admin/background/outbox-events)
 	ListBackgroundOutboxEvents(ctx context.Context, request ListBackgroundOutboxEventsRequestObject) (ListBackgroundOutboxEventsResponseObject, error)
+	// BatchRetryBackgroundOutboxEvents Retry failed or dead Outbox events in a controlled batch.
+	// (POST /api/v1/admin/background/outbox-events/batch-retry)
+	BatchRetryBackgroundOutboxEvents(ctx context.Context, request BatchRetryBackgroundOutboxEventsRequestObject) (BatchRetryBackgroundOutboxEventsResponseObject, error)
 	// RetryBackgroundOutboxEvent Retry a failed or dead Outbox event.
 	// (POST /api/v1/admin/background/outbox-events/{outboxEventId}/retry)
 	RetryBackgroundOutboxEvent(ctx context.Context, request RetryBackgroundOutboxEventRequestObject) (RetryBackgroundOutboxEventResponseObject, error)
@@ -18078,6 +18203,37 @@ func (sh *strictHandler) ListBackgroundOutboxEvents(ctx *gin.Context, params Lis
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(ListBackgroundOutboxEventsResponseObject); ok {
 		if err := validResponse.VisitListBackgroundOutboxEventsResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// BatchRetryBackgroundOutboxEvents operation middleware
+func (sh *strictHandler) BatchRetryBackgroundOutboxEvents(ctx *gin.Context) {
+	var request BatchRetryBackgroundOutboxEventsRequestObject
+
+	var body BatchRetryBackgroundOutboxEventsJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.BatchRetryBackgroundOutboxEvents(ctx, request.(BatchRetryBackgroundOutboxEventsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "BatchRetryBackgroundOutboxEvents")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(BatchRetryBackgroundOutboxEventsResponseObject); ok {
+		if err := validResponse.VisitBatchRetryBackgroundOutboxEventsResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

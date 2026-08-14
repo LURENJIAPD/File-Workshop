@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.21
+> 文档版本：V0.22
 > 文档状态：按模块持续编制  
 > 最近更新：2026-08-14
-> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 09 回收与生命周期元数据闭环、过期扫描入队和资料保全管理接口、模块 10 PostgreSQL 元数据搜索基础接口和索引刷新任务入队接口、模块 11 审计基础查询、摘要统计和完整性接口、模块 16 后台任务基础调度、统计、失败原因聚合、过期租约恢复、重试、取消、死信、跳过和批量运维接口
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 09 回收与生命周期元数据闭环、过期扫描入队和资料保全管理接口、模块 10 PostgreSQL 元数据搜索基础接口和索引刷新任务入队接口、模块 11 审计基础查询、摘要统计和完整性接口、模块 16 后台任务基础调度、统计、失败原因聚合、过期租约恢复、Outbox 批量重试、取消、死信、跳过和批量运维接口
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -30,7 +30,7 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 | 10 | 搜索 | 已收录 PostgreSQL 元数据搜索基础接口和索引刷新任务入队接口 | 2 | 2026-08-10 |
 | 11 | 审计 | 已收录基础查询、摘要统计和完整性接口 | 5 | 2026-08-14 |
 | 12～15 | 后续系统模块 | 未收录 | 0 | — |
-| 16 | 后台任务 | 已完成基础调度、管理员统计、失败原因聚合、过期租约恢复、重试、取消、死信、跳过和批量运维接口 | 12 | 2026-08-14 |
+| 16 | 后台任务 | 已完成基础调度、管理员统计、失败原因聚合、过期租约恢复、Outbox 批量重试、取消、死信、跳过和批量运维接口 | 13 | 2026-08-14 |
 
 ## 3. 全局接口约定
 
@@ -1442,7 +1442,7 @@ Content-Type: application/json
 - 成功处理 Outbox 标记为 `PUBLISHED`，成功处理 Job 标记为 `SUCCESS`；
 - 可重试失败标记 `FAILED`，写入错误码、错误摘要和下一次可用时间；
 - 永久失败或重试耗尽标记 `DEAD`；
-- 管理员可分页查询 Outbox 事件和后台任务，并对 `FAILED/DEAD` 项按 `rowVersion` 受控重试；
+- 管理员可分页查询 Outbox 事件和后台任务，并对 `FAILED/DEAD` Outbox/Job 项按 `rowVersion` 执行单项或批量受控重试；
 - 管理员可取消 `PENDING/FAILED/DEAD` 后台任务；`PROCESSING/SUCCESS/CANCELLED/SKIPPED` 不允许取消，避免正在执行任务或终态任务产生歧义；
 - 管理员可查看 Outbox 与后台任务按状态聚合的积压统计，并查看 `FAILED/DEAD` 的 Top 20 失败原因聚合；
 - 管理员可主动恢复租约已过期的 `PROCESSING` Outbox/Job；未耗尽次数的项目收敛为 `FAILED` 并立即可重试，已耗尽次数的项目收敛为 `DEAD`；
@@ -1481,6 +1481,7 @@ go run ./cmd/worker
 |---|---|---:|---|
 | `GET /api/v1/admin/background/outbox-events?page=1&pageSize=50` | `listBackgroundOutboxEvents` | `200/BackgroundOutboxEventListResponse` | 仅 `SYSTEM_ADMIN`；可按 `status/eventType` 筛选；分页统一使用 `page/pageSize` |
 | `POST /api/v1/admin/background/outbox-events/{outboxEventId}/retry` | `retryBackgroundOutboxEvent` | `200/BackgroundOutboxEventResponse` | 仅允许 `FAILED/DEAD`；请求必须包含 `rowVersion` 和 `reason`；成功后回到 `PENDING` 并清理锁与错误重试状态 |
+| `POST /api/v1/admin/background/outbox-events/batch-retry` | `batchRetryBackgroundOutboxEvents` | `200/BatchBackgroundOutboxEventOperationResponse` | 仅 `SYSTEM_ADMIN`；最多 50 项；每项必须包含 `outboxEventId/rowVersion`；仅 `FAILED/DEAD` 项可成功；单项失败以明细返回 |
 | `GET /api/v1/admin/background/summary` | `getBackgroundAdministrationSummary` | `200/BackgroundAdministrationSummaryResponse` | 仅 `SYSTEM_ADMIN`；返回 Outbox 与 Job 按状态统计 |
 | `GET /api/v1/admin/background/failure-summary` | `getBackgroundFailureSummary` | `200/BackgroundFailureSummaryResponse` | 仅 `SYSTEM_ADMIN`；固定返回 Outbox 与 Job 中 `FAILED/DEAD` 且存在 `lastErrorCode` 的 Top 20 错误码聚合，按数量和最近更新时间排序 |
 | `POST /api/v1/admin/background/expired-leases/recover` | `recoverExpiredBackgroundLeases` | `200/ExpiredBackgroundLeaseRecoveryResponse` | 仅 `SYSTEM_ADMIN`；请求必须包含 `reason`，`batchSize` 默认 100、最大 200；只处理 `PROCESSING` 且 `leaseUntil` 已过期的 Outbox/Job |
@@ -1591,6 +1592,64 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 }
 ```
 
+Outbox 批量重试请求示例：
+
+```json
+{
+  "reason": "审计消费者恢复，批量重放失败 Outbox",
+  "items": [
+    {
+      "outboxEventId": "019fd14d-c956-7f0e-a061-e5ee440d77b1",
+      "rowVersion": 4
+    },
+    {
+      "outboxEventId": "019fd14d-c956-7f0e-a061-e5ee440d77b2",
+      "rowVersion": 2
+    }
+  ]
+}
+```
+
+Outbox 批量重试响应示例：
+
+```json
+{
+  "succeeded": 1,
+  "failed": 1,
+  "items": [
+    {
+      "outboxEventId": "019fd14d-c956-7f0e-a061-e5ee440d77b1",
+      "success": true,
+      "event": {
+        "outboxEventId": "019fd14d-c956-7f0e-a061-e5ee440d77b1",
+        "aggregateType": "DOCUMENT",
+        "aggregateId": "019fd14d-c956-7f0e-a061-e5ee440d77c1",
+        "aggregateVersion": 3,
+        "eventType": "DOCUMENT_CREATED",
+        "eventSchemaVersion": 1,
+        "payload": {},
+        "deduplicationKey": "document-created:019fd14d-c956-7f0e-a061-e5ee440d77c1",
+        "priority": 0,
+        "status": "PENDING",
+        "attemptCount": 0,
+        "maxAttempts": 5,
+        "availableAt": "2026-08-14T00:00:00Z",
+        "createdAt": "2026-08-14T00:00:00Z",
+        "updatedAt": "2026-08-14T00:00:00Z",
+        "rowVersion": 5
+      }
+    },
+    {
+      "outboxEventId": "019fd14d-c956-7f0e-a061-e5ee440d77b2",
+      "success": false,
+      "errorCode": "BACKGROUND_STATE_CONFLICT",
+      "errorMessage": "outbox event state or rowVersion does not allow this operation"
+    }
+  ],
+  "requestId": "019fd14d-c956-7f0e-a061-e5ee440d77b3"
+}
+```
+
 批量运维请求示例，适用于批量重试、取消、死信和跳过：
 
 ```json
@@ -1655,7 +1714,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 | 404 | `BACKGROUND_ITEM_NOT_FOUND` | 指定 Outbox 事件或后台任务不存在 |
 | 409 | `BACKGROUND_STATE_CONFLICT` | 当前状态不是 `FAILED/DEAD`，或 `rowVersion` 已过期 |
 
-正式接口测试至少覆盖：按状态查询 Outbox/Job 积压；状态统计；失败原因 Top 20 聚合；过期租约恢复默认 `batchSize=100`、最大 200、缺少 `reason` 拒绝、只处理租约已过期的 `PROCESSING`，未耗尽次数进入 `FAILED`，耗尽次数进入 `DEAD`；查询失败原因和最近错误；受控重放 `FAILED/DEAD`；受控取消 `PENDING/FAILED/DEAD`；批量重试部分成功与部分失败；批量取消部分成功与部分失败；批量死信仅允许 `FAILED`；批量跳过仅允许 `PENDING/FAILED/DEAD`；批量重复 ID、空 items、超过 50 项和缺少 `reason` 返回 400；拒绝取消 `PROCESSING/SUCCESS/CANCELLED/SKIPPED`；拒绝死信或跳过正在执行、成功或已取消任务；普通用户访问运维接口被拒绝；分页统一使用 `page/pageSize`；非法状态、非法分页、缺少 `reason`、陈旧 `rowVersion` 和错误 Origin。
+正式接口测试至少覆盖：按状态查询 Outbox/Job 积压；状态统计；失败原因 Top 20 聚合；过期租约恢复默认 `batchSize=100`、最大 200、缺少 `reason` 拒绝、只处理租约已过期的 `PROCESSING`，未耗尽次数进入 `FAILED`，耗尽次数进入 `DEAD`；查询失败原因和最近错误；受控重放 `FAILED/DEAD`；Outbox 批量重试部分成功与部分失败、重复 ID、空 items、超过 50 项和缺少 `reason`；受控取消 `PENDING/FAILED/DEAD`；Job 批量重试部分成功与部分失败；批量取消部分成功与部分失败；批量死信仅允许 `FAILED`；批量跳过仅允许 `PENDING/FAILED/DEAD`；批量重复 ID、空 items、超过 50 项和缺少 `reason` 返回 400；拒绝取消 `PROCESSING/SUCCESS/CANCELLED/SKIPPED`；拒绝死信或跳过正在执行、成功或已取消任务；普通用户访问运维接口被拒绝；分页统一使用 `page/pageSize`；非法状态、非法分页、缺少 `reason`、陈旧 `rowVersion` 和错误 Origin。
 
 现有自动化证据：
 

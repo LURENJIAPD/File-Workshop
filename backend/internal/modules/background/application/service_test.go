@@ -143,6 +143,46 @@ func TestServiceRecoverExpiredLeasesRequiresAdmin(t *testing.T) {
 	}
 }
 
+func TestServiceBatchRetriesOutboxEventsWithPartialFailures(t *testing.T) {
+	now := time.Date(2026, 8, 14, 11, 0, 0, 0, time.UTC)
+	successID := uuid.Must(uuid.NewV7())
+	conflictID := uuid.Must(uuid.NewV7())
+	missingID := uuid.Must(uuid.NewV7())
+	repository := &fakeOperationsRepository{conflictID: conflictID, missingID: missingID}
+	service := NewService(repository, nil, func() time.Time { return now })
+
+	result, err := service.BatchRetryOutboxEvents(context.Background(), adminActor(), []domain.BatchOutboxEventItem{
+		{ID: successID, RowVersion: 1},
+		{ID: conflictID, RowVersion: 2},
+		{ID: missingID, RowVersion: 3},
+	}, "retry selected outbox events")
+	if err != nil {
+		t.Fatalf("BatchRetryOutboxEvents failed: %v", err)
+	}
+	if result.Succeeded != 1 || result.Failed != 2 || len(result.Items) != 3 {
+		t.Fatalf("result=%#v", result)
+	}
+	if repository.outboxRetryReason != "manual batch retry: retry selected outbox events" {
+		t.Fatalf("outboxRetryReason=%q", repository.outboxRetryReason)
+	}
+	if result.Items[0].Event == nil || result.Items[0].Event.Status != domain.OutboxStatusPending {
+		t.Fatalf("successful item=%#v", result.Items[0])
+	}
+}
+
+func TestServiceBatchRetryOutboxEventsValidatesDuplicates(t *testing.T) {
+	service := NewService(&fakeOperationsRepository{}, nil, time.Now)
+	id := uuid.Must(uuid.NewV7())
+
+	_, err := service.BatchRetryOutboxEvents(context.Background(), adminActor(), []domain.BatchOutboxEventItem{
+		{ID: id, RowVersion: 1},
+		{ID: id, RowVersion: 1},
+	}, "retry duplicates")
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Fatalf("error=%v, want ErrInvalidInput", err)
+	}
+}
+
 func TestServiceBatchRetriesBackgroundJobsWithPartialFailures(t *testing.T) {
 	now := time.Date(2026, 8, 10, 5, 0, 0, 0, time.UTC)
 	successID := uuid.Must(uuid.NewV7())
@@ -250,6 +290,7 @@ type fakeOperationsRepository struct {
 	leaseRecoveryNow       time.Time
 	conflictID             uuid.UUID
 	missingID              uuid.UUID
+	outboxRetryReason      string
 	retryReason            string
 	cancelID               uuid.UUID
 	cancelRowVersion       int64
@@ -271,8 +312,15 @@ func (r *fakeOperationsRepository) ListOutboxEvents(context.Context, domain.Outb
 	return domain.OutboxListResult{}, nil
 }
 
-func (r *fakeOperationsRepository) RetryOutboxEvent(context.Context, uuid.UUID, int64, string, time.Time) (domain.OutboxEvent, error) {
-	return domain.OutboxEvent{}, nil
+func (r *fakeOperationsRepository) RetryOutboxEvent(_ context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.OutboxEvent, error) {
+	r.outboxRetryReason = reason
+	if id == r.conflictID {
+		return domain.OutboxEvent{}, domain.ErrConflict
+	}
+	if id == r.missingID {
+		return domain.OutboxEvent{}, domain.ErrNotFound
+	}
+	return domain.OutboxEvent{ID: id, Status: domain.OutboxStatusPending, RowVersion: rowVersion + 1, AvailableAt: now}, nil
 }
 
 func (r *fakeOperationsRepository) ListBackgroundJobs(context.Context, domain.JobListFilter) (domain.JobListResult, error) {

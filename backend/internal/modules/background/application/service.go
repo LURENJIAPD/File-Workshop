@@ -115,6 +115,35 @@ func (s *Service) RetryOutboxEvent(ctx context.Context, actor domain.Actor, id u
 	return s.repository.RetryOutboxEvent(ctx, id, rowVersion, "manual retry: "+reason, s.now().UTC())
 }
 
+func (s *Service) BatchRetryOutboxEvents(ctx context.Context, actor domain.Actor, items []domain.BatchOutboxEventItem, reason string) (domain.BatchOutboxEventOperationResult, error) {
+	if err := requireAdmin(actor); err != nil {
+		return domain.BatchOutboxEventOperationResult{}, err
+	}
+	reason, err := validateOutboxBatchInput(items, reason)
+	if err != nil {
+		return domain.BatchOutboxEventOperationResult{}, err
+	}
+	now := s.now().UTC()
+	result := domain.BatchOutboxEventOperationResult{Items: make([]domain.BatchOutboxEventOperationResultItem, 0, len(items))}
+	for _, item := range items {
+		event, err := s.repository.RetryOutboxEvent(ctx, item.ID, item.RowVersion, "manual batch retry: "+reason, now)
+		if err == nil {
+			result.Succeeded++
+			eventCopy := event
+			result.Items = append(result.Items, domain.BatchOutboxEventOperationResultItem{ID: item.ID, Success: true, Event: &eventCopy})
+			continue
+		}
+		if errors.Is(err, domain.ErrNotFound) || errors.Is(err, domain.ErrConflict) {
+			result.Failed++
+			code, message := batchOutboxError(err)
+			result.Items = append(result.Items, domain.BatchOutboxEventOperationResultItem{ID: item.ID, Success: false, ErrorCode: &code, ErrorMessage: &message})
+			continue
+		}
+		return domain.BatchOutboxEventOperationResult{}, err
+	}
+	return result, nil
+}
+
 func (s *Service) ListBackgroundJobs(ctx context.Context, actor domain.Actor, filter domain.JobListFilter) (domain.JobListResult, error) {
 	if err := requireAdmin(actor); err != nil {
 		return domain.JobListResult{}, err
@@ -270,6 +299,24 @@ func validateBatchInput(items []domain.BatchJobItem, reason string) (string, err
 	return reason, nil
 }
 
+func validateOutboxBatchInput(items []domain.BatchOutboxEventItem, reason string) (string, error) {
+	reason = strings.TrimSpace(reason)
+	if reason == "" || len(reason) > 256 || len(items) < 1 || len(items) > domain.MaxBatchSize {
+		return "", domain.ErrInvalidInput
+	}
+	seen := make(map[uuid.UUID]struct{}, len(items))
+	for _, item := range items {
+		if item.ID == uuid.Nil || item.RowVersion < 1 {
+			return "", domain.ErrInvalidInput
+		}
+		if _, ok := seen[item.ID]; ok {
+			return "", domain.ErrInvalidInput
+		}
+		seen[item.ID] = struct{}{}
+	}
+	return reason, nil
+}
+
 func (s *Service) batchOperateJobs(ctx context.Context, items []domain.BatchJobItem, operate func(context.Context, domain.BatchJobItem) (domain.BackgroundJob, error)) (domain.BatchJobOperationResult, error) {
 	result := domain.BatchJobOperationResult{Items: make([]domain.BatchJobOperationResultItem, 0, len(items))}
 	for _, item := range items {
@@ -299,6 +346,17 @@ func batchError(err error) (string, string) {
 		return "BACKGROUND_STATE_CONFLICT", "background job state or rowVersion does not allow this operation"
 	default:
 		return "BACKGROUND_OPERATION_FAILED", "background job operation failed"
+	}
+}
+
+func batchOutboxError(err error) (string, string) {
+	switch {
+	case errors.Is(err, domain.ErrNotFound):
+		return "BACKGROUND_ITEM_NOT_FOUND", "outbox event not found"
+	case errors.Is(err, domain.ErrConflict):
+		return "BACKGROUND_STATE_CONFLICT", "outbox event state or rowVersion does not allow this operation"
+	default:
+		return "BACKGROUND_OPERATION_FAILED", "outbox event operation failed"
 	}
 }
 

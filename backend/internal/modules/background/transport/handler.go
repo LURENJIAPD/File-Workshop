@@ -110,6 +110,36 @@ func (h *Handler) RetryBackgroundOutboxEvent(ctx context.Context, request api.Re
 	return api.RetryBackgroundOutboxEvent200JSONResponse(api.BackgroundOutboxEventResponse{Event: body, RequestId: requestID}), nil
 }
 
+func (h *Handler) BatchRetryBackgroundOutboxEvents(ctx context.Context, request api.BatchRetryBackgroundOutboxEventsRequestObject) (api.BatchRetryBackgroundOutboxEventsResponseObject, error) {
+	ginContext, actor, requestID, authErr := h.authenticate(ctx)
+	if authErr != nil {
+		return api.BatchRetryBackgroundOutboxEvents401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	if !h.originAllowed(ginContext) {
+		return api.BatchRetryBackgroundOutboxEvents403JSONResponse{ForbiddenJSONResponse: forbidden(requestID)}, nil
+	}
+	if request.Body == nil {
+		return api.BatchRetryBackgroundOutboxEvents400JSONResponse{InvalidRequestJSONResponse: invalidRequest(requestID)}, nil
+	}
+	result, err := h.service.BatchRetryOutboxEvents(ginContext.Request.Context(), actor, batchOutboxRequestItems(request.Body.Items), request.Body.Reason)
+	if bad, denied, _, _, code := mapError(err, requestID); code != "" {
+		switch code {
+		case "400":
+			return api.BatchRetryBackgroundOutboxEvents400JSONResponse{InvalidRequestJSONResponse: bad}, nil
+		case "403":
+			return api.BatchRetryBackgroundOutboxEvents403JSONResponse{ForbiddenJSONResponse: denied}, nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	body, err := apiOutboxBatchResult(result, requestID)
+	if err != nil {
+		return nil, err
+	}
+	return api.BatchRetryBackgroundOutboxEvents200JSONResponse(body), nil
+}
+
 func (h *Handler) ListBackgroundJobs(ctx context.Context, request api.ListBackgroundJobsRequestObject) (api.ListBackgroundJobsResponseObject, error) {
 	ginContext, actor, requestID, authErr := h.authenticate(ctx)
 	if authErr != nil {
@@ -540,6 +570,32 @@ func apiLeaseRecovery(value domain.LeaseRecoveryResult, requestID string) api.Ex
 
 func apiLeaseRecoveryItem(value domain.LeaseRecoveryItem) api.ExpiredBackgroundLeaseRecoveryItem {
 	return api.ExpiredBackgroundLeaseRecoveryItem{Recovered: value.Recovered, Retryable: value.Retryable, Dead: value.Dead}
+}
+
+func batchOutboxRequestItems(items []api.BatchBackgroundOutboxEventOperationItemRequest) []domain.BatchOutboxEventItem {
+	result := make([]domain.BatchOutboxEventItem, 0, len(items))
+	for _, item := range items {
+		result = append(result, domain.BatchOutboxEventItem{ID: uuid.UUID(item.OutboxEventId), RowVersion: item.RowVersion})
+	}
+	return result
+}
+
+func apiOutboxBatchResult(value domain.BatchOutboxEventOperationResult, requestID string) (api.BatchBackgroundOutboxEventOperationResponse, error) {
+	items := make([]api.BatchBackgroundOutboxEventOperationItemResult, 0, len(value.Items))
+	for _, item := range value.Items {
+		result := api.BatchBackgroundOutboxEventOperationItemResult{OutboxEventId: openapi_types.UUID(item.ID), Success: item.Success}
+		if item.Event != nil {
+			event, err := apiOutboxEvent(*item.Event)
+			if err != nil {
+				return api.BatchBackgroundOutboxEventOperationResponse{}, err
+			}
+			result.Event = &event
+		}
+		result.ErrorCode = item.ErrorCode
+		result.ErrorMessage = item.ErrorMessage
+		items = append(items, result)
+	}
+	return api.BatchBackgroundOutboxEventOperationResponse{Items: items, Succeeded: value.Succeeded, Failed: value.Failed, RequestId: requestID}, nil
 }
 
 func batchRequestItems(items []api.BatchBackgroundJobOperationItemRequest) []domain.BatchJobItem {

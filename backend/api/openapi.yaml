@@ -2702,6 +2702,31 @@ paths:
         "401": { $ref: "#/components/responses/AuthRequired" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/v1/admin/background/outbox-events/batch-retry:
+    post:
+      operationId: batchRetryBackgroundOutboxEvents
+      tags: [BackgroundAdministration]
+      summary: Retry failed or dead Outbox events in a controlled batch.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchBackgroundOutboxEventOperationRequest"
+      responses:
+        "200":
+          description: Batch Outbox retry results.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchBackgroundOutboxEventOperationResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/v1/admin/background/outbox-events/{outboxEventId}/retry:
     post:
       operationId: retryBackgroundOutboxEvent
@@ -4026,6 +4051,49 @@ components:
       properties:
         outboxEvents: { $ref: "#/components/schemas/ExpiredBackgroundLeaseRecoveryItem" }
         backgroundJobs: { $ref: "#/components/schemas/ExpiredBackgroundLeaseRecoveryItem" }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    BatchBackgroundOutboxEventOperationItemRequest:
+      type: object
+      additionalProperties: false
+      required: [outboxEventId, rowVersion]
+      properties:
+        outboxEventId: { type: string, format: uuid }
+        rowVersion: { type: integer, format: int64, minimum: 1 }
+
+    BatchBackgroundOutboxEventOperationRequest:
+      type: object
+      additionalProperties: false
+      required: [items, reason]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items: { $ref: "#/components/schemas/BatchBackgroundOutboxEventOperationItemRequest" }
+        reason: { type: string, minLength: 1, maxLength: 256 }
+
+    BatchBackgroundOutboxEventOperationItemResult:
+      type: object
+      additionalProperties: false
+      required: [outboxEventId, success]
+      properties:
+        outboxEventId: { type: string, format: uuid }
+        success: { type: boolean }
+        event: { $ref: "#/components/schemas/BackgroundOutboxEvent" }
+        errorCode: { type: string, maxLength: 64 }
+        errorMessage: { type: string, maxLength: 256 }
+
+    BatchBackgroundOutboxEventOperationResponse:
+      type: object
+      additionalProperties: false
+      required: [items, succeeded, failed, requestId]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/BatchBackgroundOutboxEventOperationItemResult" }
+        succeeded: { type: integer, minimum: 0 }
+        failed: { type: integer, minimum: 0 }
         requestId: { type: string, minLength: 1, maxLength: 128 }
 
     BatchBackgroundJobOperationItemRequest:

@@ -134,6 +134,7 @@ type SearchAPI interface {
 type BackgroundAPI interface {
 	ListBackgroundOutboxEvents(context.Context, api.ListBackgroundOutboxEventsRequestObject) (api.ListBackgroundOutboxEventsResponseObject, error)
 	RetryBackgroundOutboxEvent(context.Context, api.RetryBackgroundOutboxEventRequestObject) (api.RetryBackgroundOutboxEventResponseObject, error)
+	BatchRetryBackgroundOutboxEvents(context.Context, api.BatchRetryBackgroundOutboxEventsRequestObject) (api.BatchRetryBackgroundOutboxEventsResponseObject, error)
 	GetBackgroundAdministrationSummary(context.Context, api.GetBackgroundAdministrationSummaryRequestObject) (api.GetBackgroundAdministrationSummaryResponseObject, error)
 	GetBackgroundFailureSummary(context.Context, api.GetBackgroundFailureSummaryRequestObject) (api.GetBackgroundFailureSummaryResponseObject, error)
 	RecoverExpiredBackgroundLeases(context.Context, api.RecoverExpiredBackgroundLeasesRequestObject) (api.RecoverExpiredBackgroundLeasesResponseObject, error)
@@ -290,6 +291,9 @@ func (h *APIHandler) ListBackgroundOutboxEvents(ctx context.Context, request api
 }
 func (h *APIHandler) RetryBackgroundOutboxEvent(ctx context.Context, request api.RetryBackgroundOutboxEventRequestObject) (api.RetryBackgroundOutboxEventResponseObject, error) {
 	return h.background.RetryBackgroundOutboxEvent(ctx, request)
+}
+func (h *APIHandler) BatchRetryBackgroundOutboxEvents(ctx context.Context, request api.BatchRetryBackgroundOutboxEventsRequestObject) (api.BatchRetryBackgroundOutboxEventsResponseObject, error) {
+	return h.background.BatchRetryBackgroundOutboxEvents(ctx, request)
 }
 func (h *APIHandler) GetBackgroundAdministrationSummary(ctx context.Context, request api.GetBackgroundAdministrationSummaryRequestObject) (api.GetBackgroundAdministrationSummaryResponseObject, error) {
 	return h.background.GetBackgroundAdministrationSummary(ctx, request)

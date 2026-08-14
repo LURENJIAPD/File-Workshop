@@ -158,6 +158,25 @@ type BatchJobItem struct {
 	RowVersion int64
 }
 
+type BatchOutboxEventItem struct {
+	ID         uuid.UUID
+	RowVersion int64
+}
+
+type BatchOutboxEventOperationResultItem struct {
+	ID           uuid.UUID
+	Success      bool
+	Event        *OutboxEvent
+	ErrorCode    *string
+	ErrorMessage *string
+}
+
+type BatchOutboxEventOperationResult struct {
+	Items     []BatchOutboxEventOperationResultItem
+	Succeeded int
+	Failed    int
+}
+
 type BatchJobOperationResultItem struct {
 	ID           uuid.UUID
 	Success      bool

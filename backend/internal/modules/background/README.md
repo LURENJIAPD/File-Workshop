@@ -11,7 +11,7 @@
 - 成功事件标记为 `PUBLISHED`；成功任务标记为 `SUCCESS`。
 - 可重试错误标记为 `FAILED`，永久失败或重试耗尽标记为 `DEAD`。
 - 支持失败摘要、错误码、退避重试、租约续期、心跳和 `rowVersion` 乐观并发。
-- 管理员 REST API 可分页查询 Outbox/Job 积压与失败原因，并对 `FAILED/DEAD` 单项受控重试。
+- 管理员 REST API 可分页查询 Outbox/Job 积压与失败原因，并对 `FAILED/DEAD` Outbox/Job 执行单项或批量受控重试。
 - 管理员 REST API 可按 `rowVersion` 受控取消 `PENDING/FAILED/DEAD` 后台任务，取消后任务进入 `CANCELLED` 终态。
 - 管理员 REST API 可查询 Outbox/Job 按状态聚合的积压统计。
 - 管理员 REST API 可查询 Outbox/Job `FAILED/DEAD` 状态下 Top 20 失败原因聚合，辅助定位主要故障类型。
@@ -38,6 +38,7 @@ go run ./cmd/worker
 
 - `GET /api/v1/admin/background/outbox-events?page=1&pageSize=50`
 - `POST /api/v1/admin/background/outbox-events/{outboxEventId}/retry`
+- `POST /api/v1/admin/background/outbox-events/batch-retry`
 - `GET /api/v1/admin/background/summary`
 - `GET /api/v1/admin/background/failure-summary`
 - `POST /api/v1/admin/background/expired-leases/recover`
