@@ -2810,6 +2810,24 @@ paths:
         "401": { $ref: "#/components/responses/AuthRequired" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/v1/admin/background/health-summary:
+    get:
+      operationId: getBackgroundHealthSummary
+      tags: [BackgroundAdministration]
+      summary: Get operational health signals for background operations.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Background operation health signals derived from Outbox and background job facts.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackgroundHealthSummaryResponse"
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/v1/admin/background/expired-leases/recover:
     post:
       operationId: recoverExpiredBackgroundLeases
@@ -4074,6 +4092,41 @@ components:
         backgroundJobs:
           type: array
           items: { $ref: "#/components/schemas/BackgroundFailureSummaryItem" }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    BackgroundHealthStatus:
+      type: string
+      enum: [OK, ATTENTION_REQUIRED]
+
+    BackgroundHealthSignalSeverity:
+      type: string
+      enum: [INFO, WARNING, CRITICAL]
+
+    BackgroundHealthSignalSource:
+      type: string
+      enum: [OUTBOX_EVENTS, BACKGROUND_JOBS]
+
+    BackgroundHealthSignal:
+      type: object
+      additionalProperties: false
+      required: [code, source, severity, count, message]
+      properties:
+        code: { type: string, minLength: 1, maxLength: 64 }
+        source: { $ref: "#/components/schemas/BackgroundHealthSignalSource" }
+        severity: { $ref: "#/components/schemas/BackgroundHealthSignalSeverity" }
+        count: { type: integer, format: int64, minimum: 0 }
+        oldestAt: { type: string, format: date-time }
+        message: { type: string, minLength: 1, maxLength: 256 }
+
+    BackgroundHealthSummaryResponse:
+      type: object
+      additionalProperties: false
+      required: [status, signals, requestId]
+      properties:
+        status: { $ref: "#/components/schemas/BackgroundHealthStatus" }
+        signals:
+          type: array
+          items: { $ref: "#/components/schemas/BackgroundHealthSignal" }
         requestId: { type: string, minLength: 1, maxLength: 128 }
 
     RecoverExpiredBackgroundLeasesRequest:

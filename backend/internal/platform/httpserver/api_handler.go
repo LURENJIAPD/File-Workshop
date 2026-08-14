@@ -138,6 +138,7 @@ type BackgroundAPI interface {
 	GetBackgroundAdministrationSummary(context.Context, api.GetBackgroundAdministrationSummaryRequestObject) (api.GetBackgroundAdministrationSummaryResponseObject, error)
 	GetBackgroundQueueLagSummary(context.Context, api.GetBackgroundQueueLagSummaryRequestObject) (api.GetBackgroundQueueLagSummaryResponseObject, error)
 	GetBackgroundFailureSummary(context.Context, api.GetBackgroundFailureSummaryRequestObject) (api.GetBackgroundFailureSummaryResponseObject, error)
+	GetBackgroundHealthSummary(context.Context, api.GetBackgroundHealthSummaryRequestObject) (api.GetBackgroundHealthSummaryResponseObject, error)
 	RecoverExpiredBackgroundLeases(context.Context, api.RecoverExpiredBackgroundLeasesRequestObject) (api.RecoverExpiredBackgroundLeasesResponseObject, error)
 	ListBackgroundJobs(context.Context, api.ListBackgroundJobsRequestObject) (api.ListBackgroundJobsResponseObject, error)
 	RetryBackgroundJob(context.Context, api.RetryBackgroundJobRequestObject) (api.RetryBackgroundJobResponseObject, error)
@@ -304,6 +305,9 @@ func (h *APIHandler) GetBackgroundQueueLagSummary(ctx context.Context, request a
 }
 func (h *APIHandler) GetBackgroundFailureSummary(ctx context.Context, request api.GetBackgroundFailureSummaryRequestObject) (api.GetBackgroundFailureSummaryResponseObject, error) {
 	return h.background.GetBackgroundFailureSummary(ctx, request)
+}
+func (h *APIHandler) GetBackgroundHealthSummary(ctx context.Context, request api.GetBackgroundHealthSummaryRequestObject) (api.GetBackgroundHealthSummaryResponseObject, error) {
+	return h.background.GetBackgroundHealthSummary(ctx, request)
 }
 func (h *APIHandler) RecoverExpiredBackgroundLeases(ctx context.Context, request api.RecoverExpiredBackgroundLeasesRequestObject) (api.RecoverExpiredBackgroundLeasesResponseObject, error) {
 	return h.background.RecoverExpiredBackgroundLeases(ctx, request)

@@ -119,6 +119,58 @@ func TestServiceGetQueueLagSummaryRequiresAdmin(t *testing.T) {
 	}
 }
 
+func TestServiceGetsHealthSummary(t *testing.T) {
+	now := time.Date(2026, 8, 14, 13, 0, 0, 0, time.UTC)
+	oldest := now.Add(-10 * time.Minute)
+	repository := &fakeOperationsRepository{
+		outboxCounts: []domain.OutboxStatusCount{{Status: domain.OutboxStatusDead, Count: 1}},
+		jobCounts:    []domain.OutboxStatusCount{{Status: domain.JobStatusDead, Count: 2}},
+		queueLag: domain.QueueLagSummary{
+			OutboxEvents:   domain.QueueLagItem{DuePendingCount: 4, DueFailedCount: 1, ExpiredProcessingCount: 0, OldestDueAt: &oldest},
+			BackgroundJobs: domain.QueueLagItem{DuePendingCount: 0, DueFailedCount: 0, ExpiredProcessingCount: 3, OldestDueAt: &oldest},
+		},
+	}
+	service := NewService(repository, nil, func() time.Time { return now })
+
+	summary, err := service.GetHealthSummary(context.Background(), adminActor())
+	if err != nil {
+		t.Fatalf("GetHealthSummary failed: %v", err)
+	}
+	if summary.Status != domain.HealthStatusAttentionRequired {
+		t.Fatalf("status=%s, want %s", summary.Status, domain.HealthStatusAttentionRequired)
+	}
+	if !repository.queueLagNow.Equal(now) {
+		t.Fatalf("queueLagNow=%s, want %s", repository.queueLagNow, now)
+	}
+	if len(summary.Signals) != 5 {
+		t.Fatalf("signals=%#v", summary.Signals)
+	}
+	if summary.Signals[0].Code != "OUTBOX_DEAD_EVENTS" || summary.Signals[0].Severity != domain.HealthSignalSeverityCritical {
+		t.Fatalf("first signal=%#v", summary.Signals[0])
+	}
+}
+
+func TestServiceGetsHealthyHealthSummary(t *testing.T) {
+	service := NewService(&fakeOperationsRepository{}, nil, time.Now)
+
+	summary, err := service.GetHealthSummary(context.Background(), adminActor())
+	if err != nil {
+		t.Fatalf("GetHealthSummary failed: %v", err)
+	}
+	if summary.Status != domain.HealthStatusOK || len(summary.Signals) != 0 {
+		t.Fatalf("summary=%#v", summary)
+	}
+}
+
+func TestServiceGetHealthSummaryRequiresAdmin(t *testing.T) {
+	service := NewService(&fakeOperationsRepository{}, nil, time.Now)
+
+	_, err := service.GetHealthSummary(context.Background(), domain.Actor{UserID: uuid.Must(uuid.NewV7()), Role: "USER"})
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("error=%v, want ErrForbidden", err)
+	}
+}
+
 func TestServiceGetFailureSummaryRequiresAdmin(t *testing.T) {
 	service := NewService(&fakeOperationsRepository{}, nil, time.Now)
 

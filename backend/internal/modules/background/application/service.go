@@ -78,6 +78,41 @@ func (s *Service) GetQueueLagSummary(ctx context.Context, actor domain.Actor) (d
 	return s.repository.GetQueueLagSummary(ctx, s.now().UTC())
 }
 
+func (s *Service) GetHealthSummary(ctx context.Context, actor domain.Actor) (domain.HealthSummary, error) {
+	if err := requireAdmin(actor); err != nil {
+		return domain.HealthSummary{}, err
+	}
+	outboxCounts, err := s.repository.CountOutboxEventsByStatus(ctx)
+	if err != nil {
+		return domain.HealthSummary{}, err
+	}
+	jobCounts, err := s.repository.CountBackgroundJobsByStatus(ctx)
+	if err != nil {
+		return domain.HealthSummary{}, err
+	}
+	lag, err := s.repository.GetQueueLagSummary(ctx, s.now().UTC())
+	if err != nil {
+		return domain.HealthSummary{}, err
+	}
+	signals := make([]domain.HealthSignal, 0, 8)
+	signals = appendHealthSignal(signals, countStatus(outboxCounts, domain.OutboxStatusDead), "OUTBOX_DEAD_EVENTS", domain.HealthSignalSourceOutboxEvents, domain.HealthSignalSeverityCritical, nil, "dead Outbox events require manual review")
+	signals = appendHealthSignal(signals, countStatus(jobCounts, domain.JobStatusDead), "BACKGROUND_JOB_DEAD", domain.HealthSignalSourceBackgroundJobs, domain.HealthSignalSeverityCritical, nil, "dead background jobs require manual review")
+	signals = appendHealthSignal(signals, lag.OutboxEvents.ExpiredProcessingCount, "OUTBOX_EXPIRED_PROCESSING", domain.HealthSignalSourceOutboxEvents, domain.HealthSignalSeverityCritical, lag.OutboxEvents.OldestDueAt, "expired Outbox processing leases can be recovered")
+	signals = appendHealthSignal(signals, lag.BackgroundJobs.ExpiredProcessingCount, "BACKGROUND_JOB_EXPIRED_PROCESSING", domain.HealthSignalSourceBackgroundJobs, domain.HealthSignalSeverityCritical, lag.BackgroundJobs.OldestDueAt, "expired background job processing leases can be recovered")
+	signals = appendHealthSignal(signals, lag.OutboxEvents.DueFailedCount, "OUTBOX_DUE_FAILED", domain.HealthSignalSourceOutboxEvents, domain.HealthSignalSeverityWarning, lag.OutboxEvents.OldestDueAt, "failed Outbox events are due for retry")
+	signals = appendHealthSignal(signals, lag.BackgroundJobs.DueFailedCount, "BACKGROUND_JOB_DUE_FAILED", domain.HealthSignalSourceBackgroundJobs, domain.HealthSignalSeverityWarning, lag.BackgroundJobs.OldestDueAt, "failed background jobs are due for retry")
+	signals = appendHealthSignal(signals, lag.OutboxEvents.DuePendingCount, "OUTBOX_DUE_PENDING", domain.HealthSignalSourceOutboxEvents, domain.HealthSignalSeverityInfo, lag.OutboxEvents.OldestDueAt, "pending Outbox events are ready to be processed")
+	signals = appendHealthSignal(signals, lag.BackgroundJobs.DuePendingCount, "BACKGROUND_JOB_DUE_PENDING", domain.HealthSignalSourceBackgroundJobs, domain.HealthSignalSeverityInfo, lag.BackgroundJobs.OldestDueAt, "pending background jobs are ready to be processed")
+	status := domain.HealthStatusOK
+	for _, signal := range signals {
+		if signal.Severity == domain.HealthSignalSeverityWarning || signal.Severity == domain.HealthSignalSeverityCritical {
+			status = domain.HealthStatusAttentionRequired
+			break
+		}
+	}
+	return domain.HealthSummary{Status: status, Signals: signals}, nil
+}
+
 func (s *Service) RecoverExpiredLeases(ctx context.Context, actor domain.Actor, batchSize int, reason string) (domain.LeaseRecoveryResult, error) {
 	if err := requireAdmin(actor); err != nil {
 		return domain.LeaseRecoveryResult{}, err
@@ -366,6 +401,22 @@ func batchOutboxError(err error) (string, string) {
 	default:
 		return "BACKGROUND_OPERATION_FAILED", "outbox event operation failed"
 	}
+}
+
+func appendHealthSignal(signals []domain.HealthSignal, count int64, code, source, severity string, oldestAt *time.Time, message string) []domain.HealthSignal {
+	if count <= 0 {
+		return signals
+	}
+	return append(signals, domain.HealthSignal{Code: code, Source: source, Severity: severity, Count: count, OldestAt: oldestAt, Message: message})
+}
+
+func countStatus(items []domain.OutboxStatusCount, status string) int64 {
+	for _, item := range items {
+		if item.Status == status {
+			return item.Count
+		}
+	}
+	return 0
 }
 
 func trimmedOptional(value *string) *string {

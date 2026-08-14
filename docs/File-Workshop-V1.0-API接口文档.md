@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.24
+> 文档版本：V0.25
 > 文档状态：按模块持续编制  
 > 最近更新：2026-08-14
-> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 09 回收与生命周期元数据闭环、过期扫描入队和资料保全管理接口、模块 10 PostgreSQL 元数据搜索基础接口和索引刷新任务入队接口、模块 11 审计基础查询、摘要统计增强和完整性接口、模块 16 后台任务基础调度、统计、队列延迟摘要、失败原因聚合、过期租约恢复、Outbox 批量重试、取消、死信、跳过和批量运维接口
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 09 回收与生命周期元数据闭环、过期扫描入队和资料保全管理接口、模块 10 PostgreSQL 元数据搜索基础接口和索引刷新任务入队接口、模块 11 审计基础查询、摘要统计增强和完整性接口、模块 16 后台任务基础调度、统计、队列延迟摘要、健康摘要、失败原因聚合、过期租约恢复、Outbox 批量重试、取消、死信、跳过和批量运维接口
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -30,7 +30,7 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 | 10 | 搜索 | 已收录 PostgreSQL 元数据搜索基础接口和索引刷新任务入队接口 | 2 | 2026-08-10 |
 | 11 | 审计 | 已收录基础查询、摘要统计增强和完整性接口 | 5 | 2026-08-14 |
 | 12～15 | 后续系统模块 | 未收录 | 0 | — |
-| 16 | 后台任务 | 已完成基础调度、管理员统计、队列延迟摘要、失败原因聚合、过期租约恢复、Outbox 批量重试、取消、死信、跳过和批量运维接口 | 14 | 2026-08-14 |
+| 16 | 后台任务 | 已完成基础调度、管理员统计、队列延迟摘要、健康摘要、失败原因聚合、过期租约恢复、Outbox 批量重试、取消、死信、跳过和批量运维接口 | 15 | 2026-08-14 |
 
 ## 3. 全局接口约定
 
@@ -1485,6 +1485,7 @@ go run ./cmd/worker
 | `GET /api/v1/admin/background/summary` | `getBackgroundAdministrationSummary` | `200/BackgroundAdministrationSummaryResponse` | 仅 `SYSTEM_ADMIN`；返回 Outbox 与 Job 按状态统计 |
 | `GET /api/v1/admin/background/queue-lag` | `getBackgroundQueueLagSummary` | `200/BackgroundQueueLagSummaryResponse` | 仅 `SYSTEM_ADMIN`；只读统计已到期 `PENDING`、已到期 `FAILED`、租约过期 `PROCESSING` 和最早到期时间；不修改任务状态 |
 | `GET /api/v1/admin/background/failure-summary` | `getBackgroundFailureSummary` | `200/BackgroundFailureSummaryResponse` | 仅 `SYSTEM_ADMIN`；固定返回 Outbox 与 Job 中 `FAILED/DEAD` 且存在 `lastErrorCode` 的 Top 20 错误码聚合，按数量和最近更新时间排序 |
+| `GET /api/v1/admin/background/health-summary` | `getBackgroundHealthSummary` | `200/BackgroundHealthSummaryResponse` | 仅 `SYSTEM_ADMIN`；只读返回后台队列健康状态和关注信号；死信、到期失败和过期租约会使 `status=ATTENTION_REQUIRED`，普通到期待处理仅作为 `INFO` 信号 |
 | `POST /api/v1/admin/background/expired-leases/recover` | `recoverExpiredBackgroundLeases` | `200/ExpiredBackgroundLeaseRecoveryResponse` | 仅 `SYSTEM_ADMIN`；请求必须包含 `reason`，`batchSize` 默认 100、最大 200；只处理 `PROCESSING` 且 `leaseUntil` 已过期的 Outbox/Job |
 | `GET /api/v1/admin/background/jobs?page=1&pageSize=50` | `listBackgroundJobs` | `200/BackgroundJobListResponse` | 仅 `SYSTEM_ADMIN`；可按 `status/jobType` 筛选；分页统一使用 `page/pageSize` |
 | `POST /api/v1/admin/background/jobs/{backgroundJobId}/retry` | `retryBackgroundJob` | `200/BackgroundJobResponse` | 仅允许 `FAILED/DEAD`；请求必须包含 `rowVersion` 和 `reason`；成功后回到 `PENDING` 并清理锁、心跳、开始/完成和错误状态 |
@@ -1584,9 +1585,37 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
       "latestAt": "2026-08-14T09:00:00Z"
     }
   ],
+	"requestId": "019fd14d-c956-7f0e-a061-e5ee440d77b1"
+}
+```
+
+后台任务健康摘要响应示例：
+
+```json
+{
+  "status": "ATTENTION_REQUIRED",
+  "signals": [
+    {
+      "code": "OUTBOX_DEAD_EVENTS",
+      "source": "OUTBOX_EVENTS",
+      "severity": "CRITICAL",
+      "count": 1,
+      "message": "dead Outbox events require manual review"
+    },
+    {
+      "code": "BACKGROUND_JOB_EXPIRED_PROCESSING",
+      "source": "BACKGROUND_JOBS",
+      "severity": "CRITICAL",
+      "count": 2,
+      "oldestAt": "2026-08-14T08:50:00Z",
+      "message": "expired background job processing leases can be recovered"
+    }
+  ],
   "requestId": "019fd14d-c956-7f0e-a061-e5ee440d77b1"
 }
 ```
+
+注意：健康摘要接口只读，不执行恢复、重试、取消、死信或跳过；它只把已有任务事实整理为管理端可展示的关注信号。
 
 过期租约恢复请求示例：
 

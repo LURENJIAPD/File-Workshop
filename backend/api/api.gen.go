@@ -185,19 +185,19 @@ func (e AuditResult) Valid() bool {
 
 // Defines values for AuditRiskLevel.
 const (
-	CRITICAL AuditRiskLevel = "CRITICAL"
-	HIGH     AuditRiskLevel = "HIGH"
-	NORMAL   AuditRiskLevel = "NORMAL"
+	AuditRiskLevelCRITICAL AuditRiskLevel = "CRITICAL"
+	AuditRiskLevelHIGH     AuditRiskLevel = "HIGH"
+	AuditRiskLevelNORMAL   AuditRiskLevel = "NORMAL"
 )
 
 // Valid indicates whether the value is a known member of the AuditRiskLevel enum.
 func (e AuditRiskLevel) Valid() bool {
 	switch e {
-	case CRITICAL:
+	case AuditRiskLevelCRITICAL:
 		return true
-	case HIGH:
+	case AuditRiskLevelHIGH:
 		return true
-	case NORMAL:
+	case AuditRiskLevelNORMAL:
 		return true
 	default:
 		return false
@@ -261,6 +261,63 @@ func (e AuthenticatedUserSystemRole) Valid() bool {
 	case AuthenticatedUserSystemRoleSYSTEMADMIN:
 		return true
 	case AuthenticatedUserSystemRoleUSER:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BackgroundHealthSignalSeverity.
+const (
+	BackgroundHealthSignalSeverityCRITICAL BackgroundHealthSignalSeverity = "CRITICAL"
+	BackgroundHealthSignalSeverityINFO     BackgroundHealthSignalSeverity = "INFO"
+	BackgroundHealthSignalSeverityWARNING  BackgroundHealthSignalSeverity = "WARNING"
+)
+
+// Valid indicates whether the value is a known member of the BackgroundHealthSignalSeverity enum.
+func (e BackgroundHealthSignalSeverity) Valid() bool {
+	switch e {
+	case BackgroundHealthSignalSeverityCRITICAL:
+		return true
+	case BackgroundHealthSignalSeverityINFO:
+		return true
+	case BackgroundHealthSignalSeverityWARNING:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BackgroundHealthSignalSource.
+const (
+	BACKGROUNDJOBS BackgroundHealthSignalSource = "BACKGROUND_JOBS"
+	OUTBOXEVENTS   BackgroundHealthSignalSource = "OUTBOX_EVENTS"
+)
+
+// Valid indicates whether the value is a known member of the BackgroundHealthSignalSource enum.
+func (e BackgroundHealthSignalSource) Valid() bool {
+	switch e {
+	case BACKGROUNDJOBS:
+		return true
+	case OUTBOXEVENTS:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BackgroundHealthStatus.
+const (
+	ATTENTIONREQUIRED BackgroundHealthStatus = "ATTENTION_REQUIRED"
+	OK                BackgroundHealthStatus = "OK"
+)
+
+// Valid indicates whether the value is a known member of the BackgroundHealthStatus enum.
+func (e BackgroundHealthStatus) Valid() bool {
+	switch e {
+	case ATTENTIONREQUIRED:
+		return true
+	case OK:
 		return true
 	default:
 		return false
@@ -1651,6 +1708,32 @@ type BackgroundFailureSummaryResponse struct {
 	BackgroundJobs []BackgroundFailureSummaryItem `json:"backgroundJobs"`
 	OutboxEvents   []BackgroundFailureSummaryItem `json:"outboxEvents"`
 	RequestId      string                         `json:"requestId"`
+}
+
+// BackgroundHealthSignal defines model for BackgroundHealthSignal.
+type BackgroundHealthSignal struct {
+	Code     string                         `json:"code"`
+	Count    int64                          `json:"count"`
+	Message  string                         `json:"message"`
+	OldestAt *time.Time                     `json:"oldestAt,omitempty"`
+	Severity BackgroundHealthSignalSeverity `json:"severity"`
+	Source   BackgroundHealthSignalSource   `json:"source"`
+}
+
+// BackgroundHealthSignalSeverity defines model for BackgroundHealthSignalSeverity.
+type BackgroundHealthSignalSeverity string
+
+// BackgroundHealthSignalSource defines model for BackgroundHealthSignalSource.
+type BackgroundHealthSignalSource string
+
+// BackgroundHealthStatus defines model for BackgroundHealthStatus.
+type BackgroundHealthStatus string
+
+// BackgroundHealthSummaryResponse defines model for BackgroundHealthSummaryResponse.
+type BackgroundHealthSummaryResponse struct {
+	RequestId string                   `json:"requestId"`
+	Signals   []BackgroundHealthSignal `json:"signals"`
+	Status    BackgroundHealthStatus   `json:"status"`
 }
 
 // BackgroundJob defines model for BackgroundJob.
@@ -3707,6 +3790,9 @@ type ServerInterface interface {
 	// GetBackgroundFailureSummary Get top background failure reasons.
 	// (GET /api/v1/admin/background/failure-summary)
 	GetBackgroundFailureSummary(c *gin.Context)
+	// GetBackgroundHealthSummary Get operational health signals for background operations.
+	// (GET /api/v1/admin/background/health-summary)
+	GetBackgroundHealthSummary(c *gin.Context)
 	// ListBackgroundJobs List background jobs for operations.
 	// (GET /api/v1/admin/background/jobs)
 	ListBackgroundJobs(c *gin.Context, params ListBackgroundJobsParams)
@@ -4208,6 +4294,19 @@ func (siw *ServerInterfaceWrapper) GetBackgroundFailureSummary(c *gin.Context) {
 	}
 
 	siw.Handler.GetBackgroundFailureSummary(c)
+}
+
+// GetBackgroundHealthSummary operation middleware
+func (siw *ServerInterfaceWrapper) GetBackgroundHealthSummary(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetBackgroundHealthSummary(c)
 }
 
 // ListBackgroundJobs operation middleware
@@ -7685,6 +7784,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/api/v1/admin/background/summary", wrapper.GetBackgroundAdministrationSummary)
 	router.GET(options.BaseURL+"/api/v1/admin/background/queue-lag", wrapper.GetBackgroundQueueLagSummary)
 	router.GET(options.BaseURL+"/api/v1/admin/background/failure-summary", wrapper.GetBackgroundFailureSummary)
+	router.GET(options.BaseURL+"/api/v1/admin/background/health-summary", wrapper.GetBackgroundHealthSummary)
 	router.POST(options.BaseURL+"/api/v1/admin/background/expired-leases/recover", wrapper.RecoverExpiredBackgroundLeases)
 	router.GET(options.BaseURL+"/api/v1/admin/background/jobs", wrapper.ListBackgroundJobs)
 	router.POST(options.BaseURL+"/api/v1/admin/background/jobs/batch-retry", wrapper.BatchRetryBackgroundJobs)
@@ -8275,6 +8375,61 @@ func (response GetBackgroundFailureSummary401JSONResponse) VisitGetBackgroundFai
 type GetBackgroundFailureSummary403JSONResponse struct{ ForbiddenJSONResponse }
 
 func (response GetBackgroundFailureSummary403JSONResponse) VisitGetBackgroundFailureSummaryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBackgroundHealthSummaryRequestObject struct {
+}
+
+type GetBackgroundHealthSummaryResponseObject interface {
+	VisitGetBackgroundHealthSummaryResponse(w http.ResponseWriter) error
+}
+
+type GetBackgroundHealthSummary200JSONResponse BackgroundHealthSummaryResponse
+
+func (response GetBackgroundHealthSummary200JSONResponse) VisitGetBackgroundHealthSummaryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBackgroundHealthSummary401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response GetBackgroundHealthSummary401JSONResponse) VisitGetBackgroundHealthSummaryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBackgroundHealthSummary403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetBackgroundHealthSummary403JSONResponse) VisitGetBackgroundHealthSummaryResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -17495,6 +17650,9 @@ type StrictServerInterface interface {
 	// GetBackgroundFailureSummary Get top background failure reasons.
 	// (GET /api/v1/admin/background/failure-summary)
 	GetBackgroundFailureSummary(ctx context.Context, request GetBackgroundFailureSummaryRequestObject) (GetBackgroundFailureSummaryResponseObject, error)
+	// GetBackgroundHealthSummary Get operational health signals for background operations.
+	// (GET /api/v1/admin/background/health-summary)
+	GetBackgroundHealthSummary(ctx context.Context, request GetBackgroundHealthSummaryRequestObject) (GetBackgroundHealthSummaryResponseObject, error)
 	// ListBackgroundJobs List background jobs for operations.
 	// (GET /api/v1/admin/background/jobs)
 	ListBackgroundJobs(ctx context.Context, request ListBackgroundJobsRequestObject) (ListBackgroundJobsResponseObject, error)
@@ -18060,6 +18218,30 @@ func (sh *strictHandler) GetBackgroundFailureSummary(ctx *gin.Context) {
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(GetBackgroundFailureSummaryResponseObject); ok {
 		if err := validResponse.VisitGetBackgroundFailureSummaryResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetBackgroundHealthSummary operation middleware
+func (sh *strictHandler) GetBackgroundHealthSummary(ctx *gin.Context) {
+	var request GetBackgroundHealthSummaryRequestObject
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetBackgroundHealthSummary(ctx, request.(GetBackgroundHealthSummaryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetBackgroundHealthSummary")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetBackgroundHealthSummaryResponseObject); ok {
+		if err := validResponse.VisitGetBackgroundHealthSummaryResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

@@ -228,6 +228,23 @@ func (h *Handler) GetBackgroundFailureSummary(ctx context.Context, request api.G
 	return api.GetBackgroundFailureSummary200JSONResponse(apiFailureSummary(result, requestID)), nil
 }
 
+func (h *Handler) GetBackgroundHealthSummary(ctx context.Context, request api.GetBackgroundHealthSummaryRequestObject) (api.GetBackgroundHealthSummaryResponseObject, error) {
+	ginContext, actor, requestID, authErr := h.authenticate(ctx)
+	if authErr != nil {
+		return api.GetBackgroundHealthSummary401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	result, err := h.service.GetHealthSummary(ginContext.Request.Context(), actor)
+	if _, denied, _, _, code := mapError(err, requestID); code != "" {
+		if code == "403" {
+			return api.GetBackgroundHealthSummary403JSONResponse{ForbiddenJSONResponse: denied}, nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	return api.GetBackgroundHealthSummary200JSONResponse(apiHealthSummary(result, requestID)), nil
+}
+
 func (h *Handler) RecoverExpiredBackgroundLeases(ctx context.Context, request api.RecoverExpiredBackgroundLeasesRequestObject) (api.RecoverExpiredBackgroundLeasesResponseObject, error) {
 	ginContext, actor, requestID, authErr := h.authenticate(ctx)
 	if authErr != nil {
@@ -584,6 +601,21 @@ func apiQueueLagItem(value domain.QueueLagItem) api.BackgroundQueueLagItem {
 
 func apiFailureSummary(value domain.FailureSummary, requestID string) api.BackgroundFailureSummaryResponse {
 	return api.BackgroundFailureSummaryResponse{OutboxEvents: apiFailureSummaryItems(value.OutboxEvents), BackgroundJobs: apiFailureSummaryItems(value.BackgroundJobs), RequestId: requestID}
+}
+
+func apiHealthSummary(value domain.HealthSummary, requestID string) api.BackgroundHealthSummaryResponse {
+	signals := make([]api.BackgroundHealthSignal, 0, len(value.Signals))
+	for _, signal := range value.Signals {
+		signals = append(signals, api.BackgroundHealthSignal{
+			Code:     signal.Code,
+			Source:   api.BackgroundHealthSignalSource(signal.Source),
+			Severity: api.BackgroundHealthSignalSeverity(signal.Severity),
+			Count:    signal.Count,
+			OldestAt: signal.OldestAt,
+			Message:  signal.Message,
+		})
+	}
+	return api.BackgroundHealthSummaryResponse{Status: api.BackgroundHealthStatus(value.Status), Signals: signals, RequestId: requestID}
 }
 
 func apiFailureSummaryItems(values []domain.FailureSummaryItem) []api.BackgroundFailureSummaryItem {

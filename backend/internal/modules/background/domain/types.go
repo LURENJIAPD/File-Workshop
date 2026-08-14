@@ -88,6 +88,34 @@ type QueueLagSummary struct {
 	BackgroundJobs QueueLagItem
 }
 
+type HealthStatus string
+
+const (
+	HealthStatusOK                HealthStatus = "OK"
+	HealthStatusAttentionRequired HealthStatus = "ATTENTION_REQUIRED"
+
+	HealthSignalSeverityInfo     = "INFO"
+	HealthSignalSeverityWarning  = "WARNING"
+	HealthSignalSeverityCritical = "CRITICAL"
+
+	HealthSignalSourceOutboxEvents   = "OUTBOX_EVENTS"
+	HealthSignalSourceBackgroundJobs = "BACKGROUND_JOBS"
+)
+
+type HealthSignal struct {
+	Code     string
+	Source   string
+	Severity string
+	Count    int64
+	OldestAt *time.Time
+	Message  string
+}
+
+type HealthSummary struct {
+	Status  HealthStatus
+	Signals []HealthSignal
+}
+
 type FailureSummaryItem struct {
 	ErrorCode string
 	Count     int64
