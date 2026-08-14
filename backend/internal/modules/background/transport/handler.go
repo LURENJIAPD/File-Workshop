@@ -258,6 +258,66 @@ func (h *Handler) BatchCancelBackgroundJobs(ctx context.Context, request api.Bat
 	return api.BatchCancelBackgroundJobs200JSONResponse(body), nil
 }
 
+func (h *Handler) BatchMarkBackgroundJobsDead(ctx context.Context, request api.BatchMarkBackgroundJobsDeadRequestObject) (api.BatchMarkBackgroundJobsDeadResponseObject, error) {
+	ginContext, actor, requestID, authErr := h.authenticate(ctx)
+	if authErr != nil {
+		return api.BatchMarkBackgroundJobsDead401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	if !h.originAllowed(ginContext) {
+		return api.BatchMarkBackgroundJobsDead403JSONResponse{ForbiddenJSONResponse: forbidden(requestID)}, nil
+	}
+	if request.Body == nil {
+		return api.BatchMarkBackgroundJobsDead400JSONResponse{InvalidRequestJSONResponse: invalidRequest(requestID)}, nil
+	}
+	result, err := h.service.BatchMarkBackgroundJobsDead(ginContext.Request.Context(), actor, batchRequestItems(request.Body.Items), request.Body.Reason)
+	if bad, denied, _, _, code := mapError(err, requestID); code != "" {
+		switch code {
+		case "400":
+			return api.BatchMarkBackgroundJobsDead400JSONResponse{InvalidRequestJSONResponse: bad}, nil
+		case "403":
+			return api.BatchMarkBackgroundJobsDead403JSONResponse{ForbiddenJSONResponse: denied}, nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	body, err := apiBatchResult(result, requestID)
+	if err != nil {
+		return nil, err
+	}
+	return api.BatchMarkBackgroundJobsDead200JSONResponse(body), nil
+}
+
+func (h *Handler) BatchSkipBackgroundJobs(ctx context.Context, request api.BatchSkipBackgroundJobsRequestObject) (api.BatchSkipBackgroundJobsResponseObject, error) {
+	ginContext, actor, requestID, authErr := h.authenticate(ctx)
+	if authErr != nil {
+		return api.BatchSkipBackgroundJobs401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	if !h.originAllowed(ginContext) {
+		return api.BatchSkipBackgroundJobs403JSONResponse{ForbiddenJSONResponse: forbidden(requestID)}, nil
+	}
+	if request.Body == nil {
+		return api.BatchSkipBackgroundJobs400JSONResponse{InvalidRequestJSONResponse: invalidRequest(requestID)}, nil
+	}
+	result, err := h.service.BatchSkipBackgroundJobs(ginContext.Request.Context(), actor, batchRequestItems(request.Body.Items), request.Body.Reason)
+	if bad, denied, _, _, code := mapError(err, requestID); code != "" {
+		switch code {
+		case "400":
+			return api.BatchSkipBackgroundJobs400JSONResponse{InvalidRequestJSONResponse: bad}, nil
+		case "403":
+			return api.BatchSkipBackgroundJobs403JSONResponse{ForbiddenJSONResponse: denied}, nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	body, err := apiBatchResult(result, requestID)
+	if err != nil {
+		return nil, err
+	}
+	return api.BatchSkipBackgroundJobs200JSONResponse(body), nil
+}
+
 func (h *Handler) CancelBackgroundJob(ctx context.Context, request api.CancelBackgroundJobRequestObject) (api.CancelBackgroundJobResponseObject, error) {
 	ginContext, actor, requestID, authErr := h.authenticate(ctx)
 	if authErr != nil {

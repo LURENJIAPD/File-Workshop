@@ -213,6 +213,7 @@ type Querier interface {
 	MarkAuditChainVerified(ctx context.Context, arg *MarkAuditChainVerifiedParams) (int64, error)
 	MarkBackgroundJobDead(ctx context.Context, arg *MarkBackgroundJobDeadParams) (int64, error)
 	MarkBackgroundJobFailed(ctx context.Context, arg *MarkBackgroundJobFailedParams) (int64, error)
+	MarkBackgroundJobManuallyDead(ctx context.Context, arg *MarkBackgroundJobManuallyDeadParams) (*BackgroundJob, error)
 	MarkBackgroundJobSuccess(ctx context.Context, arg *MarkBackgroundJobSuccessParams) (int64, error)
 	MarkLifecycleEntrySubtreePurging(ctx context.Context, arg *MarkLifecycleEntrySubtreePurgingParams) (int64, error)
 	MarkOrganizationChangeOperation(ctx context.Context, arg *MarkOrganizationChangeOperationParams) (*OrganizationChangeOperation, error)
@@ -258,6 +259,7 @@ type Querier interface {
 	SetOrganizationChangePlanStatus(ctx context.Context, arg *SetOrganizationChangePlanStatusParams) (*OrganizationChangePlan, error)
 	SetOrganizationStatus(ctx context.Context, arg *SetOrganizationStatusParams) (*Organization, error)
 	SetSpaceStatus(ctx context.Context, arg *SetSpaceStatusParams) (*Space, error)
+	SkipBackgroundJob(ctx context.Context, arg *SkipBackgroundJobParams) (*BackgroundJob, error)
 	SpaceDeletionBlocked(ctx context.Context, spaceID pgtype.UUID) (bool, error)
 	TouchCredentialAfterLogin(ctx context.Context, arg *TouchCredentialAfterLoginParams) error
 	TouchDraftOrganizationChangePlan(ctx context.Context, arg *TouchDraftOrganizationChangePlanParams) (*OrganizationChangePlan, error)

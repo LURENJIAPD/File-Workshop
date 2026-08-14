@@ -139,6 +139,8 @@ type BackgroundAPI interface {
 	RetryBackgroundJob(context.Context, api.RetryBackgroundJobRequestObject) (api.RetryBackgroundJobResponseObject, error)
 	BatchRetryBackgroundJobs(context.Context, api.BatchRetryBackgroundJobsRequestObject) (api.BatchRetryBackgroundJobsResponseObject, error)
 	BatchCancelBackgroundJobs(context.Context, api.BatchCancelBackgroundJobsRequestObject) (api.BatchCancelBackgroundJobsResponseObject, error)
+	BatchMarkBackgroundJobsDead(context.Context, api.BatchMarkBackgroundJobsDeadRequestObject) (api.BatchMarkBackgroundJobsDeadResponseObject, error)
+	BatchSkipBackgroundJobs(context.Context, api.BatchSkipBackgroundJobsRequestObject) (api.BatchSkipBackgroundJobsResponseObject, error)
 	CancelBackgroundJob(context.Context, api.CancelBackgroundJobRequestObject) (api.CancelBackgroundJobResponseObject, error)
 }
 
@@ -301,6 +303,12 @@ func (h *APIHandler) BatchRetryBackgroundJobs(ctx context.Context, request api.B
 }
 func (h *APIHandler) BatchCancelBackgroundJobs(ctx context.Context, request api.BatchCancelBackgroundJobsRequestObject) (api.BatchCancelBackgroundJobsResponseObject, error) {
 	return h.background.BatchCancelBackgroundJobs(ctx, request)
+}
+func (h *APIHandler) BatchMarkBackgroundJobsDead(ctx context.Context, request api.BatchMarkBackgroundJobsDeadRequestObject) (api.BatchMarkBackgroundJobsDeadResponseObject, error) {
+	return h.background.BatchMarkBackgroundJobsDead(ctx, request)
+}
+func (h *APIHandler) BatchSkipBackgroundJobs(ctx context.Context, request api.BatchSkipBackgroundJobsRequestObject) (api.BatchSkipBackgroundJobsResponseObject, error) {
+	return h.background.BatchSkipBackgroundJobs(ctx, request)
 }
 func (h *APIHandler) CancelBackgroundJob(ctx context.Context, request api.CancelBackgroundJobRequestObject) (api.CancelBackgroundJobResponseObject, error) {
 	return h.background.CancelBackgroundJob(ctx, request)

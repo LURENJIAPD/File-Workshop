@@ -107,6 +107,61 @@ func TestServiceBatchCancelBackgroundJobsValidatesDuplicates(t *testing.T) {
 	}
 }
 
+func TestServiceBatchMarksBackgroundJobsDeadWithPartialFailures(t *testing.T) {
+	now := time.Date(2026, 8, 10, 6, 0, 0, 0, time.UTC)
+	successID := uuid.Must(uuid.NewV7())
+	conflictID := uuid.Must(uuid.NewV7())
+	repository := &fakeOperationsRepository{conflictID: conflictID}
+	service := NewService(repository, nil, func() time.Time { return now })
+
+	result, err := service.BatchMarkBackgroundJobsDead(context.Background(), adminActor(), []domain.BatchJobItem{
+		{ID: successID, RowVersion: 1},
+		{ID: conflictID, RowVersion: 2},
+	}, "operator accepted failure")
+	if err != nil {
+		t.Fatalf("BatchMarkBackgroundJobsDead failed: %v", err)
+	}
+	if result.Succeeded != 1 || result.Failed != 1 || len(result.Items) != 2 {
+		t.Fatalf("result=%#v", result)
+	}
+	if repository.deadReason != "manual batch dead letter: operator accepted failure" {
+		t.Fatalf("deadReason=%q", repository.deadReason)
+	}
+	if result.Items[0].Job == nil || result.Items[0].Job.Status != domain.JobStatusDead {
+		t.Fatalf("successful item=%#v", result.Items[0])
+	}
+}
+
+func TestServiceBatchSkipsBackgroundJobs(t *testing.T) {
+	now := time.Date(2026, 8, 10, 7, 0, 0, 0, time.UTC)
+	jobID := uuid.Must(uuid.NewV7())
+	repository := &fakeOperationsRepository{}
+	service := NewService(repository, nil, func() time.Time { return now })
+
+	result, err := service.BatchSkipBackgroundJobs(context.Background(), adminActor(), []domain.BatchJobItem{{ID: jobID, RowVersion: 8}}, "task superseded")
+	if err != nil {
+		t.Fatalf("BatchSkipBackgroundJobs failed: %v", err)
+	}
+	if result.Succeeded != 1 || result.Failed != 0 {
+		t.Fatalf("result=%#v", result)
+	}
+	if repository.skipReason != "manual batch skip: task superseded" {
+		t.Fatalf("skipReason=%q", repository.skipReason)
+	}
+	if result.Items[0].Job == nil || result.Items[0].Job.Status != domain.JobStatusSkipped {
+		t.Fatalf("successful item=%#v", result.Items[0])
+	}
+}
+
+func TestServiceBatchSkipBackgroundJobsRequiresAdmin(t *testing.T) {
+	service := NewService(&fakeOperationsRepository{}, nil, time.Now)
+
+	_, err := service.BatchSkipBackgroundJobs(context.Background(), domain.Actor{UserID: uuid.Must(uuid.NewV7()), Role: "USER"}, []domain.BatchJobItem{{ID: uuid.Must(uuid.NewV7()), RowVersion: 1}}, "skip")
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("error=%v, want ErrForbidden", err)
+	}
+}
+
 func adminActor() domain.Actor {
 	return domain.Actor{UserID: uuid.Must(uuid.NewV7()), SessionID: uuid.Must(uuid.NewV7()), Role: domain.SystemRoleAdmin}
 }
@@ -121,6 +176,8 @@ type fakeOperationsRepository struct {
 	cancelRowVersion int64
 	cancelReason     string
 	cancelNow        time.Time
+	deadReason       string
+	skipReason       string
 }
 
 func (r *fakeOperationsRepository) CountOutboxEventsByStatus(context.Context) ([]domain.OutboxStatusCount, error) {
@@ -160,4 +217,26 @@ func (r *fakeOperationsRepository) CancelBackgroundJob(_ context.Context, id uui
 	r.cancelReason = reason
 	r.cancelNow = now
 	return domain.BackgroundJob{ID: id, Status: domain.JobStatusCancelled, RowVersion: rowVersion + 1}, nil
+}
+
+func (r *fakeOperationsRepository) DeadLetterBackgroundJob(_ context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error) {
+	r.deadReason = reason
+	if id == r.conflictID {
+		return domain.BackgroundJob{}, domain.ErrConflict
+	}
+	if id == r.missingID {
+		return domain.BackgroundJob{}, domain.ErrNotFound
+	}
+	return domain.BackgroundJob{ID: id, Status: domain.JobStatusDead, RowVersion: rowVersion + 1, CompletedAt: &now}, nil
+}
+
+func (r *fakeOperationsRepository) SkipBackgroundJob(_ context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error) {
+	r.skipReason = reason
+	if id == r.conflictID {
+		return domain.BackgroundJob{}, domain.ErrConflict
+	}
+	if id == r.missingID {
+		return domain.BackgroundJob{}, domain.ErrNotFound
+	}
+	return domain.BackgroundJob{ID: id, Status: domain.JobStatusSkipped, RowVersion: rowVersion + 1, CompletedAt: &now}, nil
 }

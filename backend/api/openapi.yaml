@@ -2829,6 +2829,56 @@ paths:
         "401": { $ref: "#/components/responses/AuthRequired" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/v1/admin/background/jobs/batch-dead-letter:
+    post:
+      operationId: batchMarkBackgroundJobsDead
+      tags: [BackgroundAdministration]
+      summary: Move failed background jobs to dead letter state in a controlled batch.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchBackgroundJobOperationRequest"
+      responses:
+        "200":
+          description: Batch dead letter results.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchBackgroundJobOperationResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/v1/admin/background/jobs/batch-skip:
+    post:
+      operationId: batchSkipBackgroundJobs
+      tags: [BackgroundAdministration]
+      summary: Skip pending, failed, or dead background jobs in a controlled batch.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchBackgroundJobOperationRequest"
+      responses:
+        "200":
+          description: Batch skip results.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchBackgroundJobOperationResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/v1/admin/background/jobs/{backgroundJobId}/retry:
     post:
       operationId: retryBackgroundJob

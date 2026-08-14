@@ -3413,8 +3413,14 @@ type RevokeAdminDelegationJSONRequestBody = RevokeAdminDelegationRequest
 // BatchCancelBackgroundJobsJSONRequestBody defines body for BatchCancelBackgroundJobs for application/json ContentType.
 type BatchCancelBackgroundJobsJSONRequestBody = BatchBackgroundJobOperationRequest
 
+// BatchMarkBackgroundJobsDeadJSONRequestBody defines body for BatchMarkBackgroundJobsDead for application/json ContentType.
+type BatchMarkBackgroundJobsDeadJSONRequestBody = BatchBackgroundJobOperationRequest
+
 // BatchRetryBackgroundJobsJSONRequestBody defines body for BatchRetryBackgroundJobs for application/json ContentType.
 type BatchRetryBackgroundJobsJSONRequestBody = BatchBackgroundJobOperationRequest
+
+// BatchSkipBackgroundJobsJSONRequestBody defines body for BatchSkipBackgroundJobs for application/json ContentType.
+type BatchSkipBackgroundJobsJSONRequestBody = BatchBackgroundJobOperationRequest
 
 // CancelBackgroundJobJSONRequestBody defines body for CancelBackgroundJob for application/json ContentType.
 type CancelBackgroundJobJSONRequestBody = CancelBackgroundJobRequest
@@ -3607,9 +3613,15 @@ type ServerInterface interface {
 	// BatchCancelBackgroundJobs Cancel pending, failed, or dead background jobs in a controlled batch.
 	// (POST /api/v1/admin/background/jobs/batch-cancel)
 	BatchCancelBackgroundJobs(c *gin.Context)
+	// BatchMarkBackgroundJobsDead Move failed background jobs to dead letter state in a controlled batch.
+	// (POST /api/v1/admin/background/jobs/batch-dead-letter)
+	BatchMarkBackgroundJobsDead(c *gin.Context)
 	// BatchRetryBackgroundJobs Retry failed or dead background jobs in a controlled batch.
 	// (POST /api/v1/admin/background/jobs/batch-retry)
 	BatchRetryBackgroundJobs(c *gin.Context)
+	// BatchSkipBackgroundJobs Skip pending, failed, or dead background jobs in a controlled batch.
+	// (POST /api/v1/admin/background/jobs/batch-skip)
+	BatchSkipBackgroundJobs(c *gin.Context)
 	// CancelBackgroundJob Cancel a pending, failed, or dead background job.
 	// (POST /api/v1/admin/background/jobs/{backgroundJobId}/cancel)
 	CancelBackgroundJob(c *gin.Context, backgroundJobId BackgroundJobIdPath)
@@ -4130,6 +4142,19 @@ func (siw *ServerInterfaceWrapper) BatchCancelBackgroundJobs(c *gin.Context) {
 	siw.Handler.BatchCancelBackgroundJobs(c)
 }
 
+// BatchMarkBackgroundJobsDead operation middleware
+func (siw *ServerInterfaceWrapper) BatchMarkBackgroundJobsDead(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.BatchMarkBackgroundJobsDead(c)
+}
+
 // BatchRetryBackgroundJobs operation middleware
 func (siw *ServerInterfaceWrapper) BatchRetryBackgroundJobs(c *gin.Context) {
 
@@ -4141,6 +4166,19 @@ func (siw *ServerInterfaceWrapper) BatchRetryBackgroundJobs(c *gin.Context) {
 	}
 
 	siw.Handler.BatchRetryBackgroundJobs(c)
+}
+
+// BatchSkipBackgroundJobs operation middleware
+func (siw *ServerInterfaceWrapper) BatchSkipBackgroundJobs(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.BatchSkipBackgroundJobs(c)
 }
 
 // CancelBackgroundJob operation middleware
@@ -7489,6 +7527,8 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/api/v1/admin/background/jobs", wrapper.ListBackgroundJobs)
 	router.POST(options.BaseURL+"/api/v1/admin/background/jobs/batch-retry", wrapper.BatchRetryBackgroundJobs)
 	router.POST(options.BaseURL+"/api/v1/admin/background/jobs/batch-cancel", wrapper.BatchCancelBackgroundJobs)
+	router.POST(options.BaseURL+"/api/v1/admin/background/jobs/batch-dead-letter", wrapper.BatchMarkBackgroundJobsDead)
+	router.POST(options.BaseURL+"/api/v1/admin/background/jobs/batch-skip", wrapper.BatchSkipBackgroundJobs)
 	router.POST(options.BaseURL+"/api/v1/admin/background/jobs/:backgroundJobId/retry", wrapper.RetryBackgroundJob)
 	router.POST(options.BaseURL+"/api/v1/admin/background/jobs/:backgroundJobId/cancel", wrapper.CancelBackgroundJob)
 }
@@ -8105,6 +8145,79 @@ func (response BatchCancelBackgroundJobs403JSONResponse) VisitBatchCancelBackgro
 	return err
 }
 
+type BatchMarkBackgroundJobsDeadRequestObject struct {
+	Body *BatchMarkBackgroundJobsDeadJSONRequestBody
+}
+
+type BatchMarkBackgroundJobsDeadResponseObject interface {
+	VisitBatchMarkBackgroundJobsDeadResponse(w http.ResponseWriter) error
+}
+
+type BatchMarkBackgroundJobsDead200JSONResponse BatchBackgroundJobOperationResponse
+
+func (response BatchMarkBackgroundJobsDead200JSONResponse) VisitBatchMarkBackgroundJobsDeadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BatchMarkBackgroundJobsDead400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response BatchMarkBackgroundJobsDead400JSONResponse) VisitBatchMarkBackgroundJobsDeadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BatchMarkBackgroundJobsDead401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response BatchMarkBackgroundJobsDead401JSONResponse) VisitBatchMarkBackgroundJobsDeadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BatchMarkBackgroundJobsDead403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response BatchMarkBackgroundJobsDead403JSONResponse) VisitBatchMarkBackgroundJobsDeadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type BatchRetryBackgroundJobsRequestObject struct {
 	Body *BatchRetryBackgroundJobsJSONRequestBody
 }
@@ -8164,6 +8277,79 @@ func (response BatchRetryBackgroundJobs401JSONResponse) VisitBatchRetryBackgroun
 type BatchRetryBackgroundJobs403JSONResponse struct{ ForbiddenJSONResponse }
 
 func (response BatchRetryBackgroundJobs403JSONResponse) VisitBatchRetryBackgroundJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BatchSkipBackgroundJobsRequestObject struct {
+	Body *BatchSkipBackgroundJobsJSONRequestBody
+}
+
+type BatchSkipBackgroundJobsResponseObject interface {
+	VisitBatchSkipBackgroundJobsResponse(w http.ResponseWriter) error
+}
+
+type BatchSkipBackgroundJobs200JSONResponse BatchBackgroundJobOperationResponse
+
+func (response BatchSkipBackgroundJobs200JSONResponse) VisitBatchSkipBackgroundJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BatchSkipBackgroundJobs400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response BatchSkipBackgroundJobs400JSONResponse) VisitBatchSkipBackgroundJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BatchSkipBackgroundJobs401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response BatchSkipBackgroundJobs401JSONResponse) VisitBatchSkipBackgroundJobsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type BatchSkipBackgroundJobs403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response BatchSkipBackgroundJobs403JSONResponse) VisitBatchSkipBackgroundJobsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -16891,9 +17077,15 @@ type StrictServerInterface interface {
 	// BatchCancelBackgroundJobs Cancel pending, failed, or dead background jobs in a controlled batch.
 	// (POST /api/v1/admin/background/jobs/batch-cancel)
 	BatchCancelBackgroundJobs(ctx context.Context, request BatchCancelBackgroundJobsRequestObject) (BatchCancelBackgroundJobsResponseObject, error)
+	// BatchMarkBackgroundJobsDead Move failed background jobs to dead letter state in a controlled batch.
+	// (POST /api/v1/admin/background/jobs/batch-dead-letter)
+	BatchMarkBackgroundJobsDead(ctx context.Context, request BatchMarkBackgroundJobsDeadRequestObject) (BatchMarkBackgroundJobsDeadResponseObject, error)
 	// BatchRetryBackgroundJobs Retry failed or dead background jobs in a controlled batch.
 	// (POST /api/v1/admin/background/jobs/batch-retry)
 	BatchRetryBackgroundJobs(ctx context.Context, request BatchRetryBackgroundJobsRequestObject) (BatchRetryBackgroundJobsResponseObject, error)
+	// BatchSkipBackgroundJobs Skip pending, failed, or dead background jobs in a controlled batch.
+	// (POST /api/v1/admin/background/jobs/batch-skip)
+	BatchSkipBackgroundJobs(ctx context.Context, request BatchSkipBackgroundJobsRequestObject) (BatchSkipBackgroundJobsResponseObject, error)
 	// CancelBackgroundJob Cancel a pending, failed, or dead background job.
 	// (POST /api/v1/admin/background/jobs/{backgroundJobId}/cancel)
 	CancelBackgroundJob(ctx context.Context, request CancelBackgroundJobRequestObject) (CancelBackgroundJobResponseObject, error)
@@ -17447,6 +17639,37 @@ func (sh *strictHandler) BatchCancelBackgroundJobs(ctx *gin.Context) {
 	}
 }
 
+// BatchMarkBackgroundJobsDead operation middleware
+func (sh *strictHandler) BatchMarkBackgroundJobsDead(ctx *gin.Context) {
+	var request BatchMarkBackgroundJobsDeadRequestObject
+
+	var body BatchMarkBackgroundJobsDeadJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.BatchMarkBackgroundJobsDead(ctx, request.(BatchMarkBackgroundJobsDeadRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "BatchMarkBackgroundJobsDead")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(BatchMarkBackgroundJobsDeadResponseObject); ok {
+		if err := validResponse.VisitBatchMarkBackgroundJobsDeadResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // BatchRetryBackgroundJobs operation middleware
 func (sh *strictHandler) BatchRetryBackgroundJobs(ctx *gin.Context) {
 	var request BatchRetryBackgroundJobsRequestObject
@@ -17471,6 +17694,37 @@ func (sh *strictHandler) BatchRetryBackgroundJobs(ctx *gin.Context) {
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(BatchRetryBackgroundJobsResponseObject); ok {
 		if err := validResponse.VisitBatchRetryBackgroundJobsResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// BatchSkipBackgroundJobs operation middleware
+func (sh *strictHandler) BatchSkipBackgroundJobs(ctx *gin.Context) {
+	var request BatchSkipBackgroundJobsRequestObject
+
+	var body BatchSkipBackgroundJobsJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.BatchSkipBackgroundJobs(ctx, request.(BatchSkipBackgroundJobsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "BatchSkipBackgroundJobs")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(BatchSkipBackgroundJobsResponseObject); ok {
+		if err := validResponse.VisitBatchSkipBackgroundJobsResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

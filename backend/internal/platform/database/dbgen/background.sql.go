@@ -735,6 +735,68 @@ func (q *Queries) MarkBackgroundJobFailed(ctx context.Context, arg *MarkBackgrou
 	return result.RowsAffected(), nil
 }
 
+const markBackgroundJobManuallyDead = `-- name: MarkBackgroundJobManuallyDead :one
+UPDATE background_jobs
+SET status = 'DEAD',
+    locked_by = NULL,
+    locked_at = NULL,
+    lease_until = NULL,
+    heartbeat_at = NULL,
+    completed_at = $1::timestamptz,
+    last_error_code = 'MANUAL_DEAD_LETTER',
+    last_error_summary = $2::text,
+    updated_at = $1::timestamptz,
+    row_version = row_version + 1
+WHERE background_job_id = $3::uuid
+  AND row_version = $4::bigint
+  AND status = 'FAILED'
+RETURNING background_job_id, job_type, target_document_id, target_document_version_id, target_storage_object_id, payload_schema_version, payload_json, deduplication_key, priority, status, attempt_count, max_attempts, available_at, locked_by, locked_at, lease_until, heartbeat_at, created_at, updated_at, started_at, completed_at, last_error_code, last_error_summary, row_version
+`
+
+type MarkBackgroundJobManuallyDeadParams struct {
+	CompletedAt     pgtype.Timestamptz
+	Reason          string
+	BackgroundJobID pgtype.UUID
+	RowVersion      int64
+}
+
+func (q *Queries) MarkBackgroundJobManuallyDead(ctx context.Context, arg *MarkBackgroundJobManuallyDeadParams) (*BackgroundJob, error) {
+	row := q.db.QueryRow(ctx, markBackgroundJobManuallyDead,
+		arg.CompletedAt,
+		arg.Reason,
+		arg.BackgroundJobID,
+		arg.RowVersion,
+	)
+	var i BackgroundJob
+	err := row.Scan(
+		&i.BackgroundJobID,
+		&i.JobType,
+		&i.TargetDocumentID,
+		&i.TargetDocumentVersionID,
+		&i.TargetStorageObjectID,
+		&i.PayloadSchemaVersion,
+		&i.PayloadJson,
+		&i.DeduplicationKey,
+		&i.Priority,
+		&i.Status,
+		&i.AttemptCount,
+		&i.MaxAttempts,
+		&i.AvailableAt,
+		&i.LockedBy,
+		&i.LockedAt,
+		&i.LeaseUntil,
+		&i.HeartbeatAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.StartedAt,
+		&i.CompletedAt,
+		&i.LastErrorCode,
+		&i.LastErrorSummary,
+		&i.RowVersion,
+	)
+	return &i, err
+}
+
 const markBackgroundJobSuccess = `-- name: MarkBackgroundJobSuccess :execrows
 UPDATE background_jobs
 SET status = 'SUCCESS',
@@ -1085,6 +1147,68 @@ func (q *Queries) RetryOutboxEvent(ctx context.Context, arg *RetryOutboxEventPar
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.PublishedAt,
+		&i.LastErrorCode,
+		&i.LastErrorSummary,
+		&i.RowVersion,
+	)
+	return &i, err
+}
+
+const skipBackgroundJob = `-- name: SkipBackgroundJob :one
+UPDATE background_jobs
+SET status = 'SKIPPED',
+    locked_by = NULL,
+    locked_at = NULL,
+    lease_until = NULL,
+    heartbeat_at = NULL,
+    completed_at = $1::timestamptz,
+    last_error_code = 'MANUAL_SKIP',
+    last_error_summary = $2::text,
+    updated_at = $1::timestamptz,
+    row_version = row_version + 1
+WHERE background_job_id = $3::uuid
+  AND row_version = $4::bigint
+  AND status IN ('PENDING', 'FAILED', 'DEAD')
+RETURNING background_job_id, job_type, target_document_id, target_document_version_id, target_storage_object_id, payload_schema_version, payload_json, deduplication_key, priority, status, attempt_count, max_attempts, available_at, locked_by, locked_at, lease_until, heartbeat_at, created_at, updated_at, started_at, completed_at, last_error_code, last_error_summary, row_version
+`
+
+type SkipBackgroundJobParams struct {
+	CompletedAt     pgtype.Timestamptz
+	Reason          string
+	BackgroundJobID pgtype.UUID
+	RowVersion      int64
+}
+
+func (q *Queries) SkipBackgroundJob(ctx context.Context, arg *SkipBackgroundJobParams) (*BackgroundJob, error) {
+	row := q.db.QueryRow(ctx, skipBackgroundJob,
+		arg.CompletedAt,
+		arg.Reason,
+		arg.BackgroundJobID,
+		arg.RowVersion,
+	)
+	var i BackgroundJob
+	err := row.Scan(
+		&i.BackgroundJobID,
+		&i.JobType,
+		&i.TargetDocumentID,
+		&i.TargetDocumentVersionID,
+		&i.TargetStorageObjectID,
+		&i.PayloadSchemaVersion,
+		&i.PayloadJson,
+		&i.DeduplicationKey,
+		&i.Priority,
+		&i.Status,
+		&i.AttemptCount,
+		&i.MaxAttempts,
+		&i.AvailableAt,
+		&i.LockedBy,
+		&i.LockedAt,
+		&i.LeaseUntil,
+		&i.HeartbeatAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.StartedAt,
+		&i.CompletedAt,
 		&i.LastErrorCode,
 		&i.LastErrorSummary,
 		&i.RowVersion,

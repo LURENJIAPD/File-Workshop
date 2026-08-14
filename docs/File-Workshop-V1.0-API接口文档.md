@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.18
+> 文档版本：V0.19
 > 文档状态：按模块持续编制  
 > 最近更新：2026-08-14
-> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 09 回收与生命周期元数据闭环、过期扫描入队和资料保全管理接口、模块 10 PostgreSQL 元数据搜索基础接口和索引刷新任务入队接口、模块 11 审计基础查询、摘要统计和完整性接口、模块 16 后台任务基础调度、统计、重试、取消和批量运维接口
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 09 回收与生命周期元数据闭环、过期扫描入队和资料保全管理接口、模块 10 PostgreSQL 元数据搜索基础接口和索引刷新任务入队接口、模块 11 审计基础查询、摘要统计和完整性接口、模块 16 后台任务基础调度、统计、重试、取消、死信、跳过和批量运维接口
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -30,7 +30,7 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 | 10 | 搜索 | 已收录 PostgreSQL 元数据搜索基础接口和索引刷新任务入队接口 | 2 | 2026-08-10 |
 | 11 | 审计 | 已收录基础查询、摘要统计和完整性接口 | 5 | 2026-08-14 |
 | 12～15 | 后续系统模块 | 未收录 | 0 | — |
-| 16 | 后台任务 | 已完成基础调度、管理员统计、重试、取消和批量运维接口 | 8 | 2026-08-10 |
+| 16 | 后台任务 | 已完成基础调度、管理员统计、重试、取消、死信、跳过和批量运维接口 | 10 | 2026-08-14 |
 
 ## 3. 全局接口约定
 
@@ -1431,7 +1431,7 @@ Content-Type: application/json
 
 ### 15.1 当前边界
 
-本周期完成后台任务模块的基础调度与管理员运维接口。模块仍不实现具体业务处理器，例如审计归档、文件 Hash、病毒扫描、预览、搜索索引、生命周期清理或 AI 任务；这些处理器由对应业务模块后续注册。当前 REST API 只面向 `SYSTEM_ADMIN`，用于查看 Outbox/Job 积压与失败项，查看状态统计，对 `FAILED/DEAD` 单项或批量执行受控重试，并对未完成的后台任务执行单项或批量受控取消。
+本周期完成后台任务模块的基础调度与管理员运维接口。模块仍不实现具体业务处理器，例如审计归档、文件 Hash、病毒扫描、预览、搜索索引、生命周期清理或 AI 任务；这些处理器由对应业务模块后续注册。当前 REST API 只面向 `SYSTEM_ADMIN`，用于查看 Outbox/Job 积压与失败项，查看状态统计，对 `FAILED/DEAD` 单项或批量执行受控重试，并对未完成的后台任务执行单项或批量受控取消，对确认无法继续自动处理的任务执行批量死信或跳过。
 
 当前能力：
 
@@ -1446,6 +1446,8 @@ Content-Type: application/json
 - 管理员可取消 `PENDING/FAILED/DEAD` 后台任务；`PROCESSING/SUCCESS/CANCELLED/SKIPPED` 不允许取消，避免正在执行任务或终态任务产生歧义；
 - 管理员可查看 Outbox 与后台任务按状态聚合的积压统计；
 - 管理员可对最多 50 个后台任务执行批量重试或批量取消，单项失败以明细返回，不影响同批其它任务；
+- 管理员可将 `FAILED` 后台任务批量转为 `DEAD`，用于人工确认不再自动重试的死信处置；
+- 管理员可将 `PENDING/FAILED/DEAD` 后台任务批量转为 `SKIPPED`，用于依赖业务已被取代或确认无需执行的任务；
 - 使用 `context.Context`、处理器超时和系统信号完成优雅停止；
 - Redis 不参与任务事实存储。
 
@@ -1484,6 +1486,8 @@ go run ./cmd/worker
 | `POST /api/v1/admin/background/jobs/{backgroundJobId}/cancel` | `cancelBackgroundJob` | `200/BackgroundJobResponse` | 仅允许 `PENDING/FAILED/DEAD`；请求必须包含 `rowVersion` 和 `reason`；成功后进入 `CANCELLED` 并写入 `completedAt/lastErrorCode/lastErrorSummary` |
 | `POST /api/v1/admin/background/jobs/batch-retry` | `batchRetryBackgroundJobs` | `200/BatchBackgroundJobOperationResponse` | 仅 `SYSTEM_ADMIN`；最多 50 项；每项必须包含 `backgroundJobId/rowVersion`；仅 `FAILED/DEAD` 项可成功 |
 | `POST /api/v1/admin/background/jobs/batch-cancel` | `batchCancelBackgroundJobs` | `200/BatchBackgroundJobOperationResponse` | 仅 `SYSTEM_ADMIN`；最多 50 项；每项必须包含 `backgroundJobId/rowVersion`；仅 `PENDING/FAILED/DEAD` 项可成功 |
+| `POST /api/v1/admin/background/jobs/batch-dead-letter` | `batchMarkBackgroundJobsDead` | `200/BatchBackgroundJobOperationResponse` | 仅 `SYSTEM_ADMIN`；最多 50 项；每项必须包含 `backgroundJobId/rowVersion`；仅 `FAILED` 项可成功；成功后进入 `DEAD` 并写入 `MANUAL_DEAD_LETTER` |
+| `POST /api/v1/admin/background/jobs/batch-skip` | `batchSkipBackgroundJobs` | `200/BatchBackgroundJobOperationResponse` | 仅 `SYSTEM_ADMIN`；最多 50 项；每项必须包含 `backgroundJobId/rowVersion`；仅 `PENDING/FAILED/DEAD` 项可成功；成功后进入 `SKIPPED` 并写入 `MANUAL_SKIP` |
 
 重试请求示例：
 
@@ -1535,11 +1539,11 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 }
 ```
 
-批量运维请求示例：
+批量运维请求示例，适用于批量重试、取消、死信和跳过：
 
 ```json
 {
-  "reason": "运维确认重新处理同批失败任务",
+  "reason": "运维确认处理同批后台任务",
   "items": [
     {
       "backgroundJobId": "019fd14d-c956-7f0e-a061-e5ee440d77b1",
@@ -1599,7 +1603,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 | 404 | `BACKGROUND_ITEM_NOT_FOUND` | 指定 Outbox 事件或后台任务不存在 |
 | 409 | `BACKGROUND_STATE_CONFLICT` | 当前状态不是 `FAILED/DEAD`，或 `rowVersion` 已过期 |
 
-正式接口测试至少覆盖：按状态查询 Outbox/Job 积压；状态统计；查询失败原因和最近错误；受控重放 `FAILED/DEAD`；受控取消 `PENDING/FAILED/DEAD`；批量重试部分成功与部分失败；批量取消部分成功与部分失败；批量重复 ID、空 items、超过 50 项和缺少 `reason` 返回 400；拒绝取消 `PROCESSING/SUCCESS/CANCELLED/SKIPPED`；普通用户访问运维接口被拒绝；分页统一使用 `page/pageSize`；非法状态、非法分页、缺少 `reason`、陈旧 `rowVersion` 和错误 Origin。
+正式接口测试至少覆盖：按状态查询 Outbox/Job 积压；状态统计；查询失败原因和最近错误；受控重放 `FAILED/DEAD`；受控取消 `PENDING/FAILED/DEAD`；批量重试部分成功与部分失败；批量取消部分成功与部分失败；批量死信仅允许 `FAILED`；批量跳过仅允许 `PENDING/FAILED/DEAD`；批量重复 ID、空 items、超过 50 项和缺少 `reason` 返回 400；拒绝取消 `PROCESSING/SUCCESS/CANCELLED/SKIPPED`；拒绝死信或跳过正在执行、成功或已取消任务；普通用户访问运维接口被拒绝；分页统一使用 `page/pageSize`；非法状态、非法分页、缺少 `reason`、陈旧 `rowVersion` 和错误 Origin。
 
 现有自动化证据：
 

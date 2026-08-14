@@ -1,12 +1,12 @@
 # File Workshop V1.0 开发计划
 
 > 文档编号：FW-PLAN-V1.0  
-> 文档版本：V3.1
+> 文档版本：V3.2
 > 文档状态：执行中  
 > 编制日期：2026-08-05  
 > 最近修订：2026-08-14
 > 默认路径：`docs/File-Workshop-V1.0-开发计划.md`  
-> 本次修订：推进模块 11 审计摘要统计接口周期
+> 本次修订：推进模块 16 后台任务死信与跳过批量运维接口周期
 
 ## 1. 如何阅读本计划
 
@@ -133,7 +133,7 @@
 | 13 | WebDAV兼容 | `[ ]` | 仅为接入适配器，复用统一身份、权限、文件和锁 |
 | 14 | SMB迁移 | `[ ]` | 依赖目录、存储、权限映射和后台任务 |
 | 15 | AI与Agent集成 | `[ ]` | 按确认的 V1.0 启用范围开发，禁止直持数据库或存储凭据 |
-| 16 | 后台任务 | `[~]` | 已完成 Outbox Worker、`background_jobs` 基础调度、管理员积压统计、受控重试、受控取消和批量运维接口；具体业务处理器、死信批量处理、告警和更多审计消费者继续开发 |
+| 16 | 后台任务 | `[~]` | 已完成 Outbox Worker、`background_jobs` 基础调度、管理员积压统计、受控重试、受控取消、批量死信和批量跳过接口；具体业务处理器、告警和更多审计消费者继续开发 |
 
 ### 6.2 模块 01：身份认证
 
@@ -369,10 +369,10 @@
 | 任务调度 | `[x]` | 已基于 `background_jobs` 建立通用入队、认领、执行、心跳续租和状态机；统一索引、AI、病毒扫描、预览、生命周期和审计归档处理器后续接入 |
 | 重试与死信 | `[x]` | Outbox 与 Job 均已实现可重试/永久失败分类、指数退避、失败摘要、重试耗尽转 `DEAD`，并提供 `FAILED/DEAD` 单项受控重试 API |
 | 幂等与恢复 | `[~]` | Outbox/Job 已通过去重键、注册处理器过滤、状态机和租约过期恢复支持重复领取安全；具体业务处理器幂等策略随各消费者接入 |
-| 运维与观测 | `[~]` | 已提供管理员分页查询 Outbox/Job 积压、失败原因、状态统计、单项重试、单项取消、批量重试和批量取消接口；批量死信处理、指标和告警后续补齐 |
-| 模块测试与文档 | `[~]` | 已覆盖 Outbox Worker、Job Runner、真实 PostgreSQL/Redis 后台运维 HTTP 流程、OpenAPI、统一 API 文档和模块说明；并发压力、崩溃恢复、批量死信和告警后续补充 |
+| 运维与观测 | `[~]` | 已提供管理员分页查询 Outbox/Job 积压、失败原因、状态统计、单项重试、单项取消、批量重试、批量取消、批量死信和批量跳过接口；指标和告警后续补齐 |
+| 模块测试与文档 | `[~]` | 已覆盖 Outbox Worker、Job Runner、真实 PostgreSQL/Redis 后台运维 HTTP 流程、OpenAPI、统一 API 文档和模块说明；并发压力、崩溃恢复、指标和告警后续补充 |
 
-完成标准：PostgreSQL 业务事实、Outbox 和 Job 事实保持可追踪；Redis 不是任务事实唯一来源；Worker 可安全停止和恢复，不泄漏 Goroutine；管理员可查询积压、查看状态统计、受控重试失败项并受控取消未完成任务。当前已完成后台任务基础调度、统计、重试、取消和批量运维接口周期，模块 16 尚未整体完成。
+完成标准：PostgreSQL 业务事实、Outbox 和 Job 事实保持可追踪；Redis 不是任务事实唯一来源；Worker 可安全停止和恢复，不泄漏 Goroutine；管理员可查询积压、查看状态统计、受控重试失败项、受控取消未完成任务，并对确认无法继续自动处理的后台任务执行批量死信或跳过。当前已完成后台任务基础调度、统计、重试、取消、死信和批量运维接口周期，模块 16 尚未整体完成。
 
 ### 6.18 后端阶段完成标准
 
@@ -541,6 +541,7 @@
 | 模块 16：后台任务基础调度与运维接口周期 | 2026-08-10 | `background_jobs` 通用入队/认领/执行/续租/成功/失败/死信框架，Outbox/Job 管理员分页查询，`FAILED/DEAD` 单项受控重试接口，OpenAPI、sqlc、统一 API 文档、模块说明和真实 HTTP 集成测试 | `go test ./internal/modules/background/... ./internal/app ./internal/platform/httpserver ./tests/integration` 与 `FILE_WORKSHOP_RUN_INTEGRATION=1 go test ./tests/integration -run TestBackgroundAdministrationHTTPWorkflow -count=1 -v` 通过；覆盖管理员查询/重试、普通用户拒绝、真实 PostgreSQL/Redis 连接 | 已由后续“后台任务受控取消接口周期”补齐单项取消；模块 16 尚未整体完成，业务处理器、批量处理、积压指标、告警、审计消费者和崩溃恢复压力测试后续继续 |
 | 模块 16：后台任务受控取消接口周期 | 2026-08-10 | 新增 `cancelBackgroundJob` 管理员接口，支持按 `rowVersion/reason` 将 `PENDING/FAILED/DEAD` 后台任务转为 `CANCELLED`，拒绝取消正在执行或已终结任务；同步 OpenAPI、sqlc、统一 API 文档和模块说明 | `go test ./...` 通过；应用层测试覆盖系统管理员取消、普通用户拒绝和非法输入 | 模块 16 尚未整体完成；批量重试/批量死信处理、业务处理器、积压指标、告警和崩溃恢复压力测试后续继续 |
 | 模块 16：后台任务积压统计与批量运维接口周期 | 2026-08-10 | 新增 `getBackgroundAdministrationSummary`、`batchRetryBackgroundJobs`、`batchCancelBackgroundJobs` 3 个管理员接口；支持 Outbox/Job 状态统计，以及最多 50 个后台任务的批量重试或批量取消，单项失败以明细返回 | `go test ./...` 通过；应用层测试覆盖统计、批量重试部分成功/失败、重复 ID 输入拒绝 | 模块 16 尚未整体完成；批量死信处理、具体业务处理器、指标告警和崩溃恢复压力测试后续继续 |
+| 模块 16：后台任务死信与跳过批量运维接口周期 | 2026-08-14 | 新增 `batchMarkBackgroundJobsDead` 和 `batchSkipBackgroundJobs` 2 个管理员接口；支持最多 50 个后台任务批量转 `DEAD` 或 `SKIPPED`，仅对允许状态成功，单项失败以明细返回；不跳过 Outbox 业务事件 | `go test ./internal/modules/background/... ./internal/platform/httpserver ./internal/app` 通过；应用层测试覆盖批量死信部分成功/失败、批量跳过成功和普通用户拒绝 | 模块 16 尚未整体完成；具体业务处理器、指标告警、崩溃恢复压力测试和长期运行稳定性测试后续继续 |
 | 模块 11：审计基础查询与完整性周期 | 2026-08-10 | 审计模块 domain/application/repository/transport、OpenAPI 契约、sqlc 查询、Outbox 审计消费者、Worker 接入、`GET /audit/events`、`GET /audit/events/{auditEventId}`、`GET /audit/integrity`、`POST /audit/integrity/verify` 和统一 API 文档 | `go test ./internal/modules/audit/... ./...` 通过；覆盖 Outbox 到审计事件映射、Request ID 兜底、风险分级、哈希稳定性和篡改敏感性；全量后端测试通过 | 对象存储尚未搭建，审计导出、归档、WORM、批次锚定、告警和真实数据库篡改集成测试后续补充；当前仅系统管理员可查询/校验 |
 | 模块 11：审计摘要统计接口周期 | 2026-08-14 | 新增 `GET /api/v1/audit/summary`，按 `dateFrom/dateTo` 只读统计审计事件总数、风险等级、执行结果、主体类型和哈希链状态；补充 `docs/research/M11-审计模块开源方案调研.md`，同步 OpenAPI、统一 API 文档和主设计文档 | `go test ./internal/modules/audit/... ./internal/platform/httpserver ./internal/app` 通过；应用层测试覆盖系统管理员摘要查询、普通用户拒绝和倒置日期范围拒绝 | 模块 11 尚未整体完成；审计导出、脱敏导出文件、归档、WORM、批次锚定、告警、真实数据库篡改集成和导出文件权限控制待对象存储/归档周期 |
 | 模块 06：对象存储适配基线周期 | 2026-08-10 | `internal/platform/objectstorage` 项目内接口、禁用实现、AWS SDK for Go v2 S3 适配器、对象存储环境变量、启用时健康检查和专项调研记录 | `go test ./internal/platform/objectstorage ./internal/platform/config ./internal/app` 通过；覆盖禁用实现返回 `ErrDisabled` 和预签名 URL 基础校验 | SeaweedFS S3 Gateway 尚未搭建，未验证真实 Bucket、Multipart、预签名上传/下载、Range、对象元数据和 S3 错误映射；上传 REST API 与 `upload_sessions` 事务下周期继续 |
@@ -555,7 +556,7 @@
 
 ## 13. 下一步
 
-当前基础准备以及模块 01～05 已完成当前边界；模块 06 已完成对象存储适配基线和上传控制面当前周期；模块 07 已完成版本与锁基础接口周期；模块 08 已完成共享基础接口周期；模块 09 已完成回收与生命周期元数据闭环、过期扫描入队和资料保全基础管理周期；模块 10 已完成 PostgreSQL 元数据搜索基础和索引刷新任务入队周期；模块 11 已完成审计基础查询、摘要统计和完整性接口当前周期；模块 16 已完成后台任务基础调度、管理员统计、重试、取消和批量运维接口周期。由于对象存储集群尚未搭建，模块 06 的真实上传闭环仍不能最终验收，模块 07 的真实版本生成与下载、模块 08 的共享下载/预览、模块 09 的真实对象清理以及模块 10 的全文/OCR/语义搜索也需要回到模块 06/07/12/16 后续周期。
+当前基础准备以及模块 01～05 已完成当前边界；模块 06 已完成对象存储适配基线和上传控制面当前周期；模块 07 已完成版本与锁基础接口周期；模块 08 已完成共享基础接口周期；模块 09 已完成回收与生命周期元数据闭环、过期扫描入队和资料保全基础管理周期；模块 10 已完成 PostgreSQL 元数据搜索基础和索引刷新任务入队周期；模块 11 已完成审计基础查询、摘要统计和完整性接口当前周期；模块 16 已完成后台任务基础调度、管理员统计、重试、取消、批量死信、批量跳过和批量运维接口周期。由于对象存储集群尚未搭建，模块 06 的真实上传闭环仍不能最终验收，模块 07 的真实版本生成与下载、模块 08 的共享下载/预览、模块 09 的真实对象清理以及模块 10 的全文/OCR/语义搜索也需要回到模块 06/07/12/16 后续周期。
 
 建议执行顺序：
 

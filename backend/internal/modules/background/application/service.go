@@ -20,6 +20,8 @@ type OperationsRepository interface {
 	ListBackgroundJobs(ctx context.Context, filter domain.JobListFilter) (domain.JobListResult, error)
 	RetryBackgroundJob(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error)
 	CancelBackgroundJob(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error)
+	DeadLetterBackgroundJob(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error)
+	SkipBackgroundJob(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error)
 }
 
 type Service struct {
@@ -148,6 +150,34 @@ func (s *Service) BatchCancelBackgroundJobs(ctx context.Context, actor domain.Ac
 	now := s.now().UTC()
 	return s.batchOperateJobs(ctx, items, func(ctx context.Context, item domain.BatchJobItem) (domain.BackgroundJob, error) {
 		return s.repository.CancelBackgroundJob(ctx, item.ID, item.RowVersion, "manual batch cancel: "+reason, now)
+	})
+}
+
+func (s *Service) BatchMarkBackgroundJobsDead(ctx context.Context, actor domain.Actor, items []domain.BatchJobItem, reason string) (domain.BatchJobOperationResult, error) {
+	if err := requireAdmin(actor); err != nil {
+		return domain.BatchJobOperationResult{}, err
+	}
+	reason, err := validateBatchInput(items, reason)
+	if err != nil {
+		return domain.BatchJobOperationResult{}, err
+	}
+	now := s.now().UTC()
+	return s.batchOperateJobs(ctx, items, func(ctx context.Context, item domain.BatchJobItem) (domain.BackgroundJob, error) {
+		return s.repository.DeadLetterBackgroundJob(ctx, item.ID, item.RowVersion, "manual batch dead letter: "+reason, now)
+	})
+}
+
+func (s *Service) BatchSkipBackgroundJobs(ctx context.Context, actor domain.Actor, items []domain.BatchJobItem, reason string) (domain.BatchJobOperationResult, error) {
+	if err := requireAdmin(actor); err != nil {
+		return domain.BatchJobOperationResult{}, err
+	}
+	reason, err := validateBatchInput(items, reason)
+	if err != nil {
+		return domain.BatchJobOperationResult{}, err
+	}
+	now := s.now().UTC()
+	return s.batchOperateJobs(ctx, items, func(ctx context.Context, item domain.BatchJobItem) (domain.BackgroundJob, error) {
+		return s.repository.SkipBackgroundJob(ctx, item.ID, item.RowVersion, "manual batch skip: "+reason, now)
 	})
 }
 
