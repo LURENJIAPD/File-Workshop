@@ -61,6 +61,7 @@
 - 异步可靠性：PostgreSQL Outbox + Go Worker；V1.0 不默认引入消息队列。
 - 前端：Vue 3 + TypeScript + Vite + Vue Router。
 - 前端组件和状态：Element Plus、Pinia、TanStack Vue Query。
+- 前端工作台：传统企业后台/文件管理布局 + WebOS 工作台双模式可切换；WebOS 仅作为前端 Shell，不改变后端领域模型、数据库结构、权限语义、审计规则或 API 契约。
 - 测试：Go Test、httptest、本地隔离 PostgreSQL/Redis 集成测试、Vitest、Playwright；性能测试默认使用 k6。Testcontainers 仅作为具备 Docker/CI 环境后的可选隔离方案，不是本地开发或项目运行依赖。
 - 技术栈变化必须有明确理由、影响分析和 ADR，不得由 Agent 自行替换。
 
@@ -195,6 +196,7 @@ GET /api/v1/files?page=1&pageSize=50
 - API 类型和客户端从 OpenAPI 生成，禁止手工重复维护请求/响应 DTO。
 - Pinia 保存客户端状态；TanStack Vue Query 管理服务端数据、缓存、重试和失效，禁止把服务端事实长期复制到多个 Store。
 - 统一使用选定设计方案的设计令牌和组件语言，不在项目中混用多个大型组件库。
+- 前端必须支持传统布局和 WebOS 工作台布局切换；两种模式共享同一套路由、OpenAPI 生成客户端、业务组件、权限语义和状态管理，不得为 WebOS 复制第二套业务页面或绕过服务端授权。移动端、低性能设备和无障碍场景必须支持传统布局回退。
 - 表单必须有明确标签、校验、错误反馈和提交状态；交互组件支持键盘操作和可见焦点。
 - 大列表使用虚拟化，树结构按需加载，搜索和筛选防抖，预览按需加载。
 - 上传队列支持暂停、恢复、取消、失败重试和刷新恢复；大文件 Hash 放入 Web Worker。
