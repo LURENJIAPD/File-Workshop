@@ -18,6 +18,7 @@ type OperationsRepository interface {
 	ListOutboxEvents(ctx context.Context, filter domain.OutboxListFilter) (domain.OutboxListResult, error)
 	RetryOutboxEvent(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.OutboxEvent, error)
 	CountBackgroundJobsByStatus(ctx context.Context) ([]domain.OutboxStatusCount, error)
+	GetQueueLagSummary(ctx context.Context, now time.Time) (domain.QueueLagSummary, error)
 	CountBackgroundJobFailuresByErrorCode(ctx context.Context) ([]domain.FailureSummaryItem, error)
 	ListBackgroundJobs(ctx context.Context, filter domain.JobListFilter) (domain.JobListResult, error)
 	RetryBackgroundJob(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error)
@@ -68,6 +69,13 @@ func (s *Service) GetFailureSummary(ctx context.Context, actor domain.Actor) (do
 		return domain.FailureSummary{}, err
 	}
 	return domain.FailureSummary{OutboxEvents: outboxFailures, BackgroundJobs: jobFailures}, nil
+}
+
+func (s *Service) GetQueueLagSummary(ctx context.Context, actor domain.Actor) (domain.QueueLagSummary, error) {
+	if err := requireAdmin(actor); err != nil {
+		return domain.QueueLagSummary{}, err
+	}
+	return s.repository.GetQueueLagSummary(ctx, s.now().UTC())
 }
 
 func (s *Service) RecoverExpiredLeases(ctx context.Context, actor domain.Actor, batchSize int, reason string) (domain.LeaseRecoveryResult, error) {

@@ -180,6 +180,27 @@ func (r *PostgreSQL) CountBackgroundJobsByStatus(ctx context.Context) ([]domain.
 	return result, nil
 }
 
+func (r *PostgreSQL) GetQueueLagSummary(ctx context.Context, now time.Time) (domain.QueueLagSummary, error) {
+	row, err := r.queries.GetBackgroundQueueLagSummary(ctx, timestamptz(now))
+	if err != nil {
+		return domain.QueueLagSummary{}, err
+	}
+	return domain.QueueLagSummary{
+		OutboxEvents: domain.QueueLagItem{
+			DuePendingCount:        row.OutboxDuePendingCount,
+			DueFailedCount:         row.OutboxDueFailedCount,
+			ExpiredProcessingCount: row.OutboxExpiredProcessingCount,
+			OldestDueAt:            optionalTime(row.OutboxOldestDueAt),
+		},
+		BackgroundJobs: domain.QueueLagItem{
+			DuePendingCount:        row.BackgroundJobsDuePendingCount,
+			DueFailedCount:         row.BackgroundJobsDueFailedCount,
+			ExpiredProcessingCount: row.BackgroundJobsExpiredProcessingCount,
+			OldestDueAt:            optionalTime(row.BackgroundJobsOldestDueAt),
+		},
+	}, nil
+}
+
 func (r *PostgreSQL) CountBackgroundJobFailuresByErrorCode(ctx context.Context) ([]domain.FailureSummaryItem, error) {
 	rows, err := r.queries.CountBackgroundJobFailuresByErrorCode(ctx)
 	if err != nil {

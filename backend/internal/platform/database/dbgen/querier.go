@@ -76,6 +76,7 @@ type Querier interface {
 	GetAuditChainHeadForUpdate(ctx context.Context, arg *GetAuditChainHeadForUpdateParams) (*AuditChainHead, error)
 	GetAuditEvent(ctx context.Context, arg *GetAuditEventParams) (*GetAuditEventRow, error)
 	GetBackgroundJob(ctx context.Context, backgroundJobID pgtype.UUID) (*BackgroundJob, error)
+	GetBackgroundQueueLagSummary(ctx context.Context, now pgtype.Timestamptz) (*GetBackgroundQueueLagSummaryRow, error)
 	GetCurrentSessionIdentity(ctx context.Context, userSessionID pgtype.UUID) (*GetCurrentSessionIdentityRow, error)
 	GetDatabaseHealth(ctx context.Context) (*GetDatabaseHealthRow, error)
 	GetDocumentAuthorizationResource(ctx context.Context, documentID pgtype.UUID) (*GetDocumentAuthorizationResourceRow, error)

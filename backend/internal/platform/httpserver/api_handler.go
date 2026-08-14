@@ -136,6 +136,7 @@ type BackgroundAPI interface {
 	RetryBackgroundOutboxEvent(context.Context, api.RetryBackgroundOutboxEventRequestObject) (api.RetryBackgroundOutboxEventResponseObject, error)
 	BatchRetryBackgroundOutboxEvents(context.Context, api.BatchRetryBackgroundOutboxEventsRequestObject) (api.BatchRetryBackgroundOutboxEventsResponseObject, error)
 	GetBackgroundAdministrationSummary(context.Context, api.GetBackgroundAdministrationSummaryRequestObject) (api.GetBackgroundAdministrationSummaryResponseObject, error)
+	GetBackgroundQueueLagSummary(context.Context, api.GetBackgroundQueueLagSummaryRequestObject) (api.GetBackgroundQueueLagSummaryResponseObject, error)
 	GetBackgroundFailureSummary(context.Context, api.GetBackgroundFailureSummaryRequestObject) (api.GetBackgroundFailureSummaryResponseObject, error)
 	RecoverExpiredBackgroundLeases(context.Context, api.RecoverExpiredBackgroundLeasesRequestObject) (api.RecoverExpiredBackgroundLeasesResponseObject, error)
 	ListBackgroundJobs(context.Context, api.ListBackgroundJobsRequestObject) (api.ListBackgroundJobsResponseObject, error)
@@ -297,6 +298,9 @@ func (h *APIHandler) BatchRetryBackgroundOutboxEvents(ctx context.Context, reque
 }
 func (h *APIHandler) GetBackgroundAdministrationSummary(ctx context.Context, request api.GetBackgroundAdministrationSummaryRequestObject) (api.GetBackgroundAdministrationSummaryResponseObject, error) {
 	return h.background.GetBackgroundAdministrationSummary(ctx, request)
+}
+func (h *APIHandler) GetBackgroundQueueLagSummary(ctx context.Context, request api.GetBackgroundQueueLagSummaryRequestObject) (api.GetBackgroundQueueLagSummaryResponseObject, error) {
+	return h.background.GetBackgroundQueueLagSummary(ctx, request)
 }
 func (h *APIHandler) GetBackgroundFailureSummary(ctx context.Context, request api.GetBackgroundFailureSummaryRequestObject) (api.GetBackgroundFailureSummaryResponseObject, error) {
 	return h.background.GetBackgroundFailureSummary(ctx, request)

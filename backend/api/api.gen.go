@@ -1758,6 +1758,21 @@ type BackgroundOutboxStatusCount struct {
 	Status BackgroundOutboxStatus `json:"status"`
 }
 
+// BackgroundQueueLagItem defines model for BackgroundQueueLagItem.
+type BackgroundQueueLagItem struct {
+	DueFailedCount         int64      `json:"dueFailedCount"`
+	DuePendingCount        int64      `json:"duePendingCount"`
+	ExpiredProcessingCount int64      `json:"expiredProcessingCount"`
+	OldestDueAt            *time.Time `json:"oldestDueAt,omitempty"`
+}
+
+// BackgroundQueueLagSummaryResponse defines model for BackgroundQueueLagSummaryResponse.
+type BackgroundQueueLagSummaryResponse struct {
+	BackgroundJobs BackgroundQueueLagItem `json:"backgroundJobs"`
+	OutboxEvents   BackgroundQueueLagItem `json:"outboxEvents"`
+	RequestId      string                 `json:"requestId"`
+}
+
 // BatchBackgroundJobOperationItemRequest defines model for BatchBackgroundJobOperationItemRequest.
 type BatchBackgroundJobOperationItemRequest struct {
 	BackgroundJobId openapi_types.UUID `json:"backgroundJobId"`
@@ -3722,6 +3737,9 @@ type ServerInterface interface {
 	// RetryBackgroundOutboxEvent Retry a failed or dead Outbox event.
 	// (POST /api/v1/admin/background/outbox-events/{outboxEventId}/retry)
 	RetryBackgroundOutboxEvent(c *gin.Context, outboxEventId OutboxEventIdPath)
+	// GetBackgroundQueueLagSummary Get due and expired background queue lag summary.
+	// (GET /api/v1/admin/background/queue-lag)
+	GetBackgroundQueueLagSummary(c *gin.Context)
 	// GetBackgroundAdministrationSummary Get background operations status counts.
 	// (GET /api/v1/admin/background/summary)
 	GetBackgroundAdministrationSummary(c *gin.Context)
@@ -4432,6 +4450,19 @@ func (siw *ServerInterfaceWrapper) RetryBackgroundOutboxEvent(c *gin.Context) {
 	}
 
 	siw.Handler.RetryBackgroundOutboxEvent(c, outboxEventId)
+}
+
+// GetBackgroundQueueLagSummary operation middleware
+func (siw *ServerInterfaceWrapper) GetBackgroundQueueLagSummary(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetBackgroundQueueLagSummary(c)
 }
 
 // GetBackgroundAdministrationSummary operation middleware
@@ -7652,6 +7683,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/api/v1/admin/background/outbox-events/batch-retry", wrapper.BatchRetryBackgroundOutboxEvents)
 	router.POST(options.BaseURL+"/api/v1/admin/background/outbox-events/:outboxEventId/retry", wrapper.RetryBackgroundOutboxEvent)
 	router.GET(options.BaseURL+"/api/v1/admin/background/summary", wrapper.GetBackgroundAdministrationSummary)
+	router.GET(options.BaseURL+"/api/v1/admin/background/queue-lag", wrapper.GetBackgroundQueueLagSummary)
 	router.GET(options.BaseURL+"/api/v1/admin/background/failure-summary", wrapper.GetBackgroundFailureSummary)
 	router.POST(options.BaseURL+"/api/v1/admin/background/expired-leases/recover", wrapper.RecoverExpiredBackgroundLeases)
 	router.GET(options.BaseURL+"/api/v1/admin/background/jobs", wrapper.ListBackgroundJobs)
@@ -9088,6 +9120,61 @@ func (response RetryBackgroundOutboxEvent409JSONResponse) VisitRetryBackgroundOu
 		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
 	}
 	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBackgroundQueueLagSummaryRequestObject struct {
+}
+
+type GetBackgroundQueueLagSummaryResponseObject interface {
+	VisitGetBackgroundQueueLagSummaryResponse(w http.ResponseWriter) error
+}
+
+type GetBackgroundQueueLagSummary200JSONResponse BackgroundQueueLagSummaryResponse
+
+func (response GetBackgroundQueueLagSummary200JSONResponse) VisitGetBackgroundQueueLagSummaryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBackgroundQueueLagSummary401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response GetBackgroundQueueLagSummary401JSONResponse) VisitGetBackgroundQueueLagSummaryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBackgroundQueueLagSummary403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetBackgroundQueueLagSummary403JSONResponse) VisitGetBackgroundQueueLagSummaryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -17438,6 +17525,9 @@ type StrictServerInterface interface {
 	// RetryBackgroundOutboxEvent Retry a failed or dead Outbox event.
 	// (POST /api/v1/admin/background/outbox-events/{outboxEventId}/retry)
 	RetryBackgroundOutboxEvent(ctx context.Context, request RetryBackgroundOutboxEventRequestObject) (RetryBackgroundOutboxEventResponseObject, error)
+	// GetBackgroundQueueLagSummary Get due and expired background queue lag summary.
+	// (GET /api/v1/admin/background/queue-lag)
+	GetBackgroundQueueLagSummary(ctx context.Context, request GetBackgroundQueueLagSummaryRequestObject) (GetBackgroundQueueLagSummaryResponseObject, error)
 	// GetBackgroundAdministrationSummary Get background operations status counts.
 	// (GET /api/v1/admin/background/summary)
 	GetBackgroundAdministrationSummary(ctx context.Context, request GetBackgroundAdministrationSummaryRequestObject) (GetBackgroundAdministrationSummaryResponseObject, error)
@@ -18276,6 +18366,30 @@ func (sh *strictHandler) RetryBackgroundOutboxEvent(ctx *gin.Context, outboxEven
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(RetryBackgroundOutboxEventResponseObject); ok {
 		if err := validResponse.VisitRetryBackgroundOutboxEventResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetBackgroundQueueLagSummary operation middleware
+func (sh *strictHandler) GetBackgroundQueueLagSummary(ctx *gin.Context) {
+	var request GetBackgroundQueueLagSummaryRequestObject
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetBackgroundQueueLagSummary(ctx, request.(GetBackgroundQueueLagSummaryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetBackgroundQueueLagSummary")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetBackgroundQueueLagSummaryResponseObject); ok {
+		if err := validResponse.VisitGetBackgroundQueueLagSummaryResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

@@ -87,6 +87,38 @@ func TestServiceGetsFailureSummary(t *testing.T) {
 	}
 }
 
+func TestServiceGetsQueueLagSummary(t *testing.T) {
+	now := time.Date(2026, 8, 14, 12, 0, 0, 0, time.UTC)
+	oldest := now.Add(-5 * time.Minute)
+	repository := &fakeOperationsRepository{
+		queueLag: domain.QueueLagSummary{
+			OutboxEvents:   domain.QueueLagItem{DuePendingCount: 2, DueFailedCount: 1, ExpiredProcessingCount: 1, OldestDueAt: &oldest},
+			BackgroundJobs: domain.QueueLagItem{DuePendingCount: 3, DueFailedCount: 0, ExpiredProcessingCount: 2, OldestDueAt: &oldest},
+		},
+	}
+	service := NewService(repository, nil, func() time.Time { return now })
+
+	summary, err := service.GetQueueLagSummary(context.Background(), adminActor())
+	if err != nil {
+		t.Fatalf("GetQueueLagSummary failed: %v", err)
+	}
+	if !repository.queueLagNow.Equal(now) {
+		t.Fatalf("queueLagNow=%s, want %s", repository.queueLagNow, now)
+	}
+	if summary.OutboxEvents.DuePendingCount != 2 || summary.BackgroundJobs.ExpiredProcessingCount != 2 {
+		t.Fatalf("summary=%#v", summary)
+	}
+}
+
+func TestServiceGetQueueLagSummaryRequiresAdmin(t *testing.T) {
+	service := NewService(&fakeOperationsRepository{}, nil, time.Now)
+
+	_, err := service.GetQueueLagSummary(context.Background(), domain.Actor{UserID: uuid.Must(uuid.NewV7()), Role: "USER"})
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("error=%v, want ErrForbidden", err)
+	}
+}
+
 func TestServiceGetFailureSummaryRequiresAdmin(t *testing.T) {
 	service := NewService(&fakeOperationsRepository{}, nil, time.Now)
 
@@ -284,6 +316,8 @@ type fakeOperationsRepository struct {
 	jobCounts              []domain.OutboxStatusCount
 	outboxFailures         []domain.FailureSummaryItem
 	jobFailures            []domain.FailureSummaryItem
+	queueLag               domain.QueueLagSummary
+	queueLagNow            time.Time
 	leaseRecovery          domain.LeaseRecoveryResult
 	leaseRecoveryBatchSize int
 	leaseRecoveryReason    string
@@ -329,6 +363,11 @@ func (r *fakeOperationsRepository) ListBackgroundJobs(context.Context, domain.Jo
 
 func (r *fakeOperationsRepository) CountBackgroundJobsByStatus(context.Context) ([]domain.OutboxStatusCount, error) {
 	return r.jobCounts, nil
+}
+
+func (r *fakeOperationsRepository) GetQueueLagSummary(_ context.Context, now time.Time) (domain.QueueLagSummary, error) {
+	r.queueLagNow = now
+	return r.queueLag, nil
 }
 
 func (r *fakeOperationsRepository) CountBackgroundJobFailuresByErrorCode(context.Context) ([]domain.FailureSummaryItem, error) {

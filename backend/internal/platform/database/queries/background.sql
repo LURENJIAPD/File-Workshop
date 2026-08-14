@@ -280,6 +280,55 @@ FROM background_jobs
 GROUP BY status
 ORDER BY status;
 
+-- name: GetBackgroundQueueLagSummary :one
+WITH outbox_due AS (
+  SELECT 'PENDING'::text AS status, available_at AS due_at
+  FROM outbox_events
+  WHERE status = 'PENDING'
+    AND available_at <= sqlc.arg('now')::timestamptz
+    AND attempt_count < max_attempts
+  UNION ALL
+  SELECT 'FAILED'::text AS status, COALESCE(next_retry_at, available_at) AS due_at
+  FROM outbox_events
+  WHERE status = 'FAILED'
+    AND COALESCE(next_retry_at, available_at) <= sqlc.arg('now')::timestamptz
+    AND attempt_count < max_attempts
+  UNION ALL
+  SELECT 'PROCESSING'::text AS status, lease_until AS due_at
+  FROM outbox_events
+  WHERE status = 'PROCESSING'
+    AND lease_until IS NOT NULL
+    AND lease_until <= sqlc.arg('now')::timestamptz
+),
+job_due AS (
+  SELECT 'PENDING'::text AS status, available_at AS due_at
+  FROM background_jobs
+  WHERE status = 'PENDING'
+    AND available_at <= sqlc.arg('now')::timestamptz
+    AND attempt_count < max_attempts
+  UNION ALL
+  SELECT 'FAILED'::text AS status, available_at AS due_at
+  FROM background_jobs
+  WHERE status = 'FAILED'
+    AND available_at <= sqlc.arg('now')::timestamptz
+    AND attempt_count < max_attempts
+  UNION ALL
+  SELECT 'PROCESSING'::text AS status, lease_until AS due_at
+  FROM background_jobs
+  WHERE status = 'PROCESSING'
+    AND lease_until IS NOT NULL
+    AND lease_until <= sqlc.arg('now')::timestamptz
+)
+SELECT
+  (SELECT count(*)::bigint FROM outbox_due WHERE status = 'PENDING') AS outbox_due_pending_count,
+  (SELECT count(*)::bigint FROM outbox_due WHERE status = 'FAILED') AS outbox_due_failed_count,
+  (SELECT count(*)::bigint FROM outbox_due WHERE status = 'PROCESSING') AS outbox_expired_processing_count,
+  (SELECT min(due_at)::timestamptz FROM outbox_due) AS outbox_oldest_due_at,
+  (SELECT count(*)::bigint FROM job_due WHERE status = 'PENDING') AS background_jobs_due_pending_count,
+  (SELECT count(*)::bigint FROM job_due WHERE status = 'FAILED') AS background_jobs_due_failed_count,
+  (SELECT count(*)::bigint FROM job_due WHERE status = 'PROCESSING') AS background_jobs_expired_processing_count,
+  (SELECT min(due_at)::timestamptz FROM job_due) AS background_jobs_oldest_due_at;
+
 -- name: CountBackgroundJobFailuresByErrorCode :many
 SELECT last_error_code, count(*)::bigint AS count, max(updated_at)::timestamptz AS latest_at
 FROM background_jobs

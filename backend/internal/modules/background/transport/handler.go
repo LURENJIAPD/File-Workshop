@@ -194,6 +194,23 @@ func (h *Handler) GetBackgroundAdministrationSummary(ctx context.Context, reques
 	return api.GetBackgroundAdministrationSummary200JSONResponse(apiSummary(result, requestID)), nil
 }
 
+func (h *Handler) GetBackgroundQueueLagSummary(ctx context.Context, request api.GetBackgroundQueueLagSummaryRequestObject) (api.GetBackgroundQueueLagSummaryResponseObject, error) {
+	ginContext, actor, requestID, authErr := h.authenticate(ctx)
+	if authErr != nil {
+		return api.GetBackgroundQueueLagSummary401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	result, err := h.service.GetQueueLagSummary(ginContext.Request.Context(), actor)
+	if _, denied, _, _, code := mapError(err, requestID); code != "" {
+		if code == "403" {
+			return api.GetBackgroundQueueLagSummary403JSONResponse{ForbiddenJSONResponse: denied}, nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	return api.GetBackgroundQueueLagSummary200JSONResponse(apiQueueLagSummary(result, requestID)), nil
+}
+
 func (h *Handler) GetBackgroundFailureSummary(ctx context.Context, request api.GetBackgroundFailureSummaryRequestObject) (api.GetBackgroundFailureSummaryResponseObject, error) {
 	ginContext, actor, requestID, authErr := h.authenticate(ctx)
 	if authErr != nil {
@@ -546,6 +563,23 @@ func apiSummary(value domain.AdministrationSummary, requestID string) api.Backgr
 		jobs = append(jobs, api.BackgroundJobStatusCount{Status: api.BackgroundJobStatus(item.Status), Count: item.Count})
 	}
 	return api.BackgroundAdministrationSummaryResponse{OutboxEvents: outbox, BackgroundJobs: jobs, RequestId: requestID}
+}
+
+func apiQueueLagSummary(value domain.QueueLagSummary, requestID string) api.BackgroundQueueLagSummaryResponse {
+	return api.BackgroundQueueLagSummaryResponse{
+		OutboxEvents:   apiQueueLagItem(value.OutboxEvents),
+		BackgroundJobs: apiQueueLagItem(value.BackgroundJobs),
+		RequestId:      requestID,
+	}
+}
+
+func apiQueueLagItem(value domain.QueueLagItem) api.BackgroundQueueLagItem {
+	return api.BackgroundQueueLagItem{
+		DuePendingCount:        value.DuePendingCount,
+		DueFailedCount:         value.DueFailedCount,
+		ExpiredProcessingCount: value.ExpiredProcessingCount,
+		OldestDueAt:            value.OldestDueAt,
+	}
 }
 
 func apiFailureSummary(value domain.FailureSummary, requestID string) api.BackgroundFailureSummaryResponse {

@@ -2774,6 +2774,24 @@ paths:
         "401": { $ref: "#/components/responses/AuthRequired" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/v1/admin/background/queue-lag:
+    get:
+      operationId: getBackgroundQueueLagSummary
+      tags: [BackgroundAdministration]
+      summary: Get due and expired background queue lag summary.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Due and expired queue lag summary for Outbox events and background jobs.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackgroundQueueLagSummaryResponse"
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/v1/admin/background/failure-summary:
     get:
       operationId: getBackgroundFailureSummary
@@ -4015,6 +4033,25 @@ components:
         backgroundJobs:
           type: array
           items: { $ref: "#/components/schemas/BackgroundJobStatusCount" }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    BackgroundQueueLagItem:
+      type: object
+      additionalProperties: false
+      required: [duePendingCount, dueFailedCount, expiredProcessingCount]
+      properties:
+        duePendingCount: { type: integer, format: int64, minimum: 0 }
+        dueFailedCount: { type: integer, format: int64, minimum: 0 }
+        expiredProcessingCount: { type: integer, format: int64, minimum: 0 }
+        oldestDueAt: { type: string, format: date-time }
+
+    BackgroundQueueLagSummaryResponse:
+      type: object
+      additionalProperties: false
+      required: [outboxEvents, backgroundJobs, requestId]
+      properties:
+        outboxEvents: { $ref: "#/components/schemas/BackgroundQueueLagItem" }
+        backgroundJobs: { $ref: "#/components/schemas/BackgroundQueueLagItem" }
         requestId: { type: string, minLength: 1, maxLength: 128 }
 
     BackgroundFailureSummaryItem:

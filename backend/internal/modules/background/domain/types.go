@@ -76,6 +76,18 @@ type AdministrationSummary struct {
 	BackgroundJobs []OutboxStatusCount
 }
 
+type QueueLagItem struct {
+	DuePendingCount        int64
+	DueFailedCount         int64
+	ExpiredProcessingCount int64
+	OldestDueAt            *time.Time
+}
+
+type QueueLagSummary struct {
+	OutboxEvents   QueueLagItem
+	BackgroundJobs QueueLagItem
+}
+
 type FailureSummaryItem struct {
 	ErrorCode string
 	Count     int64
