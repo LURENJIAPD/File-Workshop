@@ -27,7 +27,11 @@ type Querier interface {
 	CompleteUserIdempotencyRecord(ctx context.Context, arg *CompleteUserIdempotencyRecordParams) error
 	ConsumeSpaceQuotaReservation(ctx context.Context, arg *ConsumeSpaceQuotaReservationParams) (int64, error)
 	CountAuditChainHeads(ctx context.Context, arg *CountAuditChainHeadsParams) (int64, error)
+	CountAuditChainHeadsByStatus(ctx context.Context, arg *CountAuditChainHeadsByStatusParams) ([]*CountAuditChainHeadsByStatusRow, error)
 	CountAuditEvents(ctx context.Context, arg *CountAuditEventsParams) (int64, error)
+	CountAuditEventsByActorType(ctx context.Context, arg *CountAuditEventsByActorTypeParams) ([]*CountAuditEventsByActorTypeRow, error)
+	CountAuditEventsByResult(ctx context.Context, arg *CountAuditEventsByResultParams) ([]*CountAuditEventsByResultRow, error)
+	CountAuditEventsByRiskLevel(ctx context.Context, arg *CountAuditEventsByRiskLevelParams) ([]*CountAuditEventsByRiskLevelRow, error)
 	CountBackgroundJobs(ctx context.Context, arg *CountBackgroundJobsParams) (int64, error)
 	CountBackgroundJobsByStatus(ctx context.Context) ([]*CountBackgroundJobsByStatusRow, error)
 	CountCreatedShares(ctx context.Context, creatorUserID pgtype.UUID) (int64, error)

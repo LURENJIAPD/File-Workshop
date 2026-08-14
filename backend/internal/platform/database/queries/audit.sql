@@ -27,6 +27,30 @@ WHERE partition_date >= sqlc.arg('date_from')::date
   AND (sqlc.narg('result')::text IS NULL OR result = sqlc.narg('result')::text)
   AND (sqlc.narg('request_id')::uuid IS NULL OR request_id = sqlc.narg('request_id')::uuid);
 
+-- name: CountAuditEventsByRiskLevel :many
+SELECT risk_level, count(*)::bigint AS event_count
+FROM audit_events
+WHERE partition_date >= sqlc.arg('date_from')::date
+  AND partition_date <= sqlc.arg('date_to')::date
+GROUP BY risk_level
+ORDER BY risk_level ASC;
+
+-- name: CountAuditEventsByResult :many
+SELECT result, count(*)::bigint AS event_count
+FROM audit_events
+WHERE partition_date >= sqlc.arg('date_from')::date
+  AND partition_date <= sqlc.arg('date_to')::date
+GROUP BY result
+ORDER BY result ASC;
+
+-- name: CountAuditEventsByActorType :many
+SELECT actor_type, count(*)::bigint AS event_count
+FROM audit_events
+WHERE partition_date >= sqlc.arg('date_from')::date
+  AND partition_date <= sqlc.arg('date_to')::date
+GROUP BY actor_type
+ORDER BY actor_type ASC;
+
 -- name: ListAuditEvents :many
 SELECT
   audit_event_id, event_type, risk_level, actor_type, actor_id, actor_display_name,
@@ -108,6 +132,14 @@ FROM audit_chain_heads
 WHERE partition_date >= sqlc.arg('date_from')::date
   AND partition_date <= sqlc.arg('date_to')::date
   AND (sqlc.narg('status')::text IS NULL OR status = sqlc.narg('status')::text);
+
+-- name: CountAuditChainHeadsByStatus :many
+SELECT status, count(*)::bigint AS chain_count
+FROM audit_chain_heads
+WHERE partition_date >= sqlc.arg('date_from')::date
+  AND partition_date <= sqlc.arg('date_to')::date
+GROUP BY status
+ORDER BY status ASC;
 
 -- name: ListAuditChainEventsForVerify :many
 SELECT audit_event_id, event_type, risk_level, actor_type, actor_id, actor_display_name,

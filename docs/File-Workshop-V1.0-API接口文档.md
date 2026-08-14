@@ -1,10 +1,10 @@
 # File Workshop V1.0 API 接口文档
 
 > 文档编号：FW-API-V1.0  
-> 文档版本：V0.17
+> 文档版本：V0.18
 > 文档状态：按模块持续编制  
-> 最近更新：2026-08-10
-> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 09 回收与生命周期元数据闭环、过期扫描入队和资料保全管理接口、模块 10 PostgreSQL 元数据搜索基础接口和索引刷新任务入队接口、模块 16 后台任务基础调度、统计、重试、取消和批量运维接口
+> 最近更新：2026-08-14
+> 当前已收录：公共健康检查、模块 01 身份认证、模块 02 用户管理、模块 03 组织与空间、模块 04 权限与管理委派、模块 05 文件目录、模块 06 文件传输与存储控制面、模块 07 版本与并发基础接口、模块 08 共享基础接口、模块 09 回收与生命周期元数据闭环、过期扫描入队和资料保全管理接口、模块 10 PostgreSQL 元数据搜索基础接口和索引刷新任务入队接口、模块 11 审计基础查询、摘要统计和完整性接口、模块 16 后台任务基础调度、统计、重试、取消和批量运维接口
 > 机器契约：`backend/api/openapi.yaml`
 
 ## 1. 文档定位
@@ -28,7 +28,8 @@ OpenAPI 是机器可读的唯一权威契约。本文档必须与 OpenAPI、生�
 | 08 | 共享 | 已收录用户/组织/LINK 基础接口 | 7 | 2026-08-10 |
 | 09 | 回收与生命周期 | 已收录元数据回收、恢复、清理发起、过期扫描入队和资料保全管理接口 | 9 | 2026-08-10 |
 | 10 | 搜索 | 已收录 PostgreSQL 元数据搜索基础接口和索引刷新任务入队接口 | 2 | 2026-08-10 |
-| 11～15 | 后续系统模块 | 未收录 | 0 | — |
+| 11 | 审计 | 已收录基础查询、摘要统计和完整性接口 | 5 | 2026-08-14 |
+| 12～15 | 后续系统模块 | 未收录 | 0 | — |
 | 16 | 后台任务 | 已完成基础调度、管理员统计、重试、取消和批量运维接口 | 8 | 2026-08-10 |
 
 ## 3. 全局接口约定
@@ -1612,7 +1613,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 
 ### 16.1 当前边界
 
-本周期完成审计模块的基础查询、详情、完整性状态和哈希链校验能力，并将用户、组织、权限、文件目录模块当前产生的 Outbox 事件注册为审计消费者。当前不实现审计导出、归档、WORM、批次锚定和安全告警；这些能力依赖后续对象存储与归档周期。
+本周期完成审计模块的基础查询、详情、摘要统计、完整性状态和哈希链校验能力，并将用户、组织、权限、文件目录模块当前产生的 Outbox 事件注册为审计消费者。当前不实现审计导出、归档、WORM、批次锚定和安全告警；这些能力依赖后续对象存储与归档周期。
 
 当前审计写入链路为：
 
@@ -1628,6 +1629,7 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
 
 | 接口 | Operation ID | 成功响应 | 关键约束 |
 |---|---|---:|---|
+| `GET /api/v1/audit/summary?dateFrom=2026-08-10&dateTo=2026-08-10` | `getAuditSummary` | `200/AuditSummaryResponse` | 仅 `SYSTEM_ADMIN`；`dateFrom/dateTo` 必填且不得倒置；只读统计 `audit_events` 和 `audit_chain_heads`，不替代原始审计明细 |
 | `GET /api/v1/audit/events?dateFrom=2026-08-10&dateTo=2026-08-10&page=1&pageSize=50` | `listAuditEvents` | `200/AuditEventListResponse` | 仅 `SYSTEM_ADMIN`；`dateFrom/dateTo` 必填；支持 `eventType/riskLevel/actorType/actorId/resourceType/resourceId/result/requestId` 筛选；排序为 `createdAt DESC, auditEventId DESC` |
 | `GET /api/v1/audit/events/{auditEventId}?partitionDate=2026-08-10` | `getAuditEvent` | `200/AuditEventResponse` | 仅 `SYSTEM_ADMIN`；必须携带 `partitionDate`，因为 `audit_events` 按 `partition_date` 分区并以 `(partition_date, audit_event_id)` 定位 |
 | `GET /api/v1/audit/integrity?dateFrom=2026-08-10&dateTo=2026-08-10&page=1&pageSize=50` | `getAuditIntegrity` | `200/AuditIntegrityResponse` | 仅 `SYSTEM_ADMIN`；返回 `audit_chain_heads`；可按 `status=ACTIVE/SEALED/INVALID` 筛选 |
@@ -1650,6 +1652,32 @@ Outbox 事件响应字段严格来自 `outbox_events`：`outboxEventId/aggregate
   "page": 1,
   "pageSize": 50,
   "total": 0,
+  "requestId": "019fcc32-0bc6-7d82-aa70-62d5324b1fbb"
+}
+```
+
+摘要响应示例：
+
+```json
+{
+  "dateFrom": "2026-08-10",
+  "dateTo": "2026-08-10",
+  "totalEvents": 12,
+  "riskLevelCounts": [
+    { "riskLevel": "HIGH", "count": 2 },
+    { "riskLevel": "NORMAL", "count": 10 }
+  ],
+  "resultCounts": [
+    { "result": "SUCCESS", "count": 11 },
+    { "result": "DENIED", "count": 1 }
+  ],
+  "actorTypeCounts": [
+    { "actorType": "USER", "count": 9 },
+    { "actorType": "SYSTEM", "count": 3 }
+  ],
+  "chainStatusCounts": [
+    { "status": "ACTIVE", "count": 2 }
+  ],
   "requestId": "019fcc32-0bc6-7d82-aa70-62d5324b1fbb"
 }
 ```
@@ -1677,7 +1705,7 @@ Outbox 审计消费者的映射规则：
 | 404 | `AUDIT_NOT_FOUND` | 审计事件、链头或指定分区内链事件不存在 |
 | 409 | `AUDIT_STATE_CONFLICT` | 审计链状态不允许继续写入或校验操作 |
 
-正式接口测试至少覆盖：未登录拒绝；普通用户拒绝；系统管理员按日期分页查询；非法 `page/pageSize`；缺失或倒置 `dateFrom/dateTo`；按事件类型、风险级别、主体、资源和 Request ID 筛选；按 `partitionDate + auditEventId` 读取详情；高风险事件进入哈希链；完整链校验通过；篡改或缺失事件导致校验失败并标记 `INVALID`；Outbox 缺失 `correlationId` 时 requestId 兜底且 metadata 可追踪。
+正式接口测试至少覆盖：未登录拒绝；普通用户拒绝；系统管理员按日期获取审计摘要；摘要接口缺失或倒置 `dateFrom/dateTo` 返回 400；摘要统计风险等级、结果、主体类型和链状态；系统管理员按日期分页查询；非法 `page/pageSize`；缺失或倒置 `dateFrom/dateTo`；按事件类型、风险级别、主体、资源和 Request ID 筛选；按 `partitionDate + auditEventId` 读取详情；高风险事件进入哈希链；完整链校验通过；篡改或缺失事件导致校验失败并标记 `INVALID`；Outbox 缺失 `correlationId` 时 requestId 兜底且 metadata 可追踪。
 
 现有自动化证据：
 

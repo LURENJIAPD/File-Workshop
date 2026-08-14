@@ -2495,6 +2495,34 @@ paths:
         "409": { $ref: "#/components/responses/Conflict" }
 
 
+  /api/v1/audit/summary:
+    get:
+      operationId: getAuditSummary
+      tags: [Audit]
+      summary: Get audit event and integrity summary.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      parameters:
+        - name: dateFrom
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: dateTo
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Audit summary for operations and compliance dashboards.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditSummaryResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/v1/audit/events:
     get:
       operationId: listAuditEvents
@@ -3603,6 +3631,60 @@ components:
       required: [event, requestId]
       properties:
         event: { $ref: "#/components/schemas/AuditEvent" }
+        requestId: { type: string }
+
+    AuditRiskLevelCount:
+      type: object
+      additionalProperties: false
+      required: [riskLevel, count]
+      properties:
+        riskLevel: { $ref: "#/components/schemas/AuditRiskLevel" }
+        count: { type: integer, format: int64, minimum: 0 }
+
+    AuditResultCount:
+      type: object
+      additionalProperties: false
+      required: [result, count]
+      properties:
+        result: { $ref: "#/components/schemas/AuditResult" }
+        count: { type: integer, format: int64, minimum: 0 }
+
+    AuditActorTypeCount:
+      type: object
+      additionalProperties: false
+      required: [actorType, count]
+      properties:
+        actorType: { $ref: "#/components/schemas/AuditActorType" }
+        count: { type: integer, format: int64, minimum: 0 }
+
+    AuditChainStatusCount:
+      type: object
+      additionalProperties: false
+      required: [status, count]
+      properties:
+        status: { $ref: "#/components/schemas/AuditChainStatus" }
+        count: { type: integer, format: int64, minimum: 0 }
+
+    AuditSummaryResponse:
+      type: object
+      additionalProperties: false
+      required: [dateFrom, dateTo, totalEvents, riskLevelCounts, resultCounts, actorTypeCounts, chainStatusCounts, requestId]
+      properties:
+        dateFrom: { type: string, format: date }
+        dateTo: { type: string, format: date }
+        totalEvents: { type: integer, format: int64, minimum: 0 }
+        riskLevelCounts:
+          type: array
+          items: { $ref: "#/components/schemas/AuditRiskLevelCount" }
+        resultCounts:
+          type: array
+          items: { $ref: "#/components/schemas/AuditResultCount" }
+        actorTypeCounts:
+          type: array
+          items: { $ref: "#/components/schemas/AuditActorTypeCount" }
+        chainStatusCounts:
+          type: array
+          items: { $ref: "#/components/schemas/AuditChainStatusCount" }
         requestId: { type: string }
 
     AuditChainHead:

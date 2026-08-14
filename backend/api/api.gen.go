@@ -1457,6 +1457,12 @@ type AdminDelegationStatus string
 // AuditActorType defines model for AuditActorType.
 type AuditActorType string
 
+// AuditActorTypeCount defines model for AuditActorTypeCount.
+type AuditActorTypeCount struct {
+	ActorType AuditActorType `json:"actorType"`
+	Count     int64          `json:"count"`
+}
+
 // AuditChainHead defines model for AuditChainHead.
 type AuditChainHead struct {
 	AnchorLocation     *string            `json:"anchorLocation,omitempty"`
@@ -1475,6 +1481,12 @@ type AuditChainHead struct {
 
 // AuditChainStatus defines model for AuditChainStatus.
 type AuditChainStatus string
+
+// AuditChainStatusCount defines model for AuditChainStatusCount.
+type AuditChainStatusCount struct {
+	Count  int64            `json:"count"`
+	Status AuditChainStatus `json:"status"`
+}
 
 // AuditEvent defines model for AuditEvent.
 type AuditEvent struct {
@@ -1553,11 +1565,35 @@ type AuditIntegrityVerificationResponse struct {
 // AuditResult defines model for AuditResult.
 type AuditResult string
 
+// AuditResultCount defines model for AuditResultCount.
+type AuditResultCount struct {
+	Count  int64       `json:"count"`
+	Result AuditResult `json:"result"`
+}
+
 // AuditRiskLevel defines model for AuditRiskLevel.
 type AuditRiskLevel string
 
+// AuditRiskLevelCount defines model for AuditRiskLevelCount.
+type AuditRiskLevelCount struct {
+	Count     int64          `json:"count"`
+	RiskLevel AuditRiskLevel `json:"riskLevel"`
+}
+
 // AuditSourceChannel defines model for AuditSourceChannel.
 type AuditSourceChannel string
+
+// AuditSummaryResponse defines model for AuditSummaryResponse.
+type AuditSummaryResponse struct {
+	ActorTypeCounts   []AuditActorTypeCount   `json:"actorTypeCounts"`
+	ChainStatusCounts []AuditChainStatusCount `json:"chainStatusCounts"`
+	DateFrom          openapi_types.Date      `json:"dateFrom"`
+	DateTo            openapi_types.Date      `json:"dateTo"`
+	RequestId         string                  `json:"requestId"`
+	ResultCounts      []AuditResultCount      `json:"resultCounts"`
+	RiskLevelCounts   []AuditRiskLevelCount   `json:"riskLevelCounts"`
+	TotalEvents       int64                   `json:"totalEvents"`
+}
 
 // AuthTokenResponse defines model for AuthTokenResponse.
 type AuthTokenResponse struct {
@@ -3193,6 +3229,12 @@ type GetAuditIntegrityParams struct {
 	Status   *AuditChainStatus `form:"status,omitempty" json:"status,omitempty"`
 }
 
+// GetAuditSummaryParams defines parameters for GetAuditSummary.
+type GetAuditSummaryParams struct {
+	DateFrom openapi_types.Date `form:"dateFrom" json:"dateFrom"`
+	DateTo   openapi_types.Date `form:"dateTo" json:"dateTo"`
+}
+
 // PlacePreservationHoldParams defines parameters for PlacePreservationHold.
 type PlacePreservationHoldParams struct {
 	// IdempotencyKey 可重试写请求的稳定幂等键。
@@ -3691,6 +3733,9 @@ type ServerInterface interface {
 	// VerifyAuditIntegrity Verify one audit hash chain.
 	// (POST /api/v1/audit/integrity/verify)
 	VerifyAuditIntegrity(c *gin.Context)
+	// GetAuditSummary Get audit event and integrity summary.
+	// (GET /api/v1/audit/summary)
+	GetAuditSummary(c *gin.Context, params GetAuditSummaryParams)
 	// Login 使用用户名和密码登录
 	// (POST /api/v1/auth/login)
 	Login(c *gin.Context)
@@ -5546,6 +5591,41 @@ func (siw *ServerInterfaceWrapper) VerifyAuditIntegrity(c *gin.Context) {
 	siw.Handler.VerifyAuditIntegrity(c)
 }
 
+// GetAuditSummary operation middleware
+func (siw *ServerInterfaceWrapper) GetAuditSummary(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAuditSummaryParams
+
+	// ------------- Required query parameter "dateFrom" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "dateFrom", c.Request.URL.Query(), &params.DateFrom, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter dateFrom: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Required query parameter "dateTo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "dateTo", c.Request.URL.Query(), &params.DateTo, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter dateTo: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetAuditSummary(c, params)
+}
+
 // Login operation middleware
 func (siw *ServerInterfaceWrapper) Login(c *gin.Context) {
 
@@ -7398,6 +7478,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/api/v1/permissions/batch-evaluate", wrapper.BatchEvaluatePermissions)
 	router.POST(options.BaseURL+"/api/v1/permissions/resources/:resourceType/:resourceId/break-inheritance", wrapper.BreakPermissionInheritance)
 	router.POST(options.BaseURL+"/api/v1/permissions/resources/:resourceType/:resourceId/restore-inheritance", wrapper.RestorePermissionInheritance)
+	router.GET(options.BaseURL+"/api/v1/audit/summary", wrapper.GetAuditSummary)
 	router.GET(options.BaseURL+"/api/v1/audit/events", wrapper.ListAuditEvents)
 	router.GET(options.BaseURL+"/api/v1/audit/events/:auditEventId", wrapper.GetAuditEvent)
 	router.GET(options.BaseURL+"/api/v1/audit/integrity", wrapper.GetAuditIntegrity)
@@ -11955,6 +12036,79 @@ func (response VerifyAuditIntegrity409JSONResponse) VisitVerifyAuditIntegrityRes
 		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
 	}
 	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditSummaryRequestObject struct {
+	Params GetAuditSummaryParams
+}
+
+type GetAuditSummaryResponseObject interface {
+	VisitGetAuditSummaryResponse(w http.ResponseWriter) error
+}
+
+type GetAuditSummary200JSONResponse AuditSummaryResponse
+
+func (response GetAuditSummary200JSONResponse) VisitGetAuditSummaryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditSummary400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response GetAuditSummary400JSONResponse) VisitGetAuditSummaryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditSummary401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response GetAuditSummary401JSONResponse) VisitGetAuditSummaryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAuditSummary403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetAuditSummary403JSONResponse) VisitGetAuditSummaryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -16863,6 +17017,9 @@ type StrictServerInterface interface {
 	// VerifyAuditIntegrity Verify one audit hash chain.
 	// (POST /api/v1/audit/integrity/verify)
 	VerifyAuditIntegrity(ctx context.Context, request VerifyAuditIntegrityRequestObject) (VerifyAuditIntegrityResponseObject, error)
+	// GetAuditSummary Get audit event and integrity summary.
+	// (GET /api/v1/audit/summary)
+	GetAuditSummary(ctx context.Context, request GetAuditSummaryRequestObject) (GetAuditSummaryResponseObject, error)
 	// Login 使用用户名和密码登录
 	// (POST /api/v1/auth/login)
 	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
@@ -18568,6 +18725,32 @@ func (sh *strictHandler) VerifyAuditIntegrity(ctx *gin.Context) {
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(VerifyAuditIntegrityResponseObject); ok {
 		if err := validResponse.VisitVerifyAuditIntegrityResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAuditSummary operation middleware
+func (sh *strictHandler) GetAuditSummary(ctx *gin.Context, params GetAuditSummaryParams) {
+	var request GetAuditSummaryRequestObject
+
+	request.Params = params
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAuditSummary(ctx, request.(GetAuditSummaryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAuditSummary")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetAuditSummaryResponseObject); ok {
+		if err := validResponse.VisitGetAuditSummaryResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

@@ -13,6 +13,7 @@ import (
 type Repository interface {
 	ListEvents(context.Context, domain.EventListFilter) (domain.EventListResult, error)
 	GetEvent(context.Context, uuid.UUID, time.Time) (domain.Event, error)
+	GetSummary(context.Context, domain.SummaryFilter) (domain.Summary, error)
 	ListChainHeads(context.Context, domain.IntegrityFilter) (domain.IntegrityResult, error)
 	VerifyChain(context.Context, string, time.Time, time.Time) (domain.VerificationResult, error)
 	InsertEvent(context.Context, domain.Event) error
@@ -51,6 +52,16 @@ func (s *Service) GetEvent(ctx context.Context, actor domain.Actor, id uuid.UUID
 		return domain.Event{}, &domain.ValidationError{Field: "partitionDate"}
 	}
 	return s.repository.GetEvent(ctx, id, partitionDate)
+}
+
+func (s *Service) GetSummary(ctx context.Context, actor domain.Actor, filter domain.SummaryFilter) (domain.Summary, error) {
+	if err := requireAdmin(actor); err != nil {
+		return domain.Summary{}, err
+	}
+	if err := normalizeSummaryFilter(&filter); err != nil {
+		return domain.Summary{}, err
+	}
+	return s.repository.GetSummary(ctx, filter)
 }
 
 func (s *Service) GetIntegrity(ctx context.Context, actor domain.Actor, filter domain.IntegrityFilter) (domain.IntegrityResult, error) {
@@ -150,6 +161,21 @@ func normalizeIntegrityFilter(filter *domain.IntegrityFilter) error {
 			return err
 		}
 		filter.Status = &trimmed
+	}
+	return nil
+}
+
+func normalizeSummaryFilter(filter *domain.SummaryFilter) error {
+	if filter.DateFrom.IsZero() {
+		return &domain.ValidationError{Field: "dateFrom"}
+	}
+	if filter.DateTo.IsZero() {
+		return &domain.ValidationError{Field: "dateTo"}
+	}
+	filter.DateFrom = dateOnly(filter.DateFrom)
+	filter.DateTo = dateOnly(filter.DateTo)
+	if filter.DateFrom.After(filter.DateTo) {
+		return &domain.ValidationError{Field: "dateFrom/dateTo"}
 	}
 	return nil
 }

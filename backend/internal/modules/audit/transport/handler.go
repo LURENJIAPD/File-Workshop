@@ -121,6 +121,26 @@ func (h *Handler) GetAuditEvent(ctx context.Context, request api.GetAuditEventRe
 	return api.GetAuditEvent200JSONResponse(api.AuditEventResponse{Event: body, RequestId: requestID}), nil
 }
 
+func (h *Handler) GetAuditSummary(ctx context.Context, request api.GetAuditSummaryRequestObject) (api.GetAuditSummaryResponseObject, error) {
+	ginContext, actor, requestID, authErr := h.authenticate(ctx)
+	if authErr != nil {
+		return api.GetAuditSummary401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	result, err := h.service.GetSummary(ginContext.Request.Context(), actor, domain.SummaryFilter{DateFrom: request.Params.DateFrom.Time, DateTo: request.Params.DateTo.Time})
+	if bad, denied, _, _, code := mapError(err, requestID); code != "" {
+		switch code {
+		case "400":
+			return api.GetAuditSummary400JSONResponse{InvalidRequestJSONResponse: bad}, nil
+		case "403":
+			return api.GetAuditSummary403JSONResponse{ForbiddenJSONResponse: denied}, nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	return api.GetAuditSummary200JSONResponse(apiSummary(result, requestID)), nil
+}
+
 func (h *Handler) GetAuditIntegrity(ctx context.Context, request api.GetAuditIntegrityRequestObject) (api.GetAuditIntegrityResponseObject, error) {
 	ginContext, actor, requestID, authErr := h.authenticate(ctx)
 	if authErr != nil {
@@ -293,6 +313,51 @@ func apiChainHead(value domain.ChainHead) api.AuditChainHead {
 		UpdatedAt:          value.UpdatedAt,
 		RowVersion:         value.RowVersion,
 	}
+}
+
+func apiSummary(value domain.Summary, requestID string) api.AuditSummaryResponse {
+	return api.AuditSummaryResponse{
+		DateFrom:          apiDate(value.DateFrom),
+		DateTo:            apiDate(value.DateTo),
+		TotalEvents:       value.TotalEvents,
+		RiskLevelCounts:   apiRiskLevelCounts(value.RiskLevelCounts),
+		ResultCounts:      apiResultCounts(value.ResultCounts),
+		ActorTypeCounts:   apiActorTypeCounts(value.ActorTypeCounts),
+		ChainStatusCounts: apiChainStatusCounts(value.ChainStatusCounts),
+		RequestId:         requestID,
+	}
+}
+
+func apiRiskLevelCounts(values []domain.CountByValue) []api.AuditRiskLevelCount {
+	result := make([]api.AuditRiskLevelCount, 0, len(values))
+	for _, value := range values {
+		result = append(result, api.AuditRiskLevelCount{RiskLevel: api.AuditRiskLevel(value.Value), Count: value.Count})
+	}
+	return result
+}
+
+func apiResultCounts(values []domain.CountByValue) []api.AuditResultCount {
+	result := make([]api.AuditResultCount, 0, len(values))
+	for _, value := range values {
+		result = append(result, api.AuditResultCount{Result: api.AuditResult(value.Value), Count: value.Count})
+	}
+	return result
+}
+
+func apiActorTypeCounts(values []domain.CountByValue) []api.AuditActorTypeCount {
+	result := make([]api.AuditActorTypeCount, 0, len(values))
+	for _, value := range values {
+		result = append(result, api.AuditActorTypeCount{ActorType: api.AuditActorType(value.Value), Count: value.Count})
+	}
+	return result
+}
+
+func apiChainStatusCounts(values []domain.CountByValue) []api.AuditChainStatusCount {
+	result := make([]api.AuditChainStatusCount, 0, len(values))
+	for _, value := range values {
+		result = append(result, api.AuditChainStatusCount{Status: api.AuditChainStatus(value.Value), Count: value.Count})
+	}
+	return result
 }
 
 func apiDate(value time.Time) openapi_types.Date {

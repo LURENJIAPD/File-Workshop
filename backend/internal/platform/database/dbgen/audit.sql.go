@@ -32,6 +32,45 @@ func (q *Queries) CountAuditChainHeads(ctx context.Context, arg *CountAuditChain
 	return column_1, err
 }
 
+const countAuditChainHeadsByStatus = `-- name: CountAuditChainHeadsByStatus :many
+SELECT status, count(*)::bigint AS chain_count
+FROM audit_chain_heads
+WHERE partition_date >= $1::date
+  AND partition_date <= $2::date
+GROUP BY status
+ORDER BY status ASC
+`
+
+type CountAuditChainHeadsByStatusParams struct {
+	DateFrom pgtype.Date
+	DateTo   pgtype.Date
+}
+
+type CountAuditChainHeadsByStatusRow struct {
+	Status     string
+	ChainCount int64
+}
+
+func (q *Queries) CountAuditChainHeadsByStatus(ctx context.Context, arg *CountAuditChainHeadsByStatusParams) ([]*CountAuditChainHeadsByStatusRow, error) {
+	rows, err := q.db.Query(ctx, countAuditChainHeadsByStatus, arg.DateFrom, arg.DateTo)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*CountAuditChainHeadsByStatusRow{}
+	for rows.Next() {
+		var i CountAuditChainHeadsByStatusRow
+		if err := rows.Scan(&i.Status, &i.ChainCount); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countAuditEvents = `-- name: CountAuditEvents :one
 SELECT count(*)::bigint
 FROM audit_events
@@ -76,6 +115,123 @@ func (q *Queries) CountAuditEvents(ctx context.Context, arg *CountAuditEventsPar
 	var column_1 int64
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const countAuditEventsByActorType = `-- name: CountAuditEventsByActorType :many
+SELECT actor_type, count(*)::bigint AS event_count
+FROM audit_events
+WHERE partition_date >= $1::date
+  AND partition_date <= $2::date
+GROUP BY actor_type
+ORDER BY actor_type ASC
+`
+
+type CountAuditEventsByActorTypeParams struct {
+	DateFrom pgtype.Date
+	DateTo   pgtype.Date
+}
+
+type CountAuditEventsByActorTypeRow struct {
+	ActorType  string
+	EventCount int64
+}
+
+func (q *Queries) CountAuditEventsByActorType(ctx context.Context, arg *CountAuditEventsByActorTypeParams) ([]*CountAuditEventsByActorTypeRow, error) {
+	rows, err := q.db.Query(ctx, countAuditEventsByActorType, arg.DateFrom, arg.DateTo)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*CountAuditEventsByActorTypeRow{}
+	for rows.Next() {
+		var i CountAuditEventsByActorTypeRow
+		if err := rows.Scan(&i.ActorType, &i.EventCount); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const countAuditEventsByResult = `-- name: CountAuditEventsByResult :many
+SELECT result, count(*)::bigint AS event_count
+FROM audit_events
+WHERE partition_date >= $1::date
+  AND partition_date <= $2::date
+GROUP BY result
+ORDER BY result ASC
+`
+
+type CountAuditEventsByResultParams struct {
+	DateFrom pgtype.Date
+	DateTo   pgtype.Date
+}
+
+type CountAuditEventsByResultRow struct {
+	Result     string
+	EventCount int64
+}
+
+func (q *Queries) CountAuditEventsByResult(ctx context.Context, arg *CountAuditEventsByResultParams) ([]*CountAuditEventsByResultRow, error) {
+	rows, err := q.db.Query(ctx, countAuditEventsByResult, arg.DateFrom, arg.DateTo)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*CountAuditEventsByResultRow{}
+	for rows.Next() {
+		var i CountAuditEventsByResultRow
+		if err := rows.Scan(&i.Result, &i.EventCount); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const countAuditEventsByRiskLevel = `-- name: CountAuditEventsByRiskLevel :many
+SELECT risk_level, count(*)::bigint AS event_count
+FROM audit_events
+WHERE partition_date >= $1::date
+  AND partition_date <= $2::date
+GROUP BY risk_level
+ORDER BY risk_level ASC
+`
+
+type CountAuditEventsByRiskLevelParams struct {
+	DateFrom pgtype.Date
+	DateTo   pgtype.Date
+}
+
+type CountAuditEventsByRiskLevelRow struct {
+	RiskLevel  string
+	EventCount int64
+}
+
+func (q *Queries) CountAuditEventsByRiskLevel(ctx context.Context, arg *CountAuditEventsByRiskLevelParams) ([]*CountAuditEventsByRiskLevelRow, error) {
+	rows, err := q.db.Query(ctx, countAuditEventsByRiskLevel, arg.DateFrom, arg.DateTo)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*CountAuditEventsByRiskLevelRow{}
+	for rows.Next() {
+		var i CountAuditEventsByRiskLevelRow
+		if err := rows.Scan(&i.RiskLevel, &i.EventCount); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getAuditChainHeadForUpdate = `-- name: GetAuditChainHeadForUpdate :one

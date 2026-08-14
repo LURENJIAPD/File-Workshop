@@ -68,6 +68,40 @@ func (r *PostgreSQL) GetEvent(ctx context.Context, id uuid.UUID, partitionDate t
 	return eventFromGetRow(row)
 }
 
+func (r *PostgreSQL) GetSummary(ctx context.Context, filter domain.SummaryFilter) (domain.Summary, error) {
+	dateFrom := pgDate(filter.DateFrom)
+	dateTo := pgDate(filter.DateTo)
+	total, err := r.queries.CountAuditEvents(ctx, &dbgen.CountAuditEventsParams{DateFrom: dateFrom, DateTo: dateTo})
+	if err != nil {
+		return domain.Summary{}, err
+	}
+	riskRows, err := r.queries.CountAuditEventsByRiskLevel(ctx, &dbgen.CountAuditEventsByRiskLevelParams{DateFrom: dateFrom, DateTo: dateTo})
+	if err != nil {
+		return domain.Summary{}, err
+	}
+	resultRows, err := r.queries.CountAuditEventsByResult(ctx, &dbgen.CountAuditEventsByResultParams{DateFrom: dateFrom, DateTo: dateTo})
+	if err != nil {
+		return domain.Summary{}, err
+	}
+	actorRows, err := r.queries.CountAuditEventsByActorType(ctx, &dbgen.CountAuditEventsByActorTypeParams{DateFrom: dateFrom, DateTo: dateTo})
+	if err != nil {
+		return domain.Summary{}, err
+	}
+	chainRows, err := r.queries.CountAuditChainHeadsByStatus(ctx, &dbgen.CountAuditChainHeadsByStatusParams{DateFrom: dateFrom, DateTo: dateTo})
+	if err != nil {
+		return domain.Summary{}, err
+	}
+	return domain.Summary{
+		DateFrom:          filter.DateFrom,
+		DateTo:            filter.DateTo,
+		TotalEvents:       total,
+		RiskLevelCounts:   riskLevelCounts(riskRows),
+		ResultCounts:      resultCounts(resultRows),
+		ActorTypeCounts:   actorTypeCounts(actorRows),
+		ChainStatusCounts: chainStatusCounts(chainRows),
+	}, nil
+}
+
 func (r *PostgreSQL) ListChainHeads(ctx context.Context, filter domain.IntegrityFilter) (domain.IntegrityResult, error) {
 	status := nullableText(filter.Status)
 	total, err := r.queries.CountAuditChainHeads(ctx, &dbgen.CountAuditChainHeadsParams{DateFrom: pgDate(filter.DateFrom), DateTo: pgDate(filter.DateTo), Status: status})
@@ -209,6 +243,38 @@ func eventFilterParams(filter domain.EventListFilter) *dbgen.ListAuditEventsPara
 		PageOffset:   int64((filter.Page - 1) * filter.PageSize),
 		PageSize:     int32(filter.PageSize),
 	}
+}
+
+func riskLevelCounts(rows []*dbgen.CountAuditEventsByRiskLevelRow) []domain.CountByValue {
+	result := make([]domain.CountByValue, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, domain.CountByValue{Value: row.RiskLevel, Count: row.EventCount})
+	}
+	return result
+}
+
+func resultCounts(rows []*dbgen.CountAuditEventsByResultRow) []domain.CountByValue {
+	result := make([]domain.CountByValue, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, domain.CountByValue{Value: row.Result, Count: row.EventCount})
+	}
+	return result
+}
+
+func actorTypeCounts(rows []*dbgen.CountAuditEventsByActorTypeRow) []domain.CountByValue {
+	result := make([]domain.CountByValue, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, domain.CountByValue{Value: row.ActorType, Count: row.EventCount})
+	}
+	return result
+}
+
+func chainStatusCounts(rows []*dbgen.CountAuditChainHeadsByStatusRow) []domain.CountByValue {
+	result := make([]domain.CountByValue, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, domain.CountByValue{Value: row.Status, Count: row.ChainCount})
+	}
+	return result
 }
 
 func insertParams(event domain.Event) *dbgen.InsertAuditEventParams {

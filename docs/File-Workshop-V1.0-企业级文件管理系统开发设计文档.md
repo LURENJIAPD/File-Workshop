@@ -2636,6 +2636,7 @@ AI Worker 重试必须幂等。模型升级后可创建重建任务，不覆盖�
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
+| GET | `/audit/summary` | 审计摘要统计 |
 | GET | `/audit/events` | 审计查询 |
 | GET | `/audit/events/{id}` | 详情 |
 | POST | `/audit/exports` | 异步导出 |

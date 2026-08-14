@@ -69,8 +69,47 @@ func TestHandleOutboxEventFallsBackToOutboxIDWhenCorrelationMissing(t *testing.T
 	}
 }
 
+func TestGetSummaryRequiresAdmin(t *testing.T) {
+	t.Parallel()
+	service := NewService(&fakeRepository{}, nil)
+	_, err := service.GetSummary(context.Background(), domain.Actor{UserID: uuid.New(), Role: "USER"}, domain.SummaryFilter{DateFrom: time.Date(2026, 8, 10, 0, 0, 0, 0, time.UTC), DateTo: time.Date(2026, 8, 10, 0, 0, 0, 0, time.UTC)})
+	if err != domain.ErrForbidden {
+		t.Fatalf("GetSummary() error = %v, want forbidden", err)
+	}
+}
+
+func TestGetSummaryNormalizesDateRange(t *testing.T) {
+	t.Parallel()
+	repository := &fakeRepository{summary: domain.Summary{TotalEvents: 3, RiskLevelCounts: []domain.CountByValue{{Value: domain.RiskHigh, Count: 1}}}}
+	service := NewService(repository, nil)
+	from := time.Date(2026, 8, 10, 12, 30, 0, 0, time.FixedZone("test", 8*60*60))
+	to := time.Date(2026, 8, 11, 23, 59, 0, 0, time.FixedZone("test", 8*60*60))
+
+	result, err := service.GetSummary(context.Background(), domain.Actor{UserID: uuid.New(), Role: domain.SystemRoleAdmin}, domain.SummaryFilter{DateFrom: from, DateTo: to})
+	if err != nil {
+		t.Fatalf("GetSummary() error = %v", err)
+	}
+	if result.TotalEvents != 3 || len(result.RiskLevelCounts) != 1 {
+		t.Fatalf("unexpected summary: %#v", result)
+	}
+	if repository.summaryFilter.DateFrom.Hour() != 0 || repository.summaryFilter.DateTo.Hour() != 0 {
+		t.Fatalf("date range not normalized: %#v", repository.summaryFilter)
+	}
+}
+
+func TestGetSummaryRejectsInvertedRange(t *testing.T) {
+	t.Parallel()
+	service := NewService(&fakeRepository{}, nil)
+	_, err := service.GetSummary(context.Background(), domain.Actor{UserID: uuid.New(), Role: domain.SystemRoleAdmin}, domain.SummaryFilter{DateFrom: time.Date(2026, 8, 11, 0, 0, 0, 0, time.UTC), DateTo: time.Date(2026, 8, 10, 0, 0, 0, 0, time.UTC)})
+	if err == nil {
+		t.Fatal("GetSummary() error = nil, want validation error")
+	}
+}
+
 type fakeRepository struct {
-	events []domain.Event
+	events        []domain.Event
+	summary       domain.Summary
+	summaryFilter domain.SummaryFilter
 }
 
 func (f *fakeRepository) ListEvents(context.Context, domain.EventListFilter) (domain.EventListResult, error) {
@@ -79,6 +118,13 @@ func (f *fakeRepository) ListEvents(context.Context, domain.EventListFilter) (do
 
 func (f *fakeRepository) GetEvent(context.Context, uuid.UUID, time.Time) (domain.Event, error) {
 	return domain.Event{}, nil
+}
+
+func (f *fakeRepository) GetSummary(_ context.Context, filter domain.SummaryFilter) (domain.Summary, error) {
+	f.summaryFilter = filter
+	f.summary.DateFrom = filter.DateFrom
+	f.summary.DateTo = filter.DateTo
+	return f.summary, nil
 }
 
 func (f *fakeRepository) ListChainHeads(context.Context, domain.IntegrityFilter) (domain.IntegrityResult, error) {

@@ -139,6 +139,26 @@ type IntegrityResult struct {
 	Total    int64
 }
 
+type CountByValue struct {
+	Value string
+	Count int64
+}
+
+type SummaryFilter struct {
+	DateFrom time.Time
+	DateTo   time.Time
+}
+
+type Summary struct {
+	DateFrom          time.Time
+	DateTo            time.Time
+	TotalEvents       int64
+	RiskLevelCounts   []CountByValue
+	ResultCounts      []CountByValue
+	ActorTypeCounts   []CountByValue
+	ChainStatusCounts []CountByValue
+}
+
 type VerificationResult struct {
 	ChainID       string
 	PartitionDate time.Time

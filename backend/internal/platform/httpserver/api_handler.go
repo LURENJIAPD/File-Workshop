@@ -143,6 +143,7 @@ type BackgroundAPI interface {
 }
 
 type AuditAPI interface {
+	GetAuditSummary(context.Context, api.GetAuditSummaryRequestObject) (api.GetAuditSummaryResponseObject, error)
 	ListAuditEvents(context.Context, api.ListAuditEventsRequestObject) (api.ListAuditEventsResponseObject, error)
 	GetAuditEvent(context.Context, api.GetAuditEventRequestObject) (api.GetAuditEventResponseObject, error)
 	GetAuditIntegrity(context.Context, api.GetAuditIntegrityRequestObject) (api.GetAuditIntegrityResponseObject, error)
@@ -264,6 +265,9 @@ func (h *APIHandler) OpenShare(ctx context.Context, request api.OpenShareRequest
 	return h.shares.OpenShare(ctx, request)
 }
 
+func (h *APIHandler) GetAuditSummary(ctx context.Context, request api.GetAuditSummaryRequestObject) (api.GetAuditSummaryResponseObject, error) {
+	return h.audit.GetAuditSummary(ctx, request)
+}
 func (h *APIHandler) ListAuditEvents(ctx context.Context, request api.ListAuditEventsRequestObject) (api.ListAuditEventsResponseObject, error) {
 	return h.audit.ListAuditEvents(ctx, request)
 }
