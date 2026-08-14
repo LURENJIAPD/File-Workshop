@@ -51,6 +51,35 @@ WHERE partition_date >= sqlc.arg('date_from')::date
 GROUP BY actor_type
 ORDER BY actor_type ASC;
 
+-- name: CountAuditEventsByEventType :many
+SELECT event_type, count(*)::bigint AS event_count
+FROM audit_events
+WHERE partition_date >= sqlc.arg('date_from')::date
+  AND partition_date <= sqlc.arg('date_to')::date
+GROUP BY event_type
+ORDER BY count(*) DESC, event_type ASC
+LIMIT 20;
+
+-- name: CountAuditEventsByResourceType :many
+SELECT resource_type, count(*)::bigint AS event_count
+FROM audit_events
+WHERE partition_date >= sqlc.arg('date_from')::date
+  AND partition_date <= sqlc.arg('date_to')::date
+  AND resource_type IS NOT NULL
+GROUP BY resource_type
+ORDER BY count(*) DESC, resource_type ASC
+LIMIT 20;
+
+-- name: CountAuditEventsByFailureCode :many
+SELECT failure_code, count(*)::bigint AS event_count
+FROM audit_events
+WHERE partition_date >= sqlc.arg('date_from')::date
+  AND partition_date <= sqlc.arg('date_to')::date
+  AND failure_code IS NOT NULL
+GROUP BY failure_code
+ORDER BY count(*) DESC, failure_code ASC
+LIMIT 20;
+
 -- name: ListAuditEvents :many
 SELECT
   audit_event_id, event_type, risk_level, actor_type, actor_id, actor_display_name,

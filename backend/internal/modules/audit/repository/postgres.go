@@ -87,18 +87,33 @@ func (r *PostgreSQL) GetSummary(ctx context.Context, filter domain.SummaryFilter
 	if err != nil {
 		return domain.Summary{}, err
 	}
+	eventTypeRows, err := r.queries.CountAuditEventsByEventType(ctx, &dbgen.CountAuditEventsByEventTypeParams{DateFrom: dateFrom, DateTo: dateTo})
+	if err != nil {
+		return domain.Summary{}, err
+	}
+	resourceTypeRows, err := r.queries.CountAuditEventsByResourceType(ctx, &dbgen.CountAuditEventsByResourceTypeParams{DateFrom: dateFrom, DateTo: dateTo})
+	if err != nil {
+		return domain.Summary{}, err
+	}
+	failureCodeRows, err := r.queries.CountAuditEventsByFailureCode(ctx, &dbgen.CountAuditEventsByFailureCodeParams{DateFrom: dateFrom, DateTo: dateTo})
+	if err != nil {
+		return domain.Summary{}, err
+	}
 	chainRows, err := r.queries.CountAuditChainHeadsByStatus(ctx, &dbgen.CountAuditChainHeadsByStatusParams{DateFrom: dateFrom, DateTo: dateTo})
 	if err != nil {
 		return domain.Summary{}, err
 	}
 	return domain.Summary{
-		DateFrom:          filter.DateFrom,
-		DateTo:            filter.DateTo,
-		TotalEvents:       total,
-		RiskLevelCounts:   riskLevelCounts(riskRows),
-		ResultCounts:      resultCounts(resultRows),
-		ActorTypeCounts:   actorTypeCounts(actorRows),
-		ChainStatusCounts: chainStatusCounts(chainRows),
+		DateFrom:           filter.DateFrom,
+		DateTo:             filter.DateTo,
+		TotalEvents:        total,
+		RiskLevelCounts:    riskLevelCounts(riskRows),
+		ResultCounts:       resultCounts(resultRows),
+		ActorTypeCounts:    actorTypeCounts(actorRows),
+		ChainStatusCounts:  chainStatusCounts(chainRows),
+		EventTypeCounts:    eventTypeCounts(eventTypeRows),
+		ResourceTypeCounts: resourceTypeCounts(resourceTypeRows),
+		FailureCodeCounts:  failureCodeCounts(failureCodeRows),
 	}, nil
 }
 
@@ -273,6 +288,34 @@ func chainStatusCounts(rows []*dbgen.CountAuditChainHeadsByStatusRow) []domain.C
 	result := make([]domain.CountByValue, 0, len(rows))
 	for _, row := range rows {
 		result = append(result, domain.CountByValue{Value: row.Status, Count: row.ChainCount})
+	}
+	return result
+}
+
+func eventTypeCounts(rows []*dbgen.CountAuditEventsByEventTypeRow) []domain.CountByValue {
+	result := make([]domain.CountByValue, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, domain.CountByValue{Value: row.EventType, Count: row.EventCount})
+	}
+	return result
+}
+
+func resourceTypeCounts(rows []*dbgen.CountAuditEventsByResourceTypeRow) []domain.CountByValue {
+	result := make([]domain.CountByValue, 0, len(rows))
+	for _, row := range rows {
+		if row.ResourceType.Valid {
+			result = append(result, domain.CountByValue{Value: row.ResourceType.String, Count: row.EventCount})
+		}
+	}
+	return result
+}
+
+func failureCodeCounts(rows []*dbgen.CountAuditEventsByFailureCodeRow) []domain.CountByValue {
+	result := make([]domain.CountByValue, 0, len(rows))
+	for _, row := range rows {
+		if row.FailureCode.Valid {
+			result = append(result, domain.CountByValue{Value: row.FailureCode.String, Count: row.EventCount})
+		}
 	}
 	return result
 }

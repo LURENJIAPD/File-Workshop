@@ -156,6 +156,128 @@ func (q *Queries) CountAuditEventsByActorType(ctx context.Context, arg *CountAud
 	return items, nil
 }
 
+const countAuditEventsByEventType = `-- name: CountAuditEventsByEventType :many
+SELECT event_type, count(*)::bigint AS event_count
+FROM audit_events
+WHERE partition_date >= $1::date
+  AND partition_date <= $2::date
+GROUP BY event_type
+ORDER BY count(*) DESC, event_type ASC
+LIMIT 20
+`
+
+type CountAuditEventsByEventTypeParams struct {
+	DateFrom pgtype.Date
+	DateTo   pgtype.Date
+}
+
+type CountAuditEventsByEventTypeRow struct {
+	EventType  string
+	EventCount int64
+}
+
+func (q *Queries) CountAuditEventsByEventType(ctx context.Context, arg *CountAuditEventsByEventTypeParams) ([]*CountAuditEventsByEventTypeRow, error) {
+	rows, err := q.db.Query(ctx, countAuditEventsByEventType, arg.DateFrom, arg.DateTo)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*CountAuditEventsByEventTypeRow{}
+	for rows.Next() {
+		var i CountAuditEventsByEventTypeRow
+		if err := rows.Scan(&i.EventType, &i.EventCount); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const countAuditEventsByFailureCode = `-- name: CountAuditEventsByFailureCode :many
+SELECT failure_code, count(*)::bigint AS event_count
+FROM audit_events
+WHERE partition_date >= $1::date
+  AND partition_date <= $2::date
+  AND failure_code IS NOT NULL
+GROUP BY failure_code
+ORDER BY count(*) DESC, failure_code ASC
+LIMIT 20
+`
+
+type CountAuditEventsByFailureCodeParams struct {
+	DateFrom pgtype.Date
+	DateTo   pgtype.Date
+}
+
+type CountAuditEventsByFailureCodeRow struct {
+	FailureCode pgtype.Text
+	EventCount  int64
+}
+
+func (q *Queries) CountAuditEventsByFailureCode(ctx context.Context, arg *CountAuditEventsByFailureCodeParams) ([]*CountAuditEventsByFailureCodeRow, error) {
+	rows, err := q.db.Query(ctx, countAuditEventsByFailureCode, arg.DateFrom, arg.DateTo)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*CountAuditEventsByFailureCodeRow{}
+	for rows.Next() {
+		var i CountAuditEventsByFailureCodeRow
+		if err := rows.Scan(&i.FailureCode, &i.EventCount); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const countAuditEventsByResourceType = `-- name: CountAuditEventsByResourceType :many
+SELECT resource_type, count(*)::bigint AS event_count
+FROM audit_events
+WHERE partition_date >= $1::date
+  AND partition_date <= $2::date
+  AND resource_type IS NOT NULL
+GROUP BY resource_type
+ORDER BY count(*) DESC, resource_type ASC
+LIMIT 20
+`
+
+type CountAuditEventsByResourceTypeParams struct {
+	DateFrom pgtype.Date
+	DateTo   pgtype.Date
+}
+
+type CountAuditEventsByResourceTypeRow struct {
+	ResourceType pgtype.Text
+	EventCount   int64
+}
+
+func (q *Queries) CountAuditEventsByResourceType(ctx context.Context, arg *CountAuditEventsByResourceTypeParams) ([]*CountAuditEventsByResourceTypeRow, error) {
+	rows, err := q.db.Query(ctx, countAuditEventsByResourceType, arg.DateFrom, arg.DateTo)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*CountAuditEventsByResourceTypeRow{}
+	for rows.Next() {
+		var i CountAuditEventsByResourceTypeRow
+		if err := rows.Scan(&i.ResourceType, &i.EventCount); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countAuditEventsByResult = `-- name: CountAuditEventsByResult :many
 SELECT result, count(*)::bigint AS event_count
 FROM audit_events

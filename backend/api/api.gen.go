@@ -1562,6 +1562,12 @@ type AuditIntegrityVerificationResponse struct {
 	Verified      bool               `json:"verified"`
 }
 
+// AuditNamedCount defines model for AuditNamedCount.
+type AuditNamedCount struct {
+	Count int64  `json:"count"`
+	Name  string `json:"name"`
+}
+
 // AuditResult defines model for AuditResult.
 type AuditResult string
 
@@ -1585,14 +1591,17 @@ type AuditSourceChannel string
 
 // AuditSummaryResponse defines model for AuditSummaryResponse.
 type AuditSummaryResponse struct {
-	ActorTypeCounts   []AuditActorTypeCount   `json:"actorTypeCounts"`
-	ChainStatusCounts []AuditChainStatusCount `json:"chainStatusCounts"`
-	DateFrom          openapi_types.Date      `json:"dateFrom"`
-	DateTo            openapi_types.Date      `json:"dateTo"`
-	RequestId         string                  `json:"requestId"`
-	ResultCounts      []AuditResultCount      `json:"resultCounts"`
-	RiskLevelCounts   []AuditRiskLevelCount   `json:"riskLevelCounts"`
-	TotalEvents       int64                   `json:"totalEvents"`
+	ActorTypeCounts    []AuditActorTypeCount   `json:"actorTypeCounts"`
+	ChainStatusCounts  []AuditChainStatusCount `json:"chainStatusCounts"`
+	DateFrom           openapi_types.Date      `json:"dateFrom"`
+	DateTo             openapi_types.Date      `json:"dateTo"`
+	EventTypeCounts    []AuditNamedCount       `json:"eventTypeCounts"`
+	FailureCodeCounts  []AuditNamedCount       `json:"failureCodeCounts"`
+	RequestId          string                  `json:"requestId"`
+	ResourceTypeCounts []AuditNamedCount       `json:"resourceTypeCounts"`
+	ResultCounts       []AuditResultCount      `json:"resultCounts"`
+	RiskLevelCounts    []AuditRiskLevelCount   `json:"riskLevelCounts"`
+	TotalEvents        int64                   `json:"totalEvents"`
 }
 
 // AuthTokenResponse defines model for AuthTokenResponse.

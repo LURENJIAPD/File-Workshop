@@ -5,6 +5,7 @@
 - 从已注册 Outbox 事件生成 `audit_events`；
 - 高风险事件写入 SHA-256 Hash Chain，并维护 `audit_chain_heads`；
 - 提供管理员审计摘要统计、事件分页查询、详情查询、完整性状态查询和链校验接口；
+- 摘要统计包含风险等级、执行结果、主体类型、链状态、事件类型 Top 20、资源类型 Top 20 和失败码 Top 20；
 - 仅依赖数据库设计中已存在的 `audit_events`、`audit_chain_heads` 和 `outbox_events` 字段。
 
 暂未实现：

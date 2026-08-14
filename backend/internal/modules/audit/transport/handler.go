@@ -317,14 +317,17 @@ func apiChainHead(value domain.ChainHead) api.AuditChainHead {
 
 func apiSummary(value domain.Summary, requestID string) api.AuditSummaryResponse {
 	return api.AuditSummaryResponse{
-		DateFrom:          apiDate(value.DateFrom),
-		DateTo:            apiDate(value.DateTo),
-		TotalEvents:       value.TotalEvents,
-		RiskLevelCounts:   apiRiskLevelCounts(value.RiskLevelCounts),
-		ResultCounts:      apiResultCounts(value.ResultCounts),
-		ActorTypeCounts:   apiActorTypeCounts(value.ActorTypeCounts),
-		ChainStatusCounts: apiChainStatusCounts(value.ChainStatusCounts),
-		RequestId:         requestID,
+		DateFrom:           apiDate(value.DateFrom),
+		DateTo:             apiDate(value.DateTo),
+		TotalEvents:        value.TotalEvents,
+		RiskLevelCounts:    apiRiskLevelCounts(value.RiskLevelCounts),
+		ResultCounts:       apiResultCounts(value.ResultCounts),
+		ActorTypeCounts:    apiActorTypeCounts(value.ActorTypeCounts),
+		ChainStatusCounts:  apiChainStatusCounts(value.ChainStatusCounts),
+		EventTypeCounts:    apiNamedCounts(value.EventTypeCounts),
+		ResourceTypeCounts: apiNamedCounts(value.ResourceTypeCounts),
+		FailureCodeCounts:  apiNamedCounts(value.FailureCodeCounts),
+		RequestId:          requestID,
 	}
 }
 
@@ -356,6 +359,14 @@ func apiChainStatusCounts(values []domain.CountByValue) []api.AuditChainStatusCo
 	result := make([]api.AuditChainStatusCount, 0, len(values))
 	for _, value := range values {
 		result = append(result, api.AuditChainStatusCount{Status: api.AuditChainStatus(value.Value), Count: value.Count})
+	}
+	return result
+}
+
+func apiNamedCounts(values []domain.CountByValue) []api.AuditNamedCount {
+	result := make([]api.AuditNamedCount, 0, len(values))
+	for _, value := range values {
+		result = append(result, api.AuditNamedCount{Name: value.Value, Count: value.Count})
 	}
 	return result
 }

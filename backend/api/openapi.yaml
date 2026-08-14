@@ -3783,10 +3783,18 @@ components:
         status: { $ref: "#/components/schemas/AuditChainStatus" }
         count: { type: integer, format: int64, minimum: 0 }
 
+    AuditNamedCount:
+      type: object
+      additionalProperties: false
+      required: [name, count]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 128 }
+        count: { type: integer, format: int64, minimum: 0 }
+
     AuditSummaryResponse:
       type: object
       additionalProperties: false
-      required: [dateFrom, dateTo, totalEvents, riskLevelCounts, resultCounts, actorTypeCounts, chainStatusCounts, requestId]
+      required: [dateFrom, dateTo, totalEvents, riskLevelCounts, resultCounts, actorTypeCounts, chainStatusCounts, eventTypeCounts, resourceTypeCounts, failureCodeCounts, requestId]
       properties:
         dateFrom: { type: string, format: date }
         dateTo: { type: string, format: date }
@@ -3803,6 +3811,15 @@ components:
         chainStatusCounts:
           type: array
           items: { $ref: "#/components/schemas/AuditChainStatusCount" }
+        eventTypeCounts:
+          type: array
+          items: { $ref: "#/components/schemas/AuditNamedCount" }
+        resourceTypeCounts:
+          type: array
+          items: { $ref: "#/components/schemas/AuditNamedCount" }
+        failureCodeCounts:
+          type: array
+          items: { $ref: "#/components/schemas/AuditNamedCount" }
         requestId: { type: string }
 
     AuditChainHead:
