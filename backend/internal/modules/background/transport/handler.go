@@ -164,6 +164,23 @@ func (h *Handler) GetBackgroundAdministrationSummary(ctx context.Context, reques
 	return api.GetBackgroundAdministrationSummary200JSONResponse(apiSummary(result, requestID)), nil
 }
 
+func (h *Handler) GetBackgroundFailureSummary(ctx context.Context, request api.GetBackgroundFailureSummaryRequestObject) (api.GetBackgroundFailureSummaryResponseObject, error) {
+	ginContext, actor, requestID, authErr := h.authenticate(ctx)
+	if authErr != nil {
+		return api.GetBackgroundFailureSummary401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	result, err := h.service.GetFailureSummary(ginContext.Request.Context(), actor)
+	if _, denied, _, _, code := mapError(err, requestID); code != "" {
+		if code == "403" {
+			return api.GetBackgroundFailureSummary403JSONResponse{ForbiddenJSONResponse: denied}, nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	return api.GetBackgroundFailureSummary200JSONResponse(apiFailureSummary(result, requestID)), nil
+}
+
 func (h *Handler) RetryBackgroundJob(ctx context.Context, request api.RetryBackgroundJobRequestObject) (api.RetryBackgroundJobResponseObject, error) {
 	ginContext, actor, requestID, authErr := h.authenticate(ctx)
 	if authErr != nil {
@@ -473,6 +490,18 @@ func apiSummary(value domain.AdministrationSummary, requestID string) api.Backgr
 		jobs = append(jobs, api.BackgroundJobStatusCount{Status: api.BackgroundJobStatus(item.Status), Count: item.Count})
 	}
 	return api.BackgroundAdministrationSummaryResponse{OutboxEvents: outbox, BackgroundJobs: jobs, RequestId: requestID}
+}
+
+func apiFailureSummary(value domain.FailureSummary, requestID string) api.BackgroundFailureSummaryResponse {
+	return api.BackgroundFailureSummaryResponse{OutboxEvents: apiFailureSummaryItems(value.OutboxEvents), BackgroundJobs: apiFailureSummaryItems(value.BackgroundJobs), RequestId: requestID}
+}
+
+func apiFailureSummaryItems(values []domain.FailureSummaryItem) []api.BackgroundFailureSummaryItem {
+	result := make([]api.BackgroundFailureSummaryItem, 0, len(values))
+	for _, value := range values {
+		result = append(result, api.BackgroundFailureSummaryItem{ErrorCode: value.ErrorCode, Count: value.Count, LatestAt: value.LatestAt})
+	}
+	return result
 }
 
 func batchRequestItems(items []api.BatchBackgroundJobOperationItemRequest) []domain.BatchJobItem {

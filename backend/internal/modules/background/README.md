@@ -14,6 +14,7 @@
 - 管理员 REST API 可分页查询 Outbox/Job 积压与失败原因，并对 `FAILED/DEAD` 单项受控重试。
 - 管理员 REST API 可按 `rowVersion` 受控取消 `PENDING/FAILED/DEAD` 后台任务，取消后任务进入 `CANCELLED` 终态。
 - 管理员 REST API 可查询 Outbox/Job 按状态聚合的积压统计。
+- 管理员 REST API 可查询 Outbox/Job `FAILED/DEAD` 状态下 Top 20 失败原因聚合，辅助定位主要故障类型。
 - 管理员 REST API 可对最多 50 个后台任务执行批量重试、批量取消、批量死信或批量跳过，单项失败以明细返回。
 - 使用 `context.Context`、处理器超时和系统信号完成优雅关闭。
 
@@ -37,6 +38,7 @@ go run ./cmd/worker
 - `GET /api/v1/admin/background/outbox-events?page=1&pageSize=50`
 - `POST /api/v1/admin/background/outbox-events/{outboxEventId}/retry`
 - `GET /api/v1/admin/background/summary`
+- `GET /api/v1/admin/background/failure-summary`
 - `GET /api/v1/admin/background/jobs?page=1&pageSize=50`
 - `POST /api/v1/admin/background/jobs/{backgroundJobId}/retry`
 - `POST /api/v1/admin/background/jobs/{backgroundJobId}/cancel`

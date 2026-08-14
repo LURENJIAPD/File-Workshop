@@ -92,6 +92,15 @@ FROM outbox_events
 GROUP BY status
 ORDER BY status;
 
+-- name: CountOutboxFailuresByErrorCode :many
+SELECT last_error_code, count(*)::bigint AS count, max(updated_at)::timestamptz AS latest_at
+FROM outbox_events
+WHERE status IN ('FAILED', 'DEAD')
+  AND last_error_code IS NOT NULL
+GROUP BY last_error_code
+ORDER BY count(*) DESC, max(updated_at) DESC, last_error_code ASC
+LIMIT 20;
+
 -- name: CountOutboxEvents :one
 SELECT count(*)::bigint
 FROM outbox_events
@@ -270,6 +279,15 @@ SELECT status, count(*)::bigint AS count
 FROM background_jobs
 GROUP BY status
 ORDER BY status;
+
+-- name: CountBackgroundJobFailuresByErrorCode :many
+SELECT last_error_code, count(*)::bigint AS count, max(updated_at)::timestamptz AS latest_at
+FROM background_jobs
+WHERE status IN ('FAILED', 'DEAD')
+  AND last_error_code IS NOT NULL
+GROUP BY last_error_code
+ORDER BY count(*) DESC, max(updated_at) DESC, last_error_code ASC
+LIMIT 20;
 
 -- name: RetryBackgroundJob :one
 UPDATE background_jobs

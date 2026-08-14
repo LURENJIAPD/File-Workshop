@@ -251,6 +251,42 @@ func (q *Queries) ClaimOutboxEventsByType(ctx context.Context, arg *ClaimOutboxE
 	return items, nil
 }
 
+const countBackgroundJobFailuresByErrorCode = `-- name: CountBackgroundJobFailuresByErrorCode :many
+SELECT last_error_code, count(*)::bigint AS count, max(updated_at)::timestamptz AS latest_at
+FROM background_jobs
+WHERE status IN ('FAILED', 'DEAD')
+  AND last_error_code IS NOT NULL
+GROUP BY last_error_code
+ORDER BY count(*) DESC, max(updated_at) DESC, last_error_code ASC
+LIMIT 20
+`
+
+type CountBackgroundJobFailuresByErrorCodeRow struct {
+	LastErrorCode pgtype.Text
+	Count         int64
+	LatestAt      pgtype.Timestamptz
+}
+
+func (q *Queries) CountBackgroundJobFailuresByErrorCode(ctx context.Context) ([]*CountBackgroundJobFailuresByErrorCodeRow, error) {
+	rows, err := q.db.Query(ctx, countBackgroundJobFailuresByErrorCode)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*CountBackgroundJobFailuresByErrorCodeRow{}
+	for rows.Next() {
+		var i CountBackgroundJobFailuresByErrorCodeRow
+		if err := rows.Scan(&i.LastErrorCode, &i.Count, &i.LatestAt); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countBackgroundJobs = `-- name: CountBackgroundJobs :one
 SELECT count(*)::bigint
 FROM background_jobs
@@ -343,6 +379,42 @@ func (q *Queries) CountOutboxEventsByStatus(ctx context.Context) ([]*CountOutbox
 	for rows.Next() {
 		var i CountOutboxEventsByStatusRow
 		if err := rows.Scan(&i.Status, &i.Count); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const countOutboxFailuresByErrorCode = `-- name: CountOutboxFailuresByErrorCode :many
+SELECT last_error_code, count(*)::bigint AS count, max(updated_at)::timestamptz AS latest_at
+FROM outbox_events
+WHERE status IN ('FAILED', 'DEAD')
+  AND last_error_code IS NOT NULL
+GROUP BY last_error_code
+ORDER BY count(*) DESC, max(updated_at) DESC, last_error_code ASC
+LIMIT 20
+`
+
+type CountOutboxFailuresByErrorCodeRow struct {
+	LastErrorCode pgtype.Text
+	Count         int64
+	LatestAt      pgtype.Timestamptz
+}
+
+func (q *Queries) CountOutboxFailuresByErrorCode(ctx context.Context) ([]*CountOutboxFailuresByErrorCodeRow, error) {
+	rows, err := q.db.Query(ctx, countOutboxFailuresByErrorCode)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*CountOutboxFailuresByErrorCodeRow{}
+	for rows.Next() {
+		var i CountOutboxFailuresByErrorCodeRow
+		if err := rows.Scan(&i.LastErrorCode, &i.Count, &i.LatestAt); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)

@@ -14,9 +14,11 @@ import (
 
 type OperationsRepository interface {
 	CountOutboxEventsByStatus(ctx context.Context) ([]domain.OutboxStatusCount, error)
+	CountOutboxFailuresByErrorCode(ctx context.Context) ([]domain.FailureSummaryItem, error)
 	ListOutboxEvents(ctx context.Context, filter domain.OutboxListFilter) (domain.OutboxListResult, error)
 	RetryOutboxEvent(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.OutboxEvent, error)
 	CountBackgroundJobsByStatus(ctx context.Context) ([]domain.OutboxStatusCount, error)
+	CountBackgroundJobFailuresByErrorCode(ctx context.Context) ([]domain.FailureSummaryItem, error)
 	ListBackgroundJobs(ctx context.Context, filter domain.JobListFilter) (domain.JobListResult, error)
 	RetryBackgroundJob(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error)
 	CancelBackgroundJob(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error)
@@ -50,6 +52,21 @@ func (s *Service) GetSummary(ctx context.Context, actor domain.Actor) (domain.Ad
 		return domain.AdministrationSummary{}, err
 	}
 	return domain.AdministrationSummary{OutboxEvents: outboxCounts, BackgroundJobs: jobCounts}, nil
+}
+
+func (s *Service) GetFailureSummary(ctx context.Context, actor domain.Actor) (domain.FailureSummary, error) {
+	if err := requireAdmin(actor); err != nil {
+		return domain.FailureSummary{}, err
+	}
+	outboxFailures, err := s.repository.CountOutboxFailuresByErrorCode(ctx)
+	if err != nil {
+		return domain.FailureSummary{}, err
+	}
+	jobFailures, err := s.repository.CountBackgroundJobFailuresByErrorCode(ctx)
+	if err != nil {
+		return domain.FailureSummary{}, err
+	}
+	return domain.FailureSummary{OutboxEvents: outboxFailures, BackgroundJobs: jobFailures}, nil
 }
 
 func (s *Service) ListOutboxEvents(ctx context.Context, actor domain.Actor, filter domain.OutboxListFilter) (domain.OutboxListResult, error) {

@@ -70,6 +70,18 @@ func (r *PostgreSQL) CountOutboxEventsByStatus(ctx context.Context) ([]domain.Ou
 	return result, nil
 }
 
+func (r *PostgreSQL) CountOutboxFailuresByErrorCode(ctx context.Context) ([]domain.FailureSummaryItem, error) {
+	rows, err := r.queries.CountOutboxFailuresByErrorCode(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]domain.FailureSummaryItem, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, domain.FailureSummaryItem{ErrorCode: row.LastErrorCode.String, Count: row.Count, LatestAt: row.LatestAt.Time})
+	}
+	return result, nil
+}
+
 func (r *PostgreSQL) ListOutboxEvents(ctx context.Context, filter domain.OutboxListFilter) (domain.OutboxListResult, error) {
 	status, eventType := nullableText(filter.Status), nullableText(filter.EventType)
 	total, err := r.queries.CountOutboxEvents(ctx, &dbgen.CountOutboxEventsParams{Status: status, EventType: eventType})
@@ -164,6 +176,18 @@ func (r *PostgreSQL) CountBackgroundJobsByStatus(ctx context.Context) ([]domain.
 	result := make([]domain.OutboxStatusCount, 0, len(rows))
 	for _, row := range rows {
 		result = append(result, domain.OutboxStatusCount{Status: row.Status, Count: row.Count})
+	}
+	return result, nil
+}
+
+func (r *PostgreSQL) CountBackgroundJobFailuresByErrorCode(ctx context.Context) ([]domain.FailureSummaryItem, error) {
+	rows, err := r.queries.CountBackgroundJobFailuresByErrorCode(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]domain.FailureSummaryItem, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, domain.FailureSummaryItem{ErrorCode: row.LastErrorCode.String, Count: row.Count, LatestAt: row.LatestAt.Time})
 	}
 	return result, nil
 }

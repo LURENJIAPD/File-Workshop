@@ -1630,6 +1630,20 @@ type BackgroundAdministrationSummaryResponse struct {
 	RequestId      string                        `json:"requestId"`
 }
 
+// BackgroundFailureSummaryItem defines model for BackgroundFailureSummaryItem.
+type BackgroundFailureSummaryItem struct {
+	Count     int64     `json:"count"`
+	ErrorCode string    `json:"errorCode"`
+	LatestAt  time.Time `json:"latestAt"`
+}
+
+// BackgroundFailureSummaryResponse defines model for BackgroundFailureSummaryResponse.
+type BackgroundFailureSummaryResponse struct {
+	BackgroundJobs []BackgroundFailureSummaryItem `json:"backgroundJobs"`
+	OutboxEvents   []BackgroundFailureSummaryItem `json:"outboxEvents"`
+	RequestId      string                         `json:"requestId"`
+}
+
 // BackgroundJob defines model for BackgroundJob.
 type BackgroundJob struct {
 	AttemptCount            int                    `json:"attemptCount"`
@@ -3607,6 +3621,9 @@ type ServerInterface interface {
 	// RevokeAdminDelegation 撤销管理委派
 	// (POST /api/v1/admin-delegations/{delegationId}/revoke)
 	RevokeAdminDelegation(c *gin.Context, delegationId DelegationIdPath)
+	// GetBackgroundFailureSummary Get top background failure reasons.
+	// (GET /api/v1/admin/background/failure-summary)
+	GetBackgroundFailureSummary(c *gin.Context)
 	// ListBackgroundJobs List background jobs for operations.
 	// (GET /api/v1/admin/background/jobs)
 	ListBackgroundJobs(c *gin.Context, params ListBackgroundJobsParams)
@@ -4076,6 +4093,19 @@ func (siw *ServerInterfaceWrapper) RevokeAdminDelegation(c *gin.Context) {
 	}
 
 	siw.Handler.RevokeAdminDelegation(c, delegationId)
+}
+
+// GetBackgroundFailureSummary operation middleware
+func (siw *ServerInterfaceWrapper) GetBackgroundFailureSummary(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetBackgroundFailureSummary(c)
 }
 
 // ListBackgroundJobs operation middleware
@@ -7524,6 +7554,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/api/v1/admin/background/outbox-events", wrapper.ListBackgroundOutboxEvents)
 	router.POST(options.BaseURL+"/api/v1/admin/background/outbox-events/:outboxEventId/retry", wrapper.RetryBackgroundOutboxEvent)
 	router.GET(options.BaseURL+"/api/v1/admin/background/summary", wrapper.GetBackgroundAdministrationSummary)
+	router.GET(options.BaseURL+"/api/v1/admin/background/failure-summary", wrapper.GetBackgroundFailureSummary)
 	router.GET(options.BaseURL+"/api/v1/admin/background/jobs", wrapper.ListBackgroundJobs)
 	router.POST(options.BaseURL+"/api/v1/admin/background/jobs/batch-retry", wrapper.BatchRetryBackgroundJobs)
 	router.POST(options.BaseURL+"/api/v1/admin/background/jobs/batch-cancel", wrapper.BatchCancelBackgroundJobs)
@@ -7995,6 +8026,61 @@ func (response RevokeAdminDelegation409JSONResponse) VisitRevokeAdminDelegationR
 		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
 	}
 	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBackgroundFailureSummaryRequestObject struct {
+}
+
+type GetBackgroundFailureSummaryResponseObject interface {
+	VisitGetBackgroundFailureSummaryResponse(w http.ResponseWriter) error
+}
+
+type GetBackgroundFailureSummary200JSONResponse BackgroundFailureSummaryResponse
+
+func (response GetBackgroundFailureSummary200JSONResponse) VisitGetBackgroundFailureSummaryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBackgroundFailureSummary401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response GetBackgroundFailureSummary401JSONResponse) VisitGetBackgroundFailureSummaryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBackgroundFailureSummary403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetBackgroundFailureSummary403JSONResponse) VisitGetBackgroundFailureSummaryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -17071,6 +17157,9 @@ type StrictServerInterface interface {
 	// RevokeAdminDelegation 撤销管理委派
 	// (POST /api/v1/admin-delegations/{delegationId}/revoke)
 	RevokeAdminDelegation(ctx context.Context, request RevokeAdminDelegationRequestObject) (RevokeAdminDelegationResponseObject, error)
+	// GetBackgroundFailureSummary Get top background failure reasons.
+	// (GET /api/v1/admin/background/failure-summary)
+	GetBackgroundFailureSummary(ctx context.Context, request GetBackgroundFailureSummaryRequestObject) (GetBackgroundFailureSummaryResponseObject, error)
 	// ListBackgroundJobs List background jobs for operations.
 	// (GET /api/v1/admin/background/jobs)
 	ListBackgroundJobs(ctx context.Context, request ListBackgroundJobsRequestObject) (ListBackgroundJobsResponseObject, error)
@@ -17575,6 +17664,30 @@ func (sh *strictHandler) RevokeAdminDelegation(ctx *gin.Context, delegationId De
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(RevokeAdminDelegationResponseObject); ok {
 		if err := validResponse.VisitRevokeAdminDelegationResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetBackgroundFailureSummary operation middleware
+func (sh *strictHandler) GetBackgroundFailureSummary(ctx *gin.Context) {
+	var request GetBackgroundFailureSummaryRequestObject
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetBackgroundFailureSummary(ctx, request.(GetBackgroundFailureSummaryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetBackgroundFailureSummary")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(GetBackgroundFailureSummaryResponseObject); ok {
+		if err := validResponse.VisitGetBackgroundFailureSummaryResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

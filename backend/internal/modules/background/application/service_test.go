@@ -70,6 +70,32 @@ func TestServiceGetsSummary(t *testing.T) {
 	}
 }
 
+func TestServiceGetsFailureSummary(t *testing.T) {
+	now := time.Date(2026, 8, 14, 9, 0, 0, 0, time.UTC)
+	repository := &fakeOperationsRepository{
+		outboxFailures: []domain.FailureSummaryItem{{ErrorCode: "AUDIT_WRITE_FAILED", Count: 2, LatestAt: now}},
+		jobFailures:    []domain.FailureSummaryItem{{ErrorCode: "INDEX_FAILED", Count: 3, LatestAt: now}},
+	}
+	service := NewService(repository, nil, time.Now)
+
+	summary, err := service.GetFailureSummary(context.Background(), adminActor())
+	if err != nil {
+		t.Fatalf("GetFailureSummary failed: %v", err)
+	}
+	if summary.OutboxEvents[0].ErrorCode != "AUDIT_WRITE_FAILED" || summary.BackgroundJobs[0].Count != 3 {
+		t.Fatalf("summary=%#v", summary)
+	}
+}
+
+func TestServiceGetFailureSummaryRequiresAdmin(t *testing.T) {
+	service := NewService(&fakeOperationsRepository{}, nil, time.Now)
+
+	_, err := service.GetFailureSummary(context.Background(), domain.Actor{UserID: uuid.Must(uuid.NewV7()), Role: "USER"})
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("error=%v, want ErrForbidden", err)
+	}
+}
+
 func TestServiceBatchRetriesBackgroundJobsWithPartialFailures(t *testing.T) {
 	now := time.Date(2026, 8, 10, 5, 0, 0, 0, time.UTC)
 	successID := uuid.Must(uuid.NewV7())
@@ -169,6 +195,8 @@ func adminActor() domain.Actor {
 type fakeOperationsRepository struct {
 	outboxCounts     []domain.OutboxStatusCount
 	jobCounts        []domain.OutboxStatusCount
+	outboxFailures   []domain.FailureSummaryItem
+	jobFailures      []domain.FailureSummaryItem
 	conflictID       uuid.UUID
 	missingID        uuid.UUID
 	retryReason      string
@@ -182,6 +210,10 @@ type fakeOperationsRepository struct {
 
 func (r *fakeOperationsRepository) CountOutboxEventsByStatus(context.Context) ([]domain.OutboxStatusCount, error) {
 	return r.outboxCounts, nil
+}
+
+func (r *fakeOperationsRepository) CountOutboxFailuresByErrorCode(context.Context) ([]domain.FailureSummaryItem, error) {
+	return r.outboxFailures, nil
 }
 
 func (r *fakeOperationsRepository) ListOutboxEvents(context.Context, domain.OutboxListFilter) (domain.OutboxListResult, error) {
@@ -198,6 +230,10 @@ func (r *fakeOperationsRepository) ListBackgroundJobs(context.Context, domain.Jo
 
 func (r *fakeOperationsRepository) CountBackgroundJobsByStatus(context.Context) ([]domain.OutboxStatusCount, error) {
 	return r.jobCounts, nil
+}
+
+func (r *fakeOperationsRepository) CountBackgroundJobFailuresByErrorCode(context.Context) ([]domain.FailureSummaryItem, error) {
+	return r.jobFailures, nil
 }
 
 func (r *fakeOperationsRepository) RetryBackgroundJob(_ context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error) {

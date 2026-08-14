@@ -74,6 +74,17 @@ type AdministrationSummary struct {
 	BackgroundJobs []OutboxStatusCount
 }
 
+type FailureSummaryItem struct {
+	ErrorCode string
+	Count     int64
+	LatestAt  time.Time
+}
+
+type FailureSummary struct {
+	OutboxEvents   []FailureSummaryItem
+	BackgroundJobs []FailureSummaryItem
+}
+
 type BackgroundJob struct {
 	ID                      uuid.UUID
 	JobType                 string

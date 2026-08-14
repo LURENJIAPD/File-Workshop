@@ -135,6 +135,7 @@ type BackgroundAPI interface {
 	ListBackgroundOutboxEvents(context.Context, api.ListBackgroundOutboxEventsRequestObject) (api.ListBackgroundOutboxEventsResponseObject, error)
 	RetryBackgroundOutboxEvent(context.Context, api.RetryBackgroundOutboxEventRequestObject) (api.RetryBackgroundOutboxEventResponseObject, error)
 	GetBackgroundAdministrationSummary(context.Context, api.GetBackgroundAdministrationSummaryRequestObject) (api.GetBackgroundAdministrationSummaryResponseObject, error)
+	GetBackgroundFailureSummary(context.Context, api.GetBackgroundFailureSummaryRequestObject) (api.GetBackgroundFailureSummaryResponseObject, error)
 	ListBackgroundJobs(context.Context, api.ListBackgroundJobsRequestObject) (api.ListBackgroundJobsResponseObject, error)
 	RetryBackgroundJob(context.Context, api.RetryBackgroundJobRequestObject) (api.RetryBackgroundJobResponseObject, error)
 	BatchRetryBackgroundJobs(context.Context, api.BatchRetryBackgroundJobsRequestObject) (api.BatchRetryBackgroundJobsResponseObject, error)
@@ -291,6 +292,9 @@ func (h *APIHandler) RetryBackgroundOutboxEvent(ctx context.Context, request api
 }
 func (h *APIHandler) GetBackgroundAdministrationSummary(ctx context.Context, request api.GetBackgroundAdministrationSummaryRequestObject) (api.GetBackgroundAdministrationSummaryResponseObject, error) {
 	return h.background.GetBackgroundAdministrationSummary(ctx, request)
+}
+func (h *APIHandler) GetBackgroundFailureSummary(ctx context.Context, request api.GetBackgroundFailureSummaryRequestObject) (api.GetBackgroundFailureSummaryResponseObject, error) {
+	return h.background.GetBackgroundFailureSummary(ctx, request)
 }
 func (h *APIHandler) ListBackgroundJobs(ctx context.Context, request api.ListBackgroundJobsRequestObject) (api.ListBackgroundJobsResponseObject, error) {
 	return h.background.ListBackgroundJobs(ctx, request)
