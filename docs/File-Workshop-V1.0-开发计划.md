@@ -1,12 +1,12 @@
 # File Workshop V1.0 开发计划
 
 > 文档编号：FW-PLAN-V1.0  
-> 文档版本：V3.9
+> 文档版本：V4.0
 > 文档状态：执行中  
 > 编制日期：2026-08-05  
 > 最近修订：2026-08-14
 > 默认路径：`docs/File-Workshop-V1.0-开发计划.md`  
-> 本次修订：完成 Windows 本地阶段收敛说明
+> 本次修订：补充 Linux/SeaweedFS 环境启动清单
 
 ## 1. 如何阅读本计划
 
@@ -502,7 +502,7 @@
 | 本地 PostgreSQL 使用高权限 `root` 和默认 `postgres` 数据库 | 已接受，仅限本地开发 | 测试、预发布和生产必须重新评审最小权限 |
 | 当前 Navicat 手工导入 Schema 未登记 Goose 版本 | 部分解决 | 不自动修改现有库；重建或登记基线前必须先完成结构比对并获得授权 |
 | 当前项目源码尚未建立 Git 基线提交 | 待授权 | 不自动提交或推送；获得项目负责人明确授权后处理 |
-| SeaweedFS/S3 尚未搭建 | 暂缓 | 不影响模块 01～05 和模块 06 可离线验证的控制面；真实上传闭环、下载、Range 和兼容性验收前必须完成 |
+| SeaweedFS/S3 尚未搭建 | 暂缓 | 不影响模块 01～05 和模块 06 可离线验证的控制面；真实上传闭环、下载、Range 和兼容性验收前必须完成；环境启动和验证步骤见 `docs/File-Workshop-V1.0-Linux-SeaweedFS环境启动清单.md` |
 | Windows 本地阶段继续扩展边缘控制面收益下降 | 已收敛 | 详见 `docs/File-Workshop-V1.0-Windows本地阶段收敛说明.md`；除缺陷修复、文档校对和轻量验证外，不再主动新增不依赖对象存储的边缘接口 |
 | Redis 6.2.6 不在当前 go-redis 官方主要支持矩阵 | 已验证，仍需升级规划 | 已固定 RESP2 并通过真实测试；生产前规划升级 |
 | 当前前端开源模板与冻结技术基线可能不一致 | 待评估 | 前端开发前完成许可证、安全和适配评估，必要时更新 ADR |
@@ -549,6 +549,7 @@
 | 模块 16：后台任务队列延迟摘要接口周期 | 2026-08-14 | 新增 `getBackgroundQueueLagSummary` 管理员只读接口；统计 Outbox 与 Job 中已到期 `PENDING`、已到期 `FAILED`、租约过期 `PROCESSING` 和最早到期时间；不修改任务状态、不新增分页、不改数据库结构 | `go test ./internal/modules/background/... ./internal/platform/httpserver ./internal/app` 通过；应用层测试覆盖管理员查询、普通用户拒绝和查询时间注入 | 模块 16 尚未整体完成；具体业务处理器、指标告警、崩溃恢复压力测试、长期运行稳定性测试和外部告警集成后续继续 |
 | 模块 16：后台任务健康摘要接口周期 | 2026-08-14 | 新增 `getBackgroundHealthSummary` 管理员只读接口；基于 Outbox/Job 状态统计与队列延迟事实返回 `OK/ATTENTION_REQUIRED` 和关注信号；死信、到期失败和过期租约触发关注，普通到期待处理仅作为 `INFO`；不修改任务状态、不新增数据库结构 | `go test ./internal/modules/background/... ./internal/platform/httpserver ./internal/app` 通过；应用层测试覆盖健康状态计算、信号生成、普通用户拒绝和查询时间注入 | 模块 16 尚未整体完成；真实外部告警集成、指标暴露、具体业务处理器、崩溃恢复压力测试和长期运行稳定性测试后续继续 |
 | Windows 本地阶段收敛说明 | 2026-08-14 | 新增 `docs/File-Workshop-V1.0-Windows本地阶段收敛说明.md`，明确 Windows 本地已完成能力、暂缓原因、不可硬做事项、剩余收尾项和 Linux/SeaweedFS 阶段启动顺序 | `git diff --check` 通过；本周期为文档收敛，无代码变更 | Windows 本地后续只建议做缺陷修复、文档校对、轻量验证和环境启动清单；不再主动扩展边缘控制面 |
+| Linux/SeaweedFS 环境启动清单 | 2026-08-14 | 新增 `docs/File-Workshop-V1.0-Linux-SeaweedFS环境启动清单.md`，明确 Linux 测试服务器、SeaweedFS S3 Gateway、Bucket、凭据、`.env`、S3 兼容性验证、后端健康检查和模块 06 解锁条件 | `git diff --check` 通过；本周期为文档收尾，无代码变更 | 需项目负责人实际搭建 Linux/SeaweedFS 环境后执行验证；通过后回到模块 06 真实上传完成、下载和 Range |
 | 模块 11：审计基础查询与完整性周期 | 2026-08-10 | 审计模块 domain/application/repository/transport、OpenAPI 契约、sqlc 查询、Outbox 审计消费者、Worker 接入、`GET /audit/events`、`GET /audit/events/{auditEventId}`、`GET /audit/integrity`、`POST /audit/integrity/verify` 和统一 API 文档 | `go test ./internal/modules/audit/... ./...` 通过；覆盖 Outbox 到审计事件映射、Request ID 兜底、风险分级、哈希稳定性和篡改敏感性；全量后端测试通过 | 对象存储尚未搭建，审计导出、归档、WORM、批次锚定、告警和真实数据库篡改集成测试后续补充；当前仅系统管理员可查询/校验 |
 | 模块 11：审计摘要统计接口周期 | 2026-08-14 | 新增 `GET /api/v1/audit/summary`，按 `dateFrom/dateTo` 只读统计审计事件总数、风险等级、执行结果、主体类型和哈希链状态；补充 `docs/research/M11-审计模块开源方案调研.md`，同步 OpenAPI、统一 API 文档和主设计文档 | `go test ./internal/modules/audit/... ./internal/platform/httpserver ./internal/app` 通过；应用层测试覆盖系统管理员摘要查询、普通用户拒绝和倒置日期范围拒绝 | 模块 11 尚未整体完成；审计导出、脱敏导出文件、归档、WORM、批次锚定、告警、真实数据库篡改集成和导出文件权限控制待对象存储/归档周期 |
 | 模块 11：审计摘要统计增强周期 | 2026-08-14 | 增强 `GET /api/v1/audit/summary` 响应，追加事件类型 Top 20、资源类型 Top 20 和失败码 Top 20 统计；均来自 `audit_events`，固定数量上限，不新增分页、不改数据库结构 | `go test ./internal/modules/audit/... ./internal/platform/httpserver ./internal/app` 通过；应用层测试覆盖系统管理员摘要增强字段透出和普通用户拒绝 | 模块 11 尚未整体完成；审计导出、脱敏导出文件、归档、WORM、批次锚定、告警、真实数据库篡改集成和导出文件权限控制待对象存储/归档周期 |
@@ -568,7 +569,7 @@
 
 建议执行顺序：
 
-1. 优先搭建 Linux/SeaweedFS S3 Gateway 环境，并按 `docs/File-Workshop-V1.0-Windows本地阶段收敛说明.md` 的启动顺序验证 Bucket、凭据、Multipart、预签名和 Range；
+1. 优先搭建 Linux/SeaweedFS S3 Gateway 环境，并按 `docs/File-Workshop-V1.0-Linux-SeaweedFS环境启动清单.md` 验证 Bucket、凭据、Multipart、预签名和 Range；
 2. 环境可用后回到模块 06，实现 `upload_parts` 分片登记、完成提交、Hash 校验、`storage_objects/document_versions` 写入和下载/Range 契约；
 3. 模块 10 搜索的真实 INDEX 处理器、全文内容、模块 12 预览和模块 09 对象清理涉及文件内容、版本或存储对象时必须等待模块 06/07 基线；
 4. 若继续停留在 Windows 本地，仅做缺陷修复、文档校对、轻量验证和环境启动清单，不再主动扩展边缘控制面；

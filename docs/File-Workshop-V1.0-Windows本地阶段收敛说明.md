@@ -62,13 +62,13 @@ Windows 本地阶段可以收敛，不应继续无限扩展后台小接口或控
 2. `.env.example`、README、启动说明、数据库导入说明和测试说明的最终校对；
 3. 对已完成模块补少量缺失的应用层测试或 HTTP 集成测试；
 4. 明确数据库 Migration 与已手工导入 SQL 的关系，避免后续环境重建时混淆；
-5. 建立 Linux/SeaweedFS 阶段启动清单。
+5. 建立 Linux/SeaweedFS 阶段启动清单，详见 `docs/File-Workshop-V1.0-Linux-SeaweedFS环境启动清单.md`。
 
 这些收尾可以提升确定性，但不会新增重大业务边界。
 
 ## 5. Linux/SeaweedFS 阶段建议启动顺序
 
-Linux 和 SeaweedFS S3 Gateway 可用后，建议按以下顺序恢复开发：
+Linux 和 SeaweedFS S3 Gateway 可用后，先按 `docs/File-Workshop-V1.0-Linux-SeaweedFS环境启动清单.md` 完成环境验证，再按以下顺序恢复开发：
 
 1. 验证对象存储连接：Bucket、凭据、预签名 PUT/GET、Multipart、ETag、Range、错误码映射；
 2. 完成模块 06 上传提交：登记 `upload_parts`，校验分片，写入 `storage_objects` 和 `document_versions`；
