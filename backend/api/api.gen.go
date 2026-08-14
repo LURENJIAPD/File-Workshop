@@ -2087,6 +2087,20 @@ type ErrorResponse struct {
 	RequestId string                  `json:"requestId"`
 }
 
+// ExpiredBackgroundLeaseRecoveryItem defines model for ExpiredBackgroundLeaseRecoveryItem.
+type ExpiredBackgroundLeaseRecoveryItem struct {
+	Dead      int64 `json:"dead"`
+	Recovered int64 `json:"recovered"`
+	Retryable int64 `json:"retryable"`
+}
+
+// ExpiredBackgroundLeaseRecoveryResponse defines model for ExpiredBackgroundLeaseRecoveryResponse.
+type ExpiredBackgroundLeaseRecoveryResponse struct {
+	BackgroundJobs ExpiredBackgroundLeaseRecoveryItem `json:"backgroundJobs"`
+	OutboxEvents   ExpiredBackgroundLeaseRecoveryItem `json:"outboxEvents"`
+	RequestId      string                             `json:"requestId"`
+}
+
 // ForceReleaseDocumentLockRequest defines model for ForceReleaseDocumentLockRequest.
 type ForceReleaseDocumentLockRequest struct {
 	Reason     string `json:"reason"`
@@ -2471,6 +2485,13 @@ type ProvisionPersonalSpaceRequest struct {
 type PurgeRecycleItemRequest struct {
 	Reason     string `json:"reason"`
 	RowVersion int64  `json:"rowVersion"`
+}
+
+// RecoverExpiredBackgroundLeasesRequest defines model for RecoverExpiredBackgroundLeasesRequest.
+type RecoverExpiredBackgroundLeasesRequest struct {
+	// BatchSize Maximum expired leases to recover per source table in this call.
+	BatchSize *int   `json:"batchSize,omitempty"`
+	Reason    string `json:"reason"`
 }
 
 // RecycleItem defines model for RecycleItem.
@@ -3424,6 +3445,9 @@ type EvaluateAdminDelegationJSONRequestBody = AdminDelegationEvaluationRequest
 // RevokeAdminDelegationJSONRequestBody defines body for RevokeAdminDelegation for application/json ContentType.
 type RevokeAdminDelegationJSONRequestBody = RevokeAdminDelegationRequest
 
+// RecoverExpiredBackgroundLeasesJSONRequestBody defines body for RecoverExpiredBackgroundLeases for application/json ContentType.
+type RecoverExpiredBackgroundLeasesJSONRequestBody = RecoverExpiredBackgroundLeasesRequest
+
 // BatchCancelBackgroundJobsJSONRequestBody defines body for BatchCancelBackgroundJobs for application/json ContentType.
 type BatchCancelBackgroundJobsJSONRequestBody = BatchBackgroundJobOperationRequest
 
@@ -3621,6 +3645,9 @@ type ServerInterface interface {
 	// RevokeAdminDelegation 撤销管理委派
 	// (POST /api/v1/admin-delegations/{delegationId}/revoke)
 	RevokeAdminDelegation(c *gin.Context, delegationId DelegationIdPath)
+	// RecoverExpiredBackgroundLeases Recover expired PROCESSING leases for Outbox events and background jobs.
+	// (POST /api/v1/admin/background/expired-leases/recover)
+	RecoverExpiredBackgroundLeases(c *gin.Context)
 	// GetBackgroundFailureSummary Get top background failure reasons.
 	// (GET /api/v1/admin/background/failure-summary)
 	GetBackgroundFailureSummary(c *gin.Context)
@@ -4093,6 +4120,19 @@ func (siw *ServerInterfaceWrapper) RevokeAdminDelegation(c *gin.Context) {
 	}
 
 	siw.Handler.RevokeAdminDelegation(c, delegationId)
+}
+
+// RecoverExpiredBackgroundLeases operation middleware
+func (siw *ServerInterfaceWrapper) RecoverExpiredBackgroundLeases(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.RecoverExpiredBackgroundLeases(c)
 }
 
 // GetBackgroundFailureSummary operation middleware
@@ -7555,6 +7595,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/api/v1/admin/background/outbox-events/:outboxEventId/retry", wrapper.RetryBackgroundOutboxEvent)
 	router.GET(options.BaseURL+"/api/v1/admin/background/summary", wrapper.GetBackgroundAdministrationSummary)
 	router.GET(options.BaseURL+"/api/v1/admin/background/failure-summary", wrapper.GetBackgroundFailureSummary)
+	router.POST(options.BaseURL+"/api/v1/admin/background/expired-leases/recover", wrapper.RecoverExpiredBackgroundLeases)
 	router.GET(options.BaseURL+"/api/v1/admin/background/jobs", wrapper.ListBackgroundJobs)
 	router.POST(options.BaseURL+"/api/v1/admin/background/jobs/batch-retry", wrapper.BatchRetryBackgroundJobs)
 	router.POST(options.BaseURL+"/api/v1/admin/background/jobs/batch-cancel", wrapper.BatchCancelBackgroundJobs)
@@ -8026,6 +8067,79 @@ func (response RevokeAdminDelegation409JSONResponse) VisitRevokeAdminDelegationR
 		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
 	}
 	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RecoverExpiredBackgroundLeasesRequestObject struct {
+	Body *RecoverExpiredBackgroundLeasesJSONRequestBody
+}
+
+type RecoverExpiredBackgroundLeasesResponseObject interface {
+	VisitRecoverExpiredBackgroundLeasesResponse(w http.ResponseWriter) error
+}
+
+type RecoverExpiredBackgroundLeases200JSONResponse ExpiredBackgroundLeaseRecoveryResponse
+
+func (response RecoverExpiredBackgroundLeases200JSONResponse) VisitRecoverExpiredBackgroundLeasesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RecoverExpiredBackgroundLeases400JSONResponse struct{ InvalidRequestJSONResponse }
+
+func (response RecoverExpiredBackgroundLeases400JSONResponse) VisitRecoverExpiredBackgroundLeasesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RecoverExpiredBackgroundLeases401JSONResponse struct{ AuthRequiredJSONResponse }
+
+func (response RecoverExpiredBackgroundLeases401JSONResponse) VisitRecoverExpiredBackgroundLeasesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RecoverExpiredBackgroundLeases403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RecoverExpiredBackgroundLeases403JSONResponse) VisitRecoverExpiredBackgroundLeasesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.XRequestID != nil {
+		w.Header().Set("X-Request-ID", fmt.Sprint(*response.Headers.XRequestID))
+	}
+	w.WriteHeader(403)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -17157,6 +17271,9 @@ type StrictServerInterface interface {
 	// RevokeAdminDelegation 撤销管理委派
 	// (POST /api/v1/admin-delegations/{delegationId}/revoke)
 	RevokeAdminDelegation(ctx context.Context, request RevokeAdminDelegationRequestObject) (RevokeAdminDelegationResponseObject, error)
+	// RecoverExpiredBackgroundLeases Recover expired PROCESSING leases for Outbox events and background jobs.
+	// (POST /api/v1/admin/background/expired-leases/recover)
+	RecoverExpiredBackgroundLeases(ctx context.Context, request RecoverExpiredBackgroundLeasesRequestObject) (RecoverExpiredBackgroundLeasesResponseObject, error)
 	// GetBackgroundFailureSummary Get top background failure reasons.
 	// (GET /api/v1/admin/background/failure-summary)
 	GetBackgroundFailureSummary(ctx context.Context, request GetBackgroundFailureSummaryRequestObject) (GetBackgroundFailureSummaryResponseObject, error)
@@ -17664,6 +17781,37 @@ func (sh *strictHandler) RevokeAdminDelegation(ctx *gin.Context, delegationId De
 		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(RevokeAdminDelegationResponseObject); ok {
 		if err := validResponse.VisitRevokeAdminDelegationResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RecoverExpiredBackgroundLeases operation middleware
+func (sh *strictHandler) RecoverExpiredBackgroundLeases(ctx *gin.Context) {
+	var request RecoverExpiredBackgroundLeasesRequestObject
+
+	var body RecoverExpiredBackgroundLeasesJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RecoverExpiredBackgroundLeases(ctx, request.(RecoverExpiredBackgroundLeasesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RecoverExpiredBackgroundLeases")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(RecoverExpiredBackgroundLeasesResponseObject); ok {
+		if err := validResponse.VisitRecoverExpiredBackgroundLeasesResponse(ctx.Writer); err != nil {
 			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {

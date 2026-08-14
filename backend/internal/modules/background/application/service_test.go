@@ -96,6 +96,53 @@ func TestServiceGetFailureSummaryRequiresAdmin(t *testing.T) {
 	}
 }
 
+func TestServiceRecoversExpiredLeases(t *testing.T) {
+	now := time.Date(2026, 8, 14, 10, 0, 0, 0, time.UTC)
+	repository := &fakeOperationsRepository{
+		leaseRecovery: domain.LeaseRecoveryResult{
+			OutboxEvents:   domain.LeaseRecoveryItem{Recovered: 2, Retryable: 1, Dead: 1},
+			BackgroundJobs: domain.LeaseRecoveryItem{Recovered: 3, Retryable: 2, Dead: 1},
+		},
+	}
+	service := NewService(repository, nil, func() time.Time { return now })
+
+	result, err := service.RecoverExpiredLeases(context.Background(), adminActor(), 0, "worker crash confirmed")
+	if err != nil {
+		t.Fatalf("RecoverExpiredLeases failed: %v", err)
+	}
+	if repository.leaseRecoveryBatchSize != domain.DefaultLeaseRecoveryBatchSize {
+		t.Fatalf("batchSize=%d, want default %d", repository.leaseRecoveryBatchSize, domain.DefaultLeaseRecoveryBatchSize)
+	}
+	if repository.leaseRecoveryReason != "lease expired: worker crash confirmed" || !repository.leaseRecoveryNow.Equal(now) {
+		t.Fatalf("unexpected recovery call: reason=%q now=%s", repository.leaseRecoveryReason, repository.leaseRecoveryNow)
+	}
+	if result.OutboxEvents.Dead != 1 || result.BackgroundJobs.Retryable != 2 {
+		t.Fatalf("result=%#v", result)
+	}
+}
+
+func TestServiceRecoverExpiredLeasesValidatesInput(t *testing.T) {
+	service := NewService(&fakeOperationsRepository{}, nil, time.Now)
+
+	_, err := service.RecoverExpiredLeases(context.Background(), adminActor(), domain.MaxLeaseRecoveryBatchSize+1, "too many")
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Fatalf("batchSize error=%v, want ErrInvalidInput", err)
+	}
+	_, err = service.RecoverExpiredLeases(context.Background(), adminActor(), 10, " ")
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Fatalf("reason error=%v, want ErrInvalidInput", err)
+	}
+}
+
+func TestServiceRecoverExpiredLeasesRequiresAdmin(t *testing.T) {
+	service := NewService(&fakeOperationsRepository{}, nil, time.Now)
+
+	_, err := service.RecoverExpiredLeases(context.Background(), domain.Actor{UserID: uuid.Must(uuid.NewV7()), Role: "USER"}, 10, "recover")
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("error=%v, want ErrForbidden", err)
+	}
+}
+
 func TestServiceBatchRetriesBackgroundJobsWithPartialFailures(t *testing.T) {
 	now := time.Date(2026, 8, 10, 5, 0, 0, 0, time.UTC)
 	successID := uuid.Must(uuid.NewV7())
@@ -193,19 +240,23 @@ func adminActor() domain.Actor {
 }
 
 type fakeOperationsRepository struct {
-	outboxCounts     []domain.OutboxStatusCount
-	jobCounts        []domain.OutboxStatusCount
-	outboxFailures   []domain.FailureSummaryItem
-	jobFailures      []domain.FailureSummaryItem
-	conflictID       uuid.UUID
-	missingID        uuid.UUID
-	retryReason      string
-	cancelID         uuid.UUID
-	cancelRowVersion int64
-	cancelReason     string
-	cancelNow        time.Time
-	deadReason       string
-	skipReason       string
+	outboxCounts           []domain.OutboxStatusCount
+	jobCounts              []domain.OutboxStatusCount
+	outboxFailures         []domain.FailureSummaryItem
+	jobFailures            []domain.FailureSummaryItem
+	leaseRecovery          domain.LeaseRecoveryResult
+	leaseRecoveryBatchSize int
+	leaseRecoveryReason    string
+	leaseRecoveryNow       time.Time
+	conflictID             uuid.UUID
+	missingID              uuid.UUID
+	retryReason            string
+	cancelID               uuid.UUID
+	cancelRowVersion       int64
+	cancelReason           string
+	cancelNow              time.Time
+	deadReason             string
+	skipReason             string
 }
 
 func (r *fakeOperationsRepository) CountOutboxEventsByStatus(context.Context) ([]domain.OutboxStatusCount, error) {
@@ -234,6 +285,13 @@ func (r *fakeOperationsRepository) CountBackgroundJobsByStatus(context.Context) 
 
 func (r *fakeOperationsRepository) CountBackgroundJobFailuresByErrorCode(context.Context) ([]domain.FailureSummaryItem, error) {
 	return r.jobFailures, nil
+}
+
+func (r *fakeOperationsRepository) RecoverExpiredLeases(_ context.Context, batchSize int, reason string, now time.Time) (domain.LeaseRecoveryResult, error) {
+	r.leaseRecoveryBatchSize = batchSize
+	r.leaseRecoveryReason = reason
+	r.leaseRecoveryNow = now
+	return r.leaseRecovery, nil
 }
 
 func (r *fakeOperationsRepository) RetryBackgroundJob(_ context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error) {

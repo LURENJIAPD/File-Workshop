@@ -181,6 +181,32 @@ func (h *Handler) GetBackgroundFailureSummary(ctx context.Context, request api.G
 	return api.GetBackgroundFailureSummary200JSONResponse(apiFailureSummary(result, requestID)), nil
 }
 
+func (h *Handler) RecoverExpiredBackgroundLeases(ctx context.Context, request api.RecoverExpiredBackgroundLeasesRequestObject) (api.RecoverExpiredBackgroundLeasesResponseObject, error) {
+	ginContext, actor, requestID, authErr := h.authenticate(ctx)
+	if authErr != nil {
+		return api.RecoverExpiredBackgroundLeases401JSONResponse{AuthRequiredJSONResponse: authRequired(requestID)}, nil
+	}
+	if !h.originAllowed(ginContext) {
+		return api.RecoverExpiredBackgroundLeases403JSONResponse{ForbiddenJSONResponse: forbidden(requestID)}, nil
+	}
+	if request.Body == nil {
+		return api.RecoverExpiredBackgroundLeases400JSONResponse{InvalidRequestJSONResponse: invalidRequest(requestID)}, nil
+	}
+	result, err := h.service.RecoverExpiredLeases(ginContext.Request.Context(), actor, intValue(request.Body.BatchSize), request.Body.Reason)
+	if bad, denied, _, _, code := mapError(err, requestID); code != "" {
+		switch code {
+		case "400":
+			return api.RecoverExpiredBackgroundLeases400JSONResponse{InvalidRequestJSONResponse: bad}, nil
+		case "403":
+			return api.RecoverExpiredBackgroundLeases403JSONResponse{ForbiddenJSONResponse: denied}, nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	return api.RecoverExpiredBackgroundLeases200JSONResponse(apiLeaseRecovery(result, requestID)), nil
+}
+
 func (h *Handler) RetryBackgroundJob(ctx context.Context, request api.RetryBackgroundJobRequestObject) (api.RetryBackgroundJobResponseObject, error) {
 	ginContext, actor, requestID, authErr := h.authenticate(ctx)
 	if authErr != nil {
@@ -502,6 +528,18 @@ func apiFailureSummaryItems(values []domain.FailureSummaryItem) []api.Background
 		result = append(result, api.BackgroundFailureSummaryItem{ErrorCode: value.ErrorCode, Count: value.Count, LatestAt: value.LatestAt})
 	}
 	return result
+}
+
+func apiLeaseRecovery(value domain.LeaseRecoveryResult, requestID string) api.ExpiredBackgroundLeaseRecoveryResponse {
+	return api.ExpiredBackgroundLeaseRecoveryResponse{
+		OutboxEvents:   apiLeaseRecoveryItem(value.OutboxEvents),
+		BackgroundJobs: apiLeaseRecoveryItem(value.BackgroundJobs),
+		RequestId:      requestID,
+	}
+}
+
+func apiLeaseRecoveryItem(value domain.LeaseRecoveryItem) api.ExpiredBackgroundLeaseRecoveryItem {
+	return api.ExpiredBackgroundLeaseRecoveryItem{Recovered: value.Recovered, Retryable: value.Retryable, Dead: value.Dead}
 }
 
 func batchRequestItems(items []api.BatchBackgroundJobOperationItemRequest) []domain.BatchJobItem {

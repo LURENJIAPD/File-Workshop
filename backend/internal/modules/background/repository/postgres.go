@@ -192,6 +192,29 @@ func (r *PostgreSQL) CountBackgroundJobFailuresByErrorCode(ctx context.Context) 
 	return result, nil
 }
 
+func (r *PostgreSQL) RecoverExpiredLeases(ctx context.Context, batchSize int, reason string, now time.Time) (domain.LeaseRecoveryResult, error) {
+	row, err := r.queries.RecoverExpiredBackgroundLeases(ctx, &dbgen.RecoverExpiredBackgroundLeasesParams{
+		Now:       timestamptz(now),
+		BatchSize: int32(batchSize),
+		Reason:    reason,
+	})
+	if err != nil {
+		return domain.LeaseRecoveryResult{}, err
+	}
+	return domain.LeaseRecoveryResult{
+		OutboxEvents: domain.LeaseRecoveryItem{
+			Recovered: row.OutboxRecoveredCount,
+			Retryable: row.OutboxRetryableCount,
+			Dead:      row.OutboxDeadCount,
+		},
+		BackgroundJobs: domain.LeaseRecoveryItem{
+			Recovered: row.BackgroundJobsRecoveredCount,
+			Retryable: row.BackgroundJobsRetryableCount,
+			Dead:      row.BackgroundJobsDeadCount,
+		},
+	}, nil
+}
+
 func (r *PostgreSQL) ListBackgroundJobs(ctx context.Context, filter domain.JobListFilter) (domain.JobListResult, error) {
 	status, jobType := nullableText(filter.Status), nullableText(filter.JobType)
 	total, err := r.queries.CountBackgroundJobs(ctx, &dbgen.CountBackgroundJobsParams{Status: status, JobType: jobType})

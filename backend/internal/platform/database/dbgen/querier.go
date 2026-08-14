@@ -234,6 +234,7 @@ type Querier interface {
 	OrganizationDeletionBlocked(ctx context.Context, arg *OrganizationDeletionBlockedParams) (bool, error)
 	OrganizationWouldCreateCycle(ctx context.Context, arg *OrganizationWouldCreateCycleParams) (bool, error)
 	PermissionOrganizationExists(ctx context.Context, organizationID pgtype.UUID) (bool, error)
+	RecoverExpiredBackgroundLeases(ctx context.Context, arg *RecoverExpiredBackgroundLeasesParams) (*RecoverExpiredBackgroundLeasesRow, error)
 	ReleaseDocumentLock(ctx context.Context, arg *ReleaseDocumentLockParams) (*DocumentLock, error)
 	ReleasePreservationHold(ctx context.Context, arg *ReleasePreservationHoldParams) (*LegalHold, error)
 	ReleaseSpaceQuotaReservation(ctx context.Context, arg *ReleaseSpaceQuotaReservationParams) (int64, error)

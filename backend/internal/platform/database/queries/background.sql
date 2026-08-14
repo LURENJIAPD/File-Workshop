@@ -289,6 +289,67 @@ GROUP BY last_error_code
 ORDER BY count(*) DESC, max(updated_at) DESC, last_error_code ASC
 LIMIT 20;
 
+-- name: RecoverExpiredBackgroundLeases :one
+WITH outbox_candidates AS (
+  SELECT outbox_event_id
+  FROM outbox_events
+  WHERE status = 'PROCESSING'
+    AND lease_until IS NOT NULL
+    AND lease_until <= sqlc.arg('now')::timestamptz
+  ORDER BY priority DESC, lease_until, outbox_event_id
+  LIMIT sqlc.arg('batch_size')::integer
+  FOR UPDATE SKIP LOCKED
+),
+updated_outbox AS (
+  UPDATE outbox_events e
+  SET status = CASE WHEN e.attempt_count < e.max_attempts THEN 'FAILED' ELSE 'DEAD' END,
+      locked_by = NULL,
+      locked_at = NULL,
+      lease_until = NULL,
+      next_retry_at = CASE WHEN e.attempt_count < e.max_attempts THEN sqlc.arg('now')::timestamptz ELSE NULL END,
+      last_error_code = 'LEASE_EXPIRED',
+      last_error_summary = sqlc.arg('reason')::text,
+      updated_at = sqlc.arg('now')::timestamptz,
+      row_version = e.row_version + 1
+  FROM outbox_candidates c
+  WHERE e.outbox_event_id = c.outbox_event_id
+  RETURNING e.status
+),
+job_candidates AS (
+  SELECT background_job_id
+  FROM background_jobs
+  WHERE status = 'PROCESSING'
+    AND lease_until IS NOT NULL
+    AND lease_until <= sqlc.arg('now')::timestamptz
+  ORDER BY priority DESC, lease_until, background_job_id
+  LIMIT sqlc.arg('batch_size')::integer
+  FOR UPDATE SKIP LOCKED
+),
+updated_jobs AS (
+  UPDATE background_jobs j
+  SET status = CASE WHEN j.attempt_count < j.max_attempts THEN 'FAILED' ELSE 'DEAD' END,
+      locked_by = NULL,
+      locked_at = NULL,
+      lease_until = NULL,
+      heartbeat_at = NULL,
+      available_at = CASE WHEN j.attempt_count < j.max_attempts THEN sqlc.arg('now')::timestamptz ELSE j.available_at END,
+      completed_at = CASE WHEN j.attempt_count < j.max_attempts THEN NULL ELSE sqlc.arg('now')::timestamptz END,
+      last_error_code = 'LEASE_EXPIRED',
+      last_error_summary = sqlc.arg('reason')::text,
+      updated_at = sqlc.arg('now')::timestamptz,
+      row_version = j.row_version + 1
+  FROM job_candidates c
+  WHERE j.background_job_id = c.background_job_id
+  RETURNING j.status
+)
+SELECT
+  (SELECT count(*)::bigint FROM updated_outbox) AS outbox_recovered_count,
+  (SELECT count(*)::bigint FROM updated_outbox WHERE status = 'FAILED') AS outbox_retryable_count,
+  (SELECT count(*)::bigint FROM updated_outbox WHERE status = 'DEAD') AS outbox_dead_count,
+  (SELECT count(*)::bigint FROM updated_jobs) AS background_jobs_recovered_count,
+  (SELECT count(*)::bigint FROM updated_jobs WHERE status = 'FAILED') AS background_jobs_retryable_count,
+  (SELECT count(*)::bigint FROM updated_jobs WHERE status = 'DEAD') AS background_jobs_dead_count;
+
 -- name: RetryBackgroundJob :one
 UPDATE background_jobs
 SET status = 'PENDING',

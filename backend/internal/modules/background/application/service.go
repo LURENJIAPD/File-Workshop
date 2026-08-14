@@ -24,6 +24,7 @@ type OperationsRepository interface {
 	CancelBackgroundJob(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error)
 	DeadLetterBackgroundJob(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error)
 	SkipBackgroundJob(ctx context.Context, id uuid.UUID, rowVersion int64, reason string, now time.Time) (domain.BackgroundJob, error)
+	RecoverExpiredLeases(ctx context.Context, batchSize int, reason string, now time.Time) (domain.LeaseRecoveryResult, error)
 }
 
 type Service struct {
@@ -67,6 +68,20 @@ func (s *Service) GetFailureSummary(ctx context.Context, actor domain.Actor) (do
 		return domain.FailureSummary{}, err
 	}
 	return domain.FailureSummary{OutboxEvents: outboxFailures, BackgroundJobs: jobFailures}, nil
+}
+
+func (s *Service) RecoverExpiredLeases(ctx context.Context, actor domain.Actor, batchSize int, reason string) (domain.LeaseRecoveryResult, error) {
+	if err := requireAdmin(actor); err != nil {
+		return domain.LeaseRecoveryResult{}, err
+	}
+	if batchSize == 0 {
+		batchSize = domain.DefaultLeaseRecoveryBatchSize
+	}
+	reason = strings.TrimSpace(reason)
+	if batchSize < 1 || batchSize > domain.MaxLeaseRecoveryBatchSize || reason == "" || len(reason) > 256 {
+		return domain.LeaseRecoveryResult{}, domain.ErrInvalidInput
+	}
+	return s.repository.RecoverExpiredLeases(ctx, batchSize, "lease expired: "+reason, s.now().UTC())
 }
 
 func (s *Service) ListOutboxEvents(ctx context.Context, actor domain.Actor, filter domain.OutboxListFilter) (domain.OutboxListResult, error) {

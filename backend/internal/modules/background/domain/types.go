@@ -24,10 +24,12 @@ const (
 
 	SystemRoleAdmin = "SYSTEM_ADMIN"
 
-	DefaultPage     = 1
-	DefaultPageSize = 50
-	MaxPageSize     = 200
-	MaxBatchSize    = 50
+	DefaultPage                   = 1
+	DefaultPageSize               = 50
+	MaxPageSize                   = 200
+	MaxBatchSize                  = 50
+	DefaultLeaseRecoveryBatchSize = 100
+	MaxLeaseRecoveryBatchSize     = 200
 )
 
 type Actor struct {
@@ -83,6 +85,17 @@ type FailureSummaryItem struct {
 type FailureSummary struct {
 	OutboxEvents   []FailureSummaryItem
 	BackgroundJobs []FailureSummaryItem
+}
+
+type LeaseRecoveryItem struct {
+	Recovered int64
+	Retryable int64
+	Dead      int64
+}
+
+type LeaseRecoveryResult struct {
+	OutboxEvents   LeaseRecoveryItem
+	BackgroundJobs LeaseRecoveryItem
 }
 
 type BackgroundJob struct {

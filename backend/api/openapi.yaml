@@ -2767,6 +2767,31 @@ paths:
         "401": { $ref: "#/components/responses/AuthRequired" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/v1/admin/background/expired-leases/recover:
+    post:
+      operationId: recoverExpiredBackgroundLeases
+      tags: [BackgroundAdministration]
+      summary: Recover expired PROCESSING leases for Outbox events and background jobs.
+      security:
+        - bearerAuth: []
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecoverExpiredBackgroundLeasesRequest"
+      responses:
+        "200":
+          description: Expired leases were recovered into retryable or dead states.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExpiredBackgroundLeaseRecoveryResponse"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/AuthRequired" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/v1/admin/background/jobs:
     get:
       operationId: listBackgroundJobs
@@ -3970,6 +3995,37 @@ components:
         backgroundJobs:
           type: array
           items: { $ref: "#/components/schemas/BackgroundFailureSummaryItem" }
+        requestId: { type: string, minLength: 1, maxLength: 128 }
+
+    RecoverExpiredBackgroundLeasesRequest:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties:
+        batchSize:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 100
+          description: Maximum expired leases to recover per source table in this call.
+        reason: { type: string, minLength: 1, maxLength: 256 }
+
+    ExpiredBackgroundLeaseRecoveryItem:
+      type: object
+      additionalProperties: false
+      required: [recovered, retryable, dead]
+      properties:
+        recovered: { type: integer, format: int64, minimum: 0 }
+        retryable: { type: integer, format: int64, minimum: 0 }
+        dead: { type: integer, format: int64, minimum: 0 }
+
+    ExpiredBackgroundLeaseRecoveryResponse:
+      type: object
+      additionalProperties: false
+      required: [outboxEvents, backgroundJobs, requestId]
+      properties:
+        outboxEvents: { $ref: "#/components/schemas/ExpiredBackgroundLeaseRecoveryItem" }
+        backgroundJobs: { $ref: "#/components/schemas/ExpiredBackgroundLeaseRecoveryItem" }
         requestId: { type: string, minLength: 1, maxLength: 128 }
 
     BatchBackgroundJobOperationItemRequest:
